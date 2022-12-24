@@ -66,7 +66,7 @@ input_args = {
 }
 
 # run the simulation
-Sensordata = kspaceFirstOrder2DC(**{
+sensor_data = kspaceFirstOrder2DC(**{
     'medium': medium,
     'kgrid': kgrid,
     'source': source,
@@ -74,5 +74,7 @@ Sensordata = kspaceFirstOrder2DC(**{
     **input_args
 })
 # assert compare_against_ref(f'out_pr_2D_FFT_line_sensor', input_args['SaveToDisk']), 'Files do not match!'
-plt.imshow(Sensordata);
-plt.show()
+
+plt.figure()
+plt.imshow(sensor_data)
+plt.savefig('./data/output/d1_2D.png')

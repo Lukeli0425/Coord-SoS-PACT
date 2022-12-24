@@ -78,5 +78,7 @@ sensor_data = kspaceFirstOrder3DC(**{
 })
 
 savemat('./data/output/d1.mat',{'sensor':sensor_data})
+
+plt.figure()
 plt.imshow(sensor_data)
-plt.show()
+plt.savefig('./data/output/d1_3D.png')

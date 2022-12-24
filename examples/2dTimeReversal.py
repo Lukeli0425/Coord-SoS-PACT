@@ -83,5 +83,7 @@ recon = kspaceFirstOrder2DG(**{
         'sensor': sensor,
         **input_args
     })
+
+plt.figure()
 plt.imshow(recon)
-plt.show()
+plt.savefig('./data/output/d1_recon_2D.png')
