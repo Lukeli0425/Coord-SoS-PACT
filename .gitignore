@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# large files
+kwave/bin/linux/
+
+# vscode settings
 .vscode/
 
 # C extensions
