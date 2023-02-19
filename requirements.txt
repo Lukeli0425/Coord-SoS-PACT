@@ -3,5 +3,5 @@ scipy
 matplotlib
 h5py
 opencv-python
-pytorvh
+pytorch
 torchvision
