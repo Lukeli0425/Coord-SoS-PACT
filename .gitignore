@@ -1,3 +1,7 @@
+# Code for Reference
+APACT1
+unfoldedVBA-main
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +12,9 @@ kwave/bin/linux/
 
 # vscode settings
 .vscode/
+
+# Mac files
+.DS_Store
 
 # C extensions
 *.so
