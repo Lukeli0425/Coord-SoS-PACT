@@ -3,5 +3,6 @@ scipy
 matplotlib
 h5py
 opencv-python
-pytorch
+torch
 torchvision
+tqdm
