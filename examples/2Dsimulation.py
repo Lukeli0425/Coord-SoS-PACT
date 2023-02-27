@@ -43,7 +43,7 @@ disc_1 = disc_magnitude * makeDisc(Nx, Ny, disc_x_pos, disc_y_pos, disc_radius)
 
 source = kSource()
 source.p0 = disc_1 + disc_2
-
+print('shape:',disc_1.shape)
 # smooth the initial pressure distribution and restore the magnitude
 source.p0 = smooth(source.p0, True)
 

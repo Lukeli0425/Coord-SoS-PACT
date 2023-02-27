@@ -2,6 +2,7 @@ numpy
 scipy
 matplotlib
 h5py
+tqdm
 opencv-python
 pytorch
 torchvision
