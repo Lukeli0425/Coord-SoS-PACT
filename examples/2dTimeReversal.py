@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 filepath = "./data/input/sinogram.mat"
 data = scio.loadmat(filepath)
 sinogram = data['linear']
+print(sinogram.shape)
 pathname = gettempdir()
 # create the computational grid
 PML_size = 10              # size of the PML in grid points
