@@ -6,3 +6,4 @@ opencv-python
 torch
 torchvision
 tqdm
+numba
