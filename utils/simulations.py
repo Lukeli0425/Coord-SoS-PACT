@@ -1,11 +1,29 @@
 import os 
 import numpy as np
 import numba
-
+from tempfile import gettempdir
+from kwave.ksource import kSource
+from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
+from kwave.utils import *
+from kwave.ktransducer import *
+from kwave.kmedium import kWaveMedium
 
 
 def read_images(path, files):
     return [np.load(os.path.join(path, file)) for file in files]
+
+
+def subtract_background(image):
+    """Conduct background subtraction to blood vessel section images.
+
+    Args:
+        image (`numpy.ndarray`): Input blood vessel section image.
+
+    Returns:
+        `numpy.ndarray`: Background subtracted blood vessel section image.
+    """
+    return image - image[0,0]
+
 
 def join_images(images, n_row=2, n_col=2):
     
@@ -19,17 +37,52 @@ def join_images(images, n_row=2, n_col=2):
     
     return image_joint
 
-def split_images(image, img_size=(128, 128)):
-    images = []
-    n_x, n_y = image.shape[0]//img_size[0], image.shape[1]//img_size[1]
-    for idx in range(n_x):
-        for idy in range(n_y):
-            images.append(image[idx*img_size[0]:(idx+1)*img_size[0], idy*img_size[1]:(idy+1)*img_size[1]])
-    return images
+
+def split_images(images, img_size=(128, 128)):
+    
+    n_x, n_y = images[0].shape[0]//img_size[0], images[0].shape[1]//img_size[1]
+    images_out = [[] for i in range(n_x*n_y)]
+    for image in images:
+        for idx in range(n_x):
+            for idy in range(n_y):
+                images_out[n_x*idx+idy].append(image[idx*img_size[0]:(idx+1)*img_size[0], idy*img_size[1]:(idy+1)*img_size[1]])
+    images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
+    
+    return images_out
     
 
-def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
+def zero_pad(image, Nx, Ny):
+    """Pads image with zeros.
 
+    Args:
+        image (`numpy.ndarray`): Input image.
+        N (`int`): Image size atter padding.
+
+    Returns:
+        `numpy.ndarray`: Padded image.
+    """
+    
+    image_pad = np.zeros((Nx, Ny))
+    
+    pad_start_x, pad_end_x = (Nx-image.shape[0])//2, (Nx+image.shape[0])//2
+    pad_start_y, pad_end_y = (Ny-image.shape[1])//2, (Ny+image.shape[1])//2
+    image_pad[pad_start_x:pad_end_x, pad_start_y:pad_end_y] = image
+    
+    return image_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y)
+
+
+def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
+    """Reorder the binary sensor data collected by a ring array in angular order.
+
+    Args:
+        sensor_data (`numpy.ndarray`): Input sensor data with shape `[N_transducer, N_T]`.
+        sensor (`kSensor`): K-wave sensor object.
+        kgrid (`kWaveGrid`): K-wave grid object.
+        PML_size (int): Size of PML.
+
+    Returns:
+        `numpy.ndarray`: Reordered sensor data with shape `(N_transducer, N_T)`.
+    """
     x_sensor = kgrid.x[sensor.mask[PML_size:-PML_size,PML_size:-PML_size] == 1]
     y_sensor = kgrid.y[sensor.mask[PML_size:-PML_size,PML_size:-PML_size] == 1]
     
@@ -38,6 +91,81 @@ def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
     reorder_index = np.argsort(angle)
     
     return sensor_data[reorder_index]
+
+
+def get_medium(kgrid, Nx=2024, Ny=2024, 
+               sos_background=1500.0, 
+               R=0.01, R1=0.06, offset=0.0, rou=1000):
+    """
+    Generate K-wave medium object with varying SoS distribution.
+
+    Args:
+        Nx (int, optional): _description_. Defaults to 2024.
+        Ny (int, optional): _description_. Defaults to 2024.
+        sos_background (float, optional): SoS of the background medium. [m/s]. Defaults to 1500.0.
+        R (float, optional): Radius of the large circle in SoS distribution. [m]. Defaults to 0.01.
+        R1 (float, optional): Radius of the small circle in SoS distribution. [m]. Defaults to 0.06.
+        offset (float, optional): Offset of circle in SoS distribution. [m]. Defaults to 0.0.
+        rou (int, optional): Density. [g/cm^3] Defaults to 1000.
+
+    Returns:
+        `kWaveMedium`: The medium object with varying SoS distribution.
+    """
+
+    XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
+    SoS = np.ones((Ny, Nx)) * 1500
+    SoS[XX**2 + YY**2 < R**2] = 1600
+    SoS[XX**2 + (YY + offset)**2 < R1**2] = 1650
+
+    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=sos_background, density=rou)
+    
+    return medium
+
+
+def forward_2D(p0, kgrid, medium, sensor, PML_size=12):
+    """2D forward simluation with K-wave.
+
+    Args:
+        p0 (`numpy.ndarray`): Initial pressure distribution.
+        kgrid (`kWaveGrid`): K-wave grid object.
+        medium (`kWaveMedium`): K-wave medium object.
+        sensor (`kSensor`): K-wave sensor object.
+        PML_size (int, optional): Size of PML. Defaults to 12.
+
+    Returns:
+        `numpy.ndarray`: Photoacoustic data collected by tranceducers with shape `(N_transducer, N_T)`.
+    """
+    
+    pathname = gettempdir()
+
+    source = kSource()
+    source.p0 = p0
+
+    # Smooth the initial pressure distribution and restore the magnitude.
+    # source.p0 = smooth(source.p0, True)
+
+    # Create the time array.
+    kgrid.makeTime(medium.sound_speed)
+
+    # Set the input arguements: force the PML to be outside the computational grid switch off p0 smoothing within kspaceFirstOrder2D.
+    input_args = {
+        'PMLInside': False,
+        'PMLSize': PML_size,
+        'Smooth': False,
+        'SaveToDisk': os.path.join(pathname, f'example_input.h5'),
+        'SaveToDiskExit': False, 
+    }
+
+    # Run the simulation.
+    sensor_data = kspaceFirstOrder2DC(**{
+        'medium': medium,
+        'kgrid': kgrid,
+        'source': source,
+        'sensor': sensor,
+        **input_args
+    })
+    
+    return sensor_data
 
 
 @numba.jit(nopython=True) 
@@ -77,37 +205,11 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
                 else:
                     related_data[k] = Sinogram[k, id]
             Image[t, s] = related_data.mean()
+
     return Image
 
 
-def subtract_background(image):
-    """Conduct background subtraction to blood vessel section images.
-
-    Args:
-        image (`numpy.ndarray`): Input blood vessel section image.
-
-    Returns:
-        `numpy.ndarray`: Background subtracted blood vessel section image.
-    """
-    return image - image[0,0]
 
 
-def zero_pad(image, pad_x, pad_y):
-    """Pads image with zeros.
 
-    Args:
-        image (`numpy.ndarray`): Input image.
-        pad_x (`int`): Pad length along x direction.
-        pad_y (`int`): Pad length along y direction.
-
-    Returns:
-        `numpy.ndarray`: Padded image.
-    """
-    
-    image_pad = np.zeros((pad_x, pad_y))
-    
-    pad_start, pad_end = int(pad_x/2-image.shape[0]/2), int(pad_x/2+image.shape[0]/2)
-    image_pad[pad_start:pad_end, pad_start:pad_end] = image
-    
-    return image_pad
     
