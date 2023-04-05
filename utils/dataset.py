@@ -41,7 +41,7 @@ class PACT_Dataset(Dataset):
         else:
             self.n_samples = min(self.n_gt, self.n_obs)
             self.logger.warning("Inequal number of ground truth samples and observation samples.")
-        
+        self.n_samples = 3200
         self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
 
 
@@ -50,8 +50,8 @@ class PACT_Dataset(Dataset):
 
     def __getitem__(self, idx):
         
-        obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).unsqueeze(0)
-        gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).unsqueeze(0)
+        obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).float()
+        gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
 
         return obs, gt
     

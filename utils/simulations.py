@@ -122,7 +122,7 @@ def get_medium(kgrid, Nx=2024, Ny=2024,
     return medium
 
 
-def forward_2D(p0, kgrid, medium, sensor, PML_size=12):
+def forward_2D(p0, kgrid, medium, sensor, PML_size=12, n_start=0):
     """2D forward simluation with K-wave.
 
     Args:
@@ -136,7 +136,7 @@ def forward_2D(p0, kgrid, medium, sensor, PML_size=12):
         `numpy.ndarray`: Photoacoustic data collected by tranceducers with shape `(N_transducer, N_T)`.
     """
     
-    pathname = gettempdir()
+    pathname = os.path.join(gettempdir(), f'{n_start}')
 
     source = kSource()
     source.p0 = p0
@@ -152,7 +152,7 @@ def forward_2D(p0, kgrid, medium, sensor, PML_size=12):
         'PMLInside': False,
         'PMLSize': PML_size,
         'Smooth': False,
-        'SaveToDisk': os.path.join(pathname, f'example_input.h5'),
+        'SaveToDisk': os.path.join(pathname, f'example_input_{n_start}.h5'),
         'SaveToDiskExit': False, 
     }
 

@@ -5,6 +5,11 @@ DUBLID-main
 SelfDeblur-master
 DeePGEM-main
 
+saved_models/
+
+# nohup files
+*.out
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

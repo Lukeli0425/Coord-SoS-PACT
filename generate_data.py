@@ -11,8 +11,9 @@ from kwave.ktransducer import *
 from utils.simulations import read_images, join_images, zero_pad, split_images
 from utils.simulations import get_medium, reorder_binary_sensor_data, forward_2D, delay_and_sum
 from utils.dataset import mkdir
+from tempfile import gettempdir
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 
 def generate_sections(vessel_data_path, sec_path, n_sec=5, min_std=0.11):
@@ -43,7 +44,8 @@ def generate_sections(vessel_data_path, sec_path, n_sec=5, min_std=0.11):
 def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=False,
                   image_size=(2024, 2024), PML_size=12, 
                   sos_background = 1500.0, R_ring=0.05, N_transducer=512,
-                  n_delays=8, delay_step=2e-4):
+                  n_delays=8, delay_step=2e-4,
+                  n_start=0):
     
     logger = logging.getLogger('DataGenerator')
     
@@ -71,8 +73,12 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
     T_sample = 1/40e6
     d_delays = np.linspace(-(n_delays/2-1), n_delays/2, n_delays) * delay_step
     
+    pathname = os.path.join(gettempdir(), f'{n_start}')
+    mkdir(pathname)
+    
     sec_files = os.listdir(sec_path)
-    for idx in tqdm(range(len(sec_files)//4)):
+    # for idx in tqdm(range(len(sec_files)//4)):
+    for idx in tqdm(range(n_start, n_start+700)):
         # Simulation parameters.
         R = 0.01 + 0.004 * (rand() -0.5) # U(0.008,0.012)
         R1 = 0.006 + 0.001 * (rand() -0.5) # U(0.005, 0.007)
@@ -80,7 +86,7 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
         rou = 1000
     
         # Join and pad ground truth images.
-        gt_imgs = read_images(sec_path, sec_files[idx:idx+4])
+        gt_imgs = read_images(sec_path, sec_files[4*idx:4*idx+4])
         gt_joint = join_images(gt_imgs)
         gt_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(gt_joint, Nx, Ny)
         
@@ -101,7 +107,8 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
                                  kgrid=kgrid, 
                                  medium=medium,
                                  sensor=sensor,
-                                 PML_size=PML_size)
+                                 PML_size=PML_size,
+                                 n_start=n_start)
         sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
                                                  sensor=sensor, 
                                                  kgrid=kgrid, 
@@ -149,13 +156,15 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_train', type=int, default=8000)
+    parser.add_argument('--n_train', type=int, default=10000)
+    parser.add_argument('--n_start', type=int, default=0)
     parser.add_argument('--sectioning', action="store_true")
     parser.add_argument('--n_delays', type=int, default=8)
     opt = parser.parse_args()
     
     generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', 
-                  vessel_data_path='/mnt/WD6TB/tianaoli/skinVessel/',
+                  vessel_data_path='/mnt/WD6TB/tianaoli/SkinVessel/',
                   n_train=opt.n_train, sectioning=opt.sectioning,
-                  n_delays=opt.n_delays)
+                  n_delays=opt.n_delays,
+                  n_start=opt.n_start)
     
