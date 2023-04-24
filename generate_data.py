@@ -77,8 +77,9 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
     mkdir(pathname)
     
     sec_files = os.listdir(sec_path)
+    sec_files.remove('vis')
     # for idx in tqdm(range(len(sec_files)//4)):
-    for idx in tqdm(range(n_start, n_start+700)):
+    for idx in tqdm(range(2500, 3000)):
         # Simulation parameters.
         R = 0.01 + 0.004 * (rand() -0.5) # U(0.008,0.012)
         R1 = 0.006 + 0.001 * (rand() -0.5) # U(0.005, 0.007)

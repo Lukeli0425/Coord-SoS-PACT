@@ -1,7 +1,7 @@
 # Parameters for neural network
-C = 16  # number of feature maps
+C = 8  # number of feature maps
 K = 3  # filter width
-num_layer = 10  # total number of layer
+num_layer = 8  # total number of layer
 epsilon = 1e-8  # to avoid division by zero
 alpha = 1e-2  # weight decay parameter
 kappa = 1e2  # weight for the kernel term
@@ -15,8 +15,8 @@ kernel_bias_scale = 0.01
 eta_init = 1.
 
 # Parameters for data loading
-batch_size = 16
-patch_size = [256, 256]
+batch_size = 32
+patch_size = [128, 128]
 num_threads = batch_size  # number of threads to use in data loading
 image_channels = 1  # 1 for grayscale, and 3 for color
 bounding_box_size = [45, 45]

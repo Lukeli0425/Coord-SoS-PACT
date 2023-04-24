@@ -74,7 +74,7 @@ def conj_mul(c1, c2):
     '''
     Complex conjugate of c1 and multiplication with c2
     '''
-
+    return c1 * c2.conj()
     r1, i1 = c1[..., 0], -c1[..., 1]
     r2, i2 = c2[..., 0], c2[..., 1]
     r = r1*r2 - i1*i2
@@ -87,7 +87,7 @@ def csquare(c):
     '''
     Square of absolute values of complex numbers
     '''
-
+    return c.abs()**2
     return c[..., 0]**2 + c[..., 1]**2
 
 
@@ -110,7 +110,8 @@ def fft2(signal, size=None):
 
     padded = signal if size is None else pad_to(signal, size)
 
-    return torch.rfft(padded, signal_ndim=2)
+    # return torch.rfft(padded, signal_ndim=2)
+    return torch.fft.fft2(padded)
 
 
 def ifft2(signal, size=None):
@@ -118,7 +119,8 @@ def ifft2(signal, size=None):
     Inverse fast Fourier transform on the last two dimensions
     '''
 
-    return torch.irfft(signal, signal_ndim=2, signal_sizes=size)
+    # return torch.irfft(signal, signal_ndim=2, signal_sizes=size)
+    return torch.fft.ifft2(signal).real
 
 
 def circ_shift(ts, shift):

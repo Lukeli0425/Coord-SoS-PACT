@@ -12,6 +12,7 @@ class DUBLID(nn.Module):
         self.device = device
         weight = nn.Parameter(nn.init.xavier_normal_(
             torch.empty(pt.C, channels, pt.K, pt.K, device=self.device)))
+
         self.weight_list = nn.ParameterList([weight])
         for layer in range(pt.num_layer - 1):
             weight = nn.Parameter(nn.init.xavier_normal_(
@@ -73,13 +74,12 @@ class DUBLID(nn.Module):
         '''
 
         eta = pt.prox_scale*self.prox_list[-1]
-        ec = eta.unsqueeze(dim=-1)
+        ec = eta#.unsqueeze(dim=-1)
         if Fw.shape[0] == 1:  # grayscale
             Fy = Fy[:, 0]
-            num = op.conj_mul(Fk, Fy) \
-                + torch.sum(ec*op.conj_mul(Fw, Fg), dim=1)
+            num = op.conj_mul(Fk, Fy) + torch.sum(ec*op.conj_mul(Fw, Fg), dim=1)
             den = op.csquare(Fk) + torch.sum(eta*op.csquare(Fw), dim=1)
-            Fx = num / den.unsqueeze(dim=-1)
+            Fx = num / den#.unsqueeze(dim=-1)
             Fx = Fx.unsqueeze(dim=1)
         elif Fw.shape[0] == 3:  # color
             Fwr = Fw[0].unsqueeze(dim=0)
@@ -125,11 +125,12 @@ class DUBLID(nn.Module):
           image_pred:       NxC_inxHvxWv; estimated image features
           kernel_pred:      NxHkxWk; estimated kernels
         '''
-
+        blurred_image = blurred_image[:,3:4,:,:]
         # Size for kernels
         Hk, Wk = pt.bounding_box_size
         # Size for the 'full' scheme
         N, C_in, Hv, Wv = blurred_image.size()
+
         # Size for the 'same' scheme
         Hs, Ws = Hv + Hk - 1, Wv + Wk - 1
         # Size for the 'valid' scheme
@@ -143,7 +144,10 @@ class DUBLID(nn.Module):
         for layer in range(pt.num_layer):
             w = self.weight_list[layer]
             if layer == 0:
+                # print(w.shape, pt.C, C_in, w.view(pt.C, C_in, -1).shape)
                 w_mean = torch.mean(w.view(pt.C, C_in, -1), dim=-1)
+                # print(w_mean.shape)
+                # print('########')
                 w = w - torch.reshape(w_mean, (pt.C, C_in, 1, 1))
                 w0 = torch.transpose(w, dim0=0, dim1=1)
                 # At the output end we need to perform convolution instead
@@ -170,9 +174,10 @@ class DUBLID(nn.Module):
             fft_size = fy.shape[-2:]
             # Update latent image
             zeta = pt.prox_scale*self.prox_list[layer]
-            num = zeta.unsqueeze(dim=-1)*op.conj_mul(Fk, Ffy) + Fz
-            den = zeta*op.csquare(Fk) + 1
-            Fg = num / den.unsqueeze(dim=-1)
+            num = zeta * op.conj_mul(Fk, Ffy) + Fz
+            den = zeta * op.csquare(Fk) + 1
+            
+            Fg = num / den#.unsqueeze(dim=-1)
             # Update surrogate blurred image
             b = self.bias_list[layer + 1]
             Fz = op.fft2(op.threshold(op.ifft2(Fg, size=fft_size), b))
@@ -180,7 +185,7 @@ class DUBLID(nn.Module):
             zk = self.kernel_prox_list[layer]
             num = zk*torch.sum(op.conj_mul(Fz, Ffy), dim=1) + Fk.squeeze(dim=1)
             den = zk*torch.sum(op.csquare(Fz), dim=1) + 1
-            k = op.ifft2(num / den.unsqueeze(dim=-1), size=fft_size)
+            k = op.ifft2(num / den, size=fft_size)
             k_max = torch.logsumexp(k.view(N, -1)*pt.kernel_scale, dim=-1)
             k_max = k_max / pt.kernel_scale
             bk =  pt.kernel_bias_scale*self.kernel_bias_list[layer]

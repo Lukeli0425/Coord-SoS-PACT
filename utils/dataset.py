@@ -41,7 +41,7 @@ class PACT_Dataset(Dataset):
         else:
             self.n_samples = min(self.n_gt, self.n_obs)
             self.logger.warning("Inequal number of ground truth samples and observation samples.")
-        self.n_samples = 3200
+
         self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
 
 
