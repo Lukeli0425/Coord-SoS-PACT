@@ -1,12 +1,11 @@
 import math
 import numpy as np
 import torch
-import torch.fft as tfft
 from torch.fft import fftn, ifftn, fftshift
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import models.ResUNet as ResUNet
+from models.ResUNet import ResUNet
 from utils.utils_torch import conv_fft_batch, psf_to_otf, get_fourier_coord
 
 
@@ -45,35 +44,34 @@ class Down(nn.Module):
 
 
 class SubNet(nn.Module):
-    def __init__(self, n):
+    def __init__(self, n_iters=8):
         super(SubNet, self).__init__()
-        self.n = n
-        self.conv_layers = nn.Sequential(
-            Down(1,4),
+        self.n_iters = n_iters
+        self.cnn = nn.Sequential(
             Down(8,8),
             Down(8,16),
-            Down(16,16))
+            Down(16,32),
+            Down(32,32)
+        )
         self.mlp = nn.Sequential(
-            nn.Linear(16*8*8+1, 64),
+            nn.Linear(32*8*8, 256),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 64),
+            nn.Linear(256, 64),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 2*self.n),
-            nn.Softplus())
+            nn.Linear(64, 2*self.n_iters),
+            nn.Softplus()
+        )
         
-    def forward(self, kernel, alpha):
-        N, _, h, w  = kernel.size()
-        h1, h2 = int(np.floor(0.5*(128-h))), int(np.ceil(0.5*(128-h)))
-        w1, w2 = int(np.floor(0.5*(128-w))), int(np.ceil(0.5*(128-w)))
-        k_pad = F.pad(kernel, (w1,w2,h1,h2), "constant", 0)
-        H = tfft.fftn(k_pad, dim=[2,3])
-        HtH = torch.abs(H)**2
-        x = self.conv_layers(HtH.float())
-        x = torch.cat((x.view(N,1,16*8*8),  alpha.float().view(N,1,1)), axis=2).float()
+    def forward(self, y):
+        B, _, h, w  = y.size()
+        H = fftn(y, dim=[-2,-1])
+        HtH = torch.abs(H) ** 2
+        x = self.cnn(HtH.float())
+        x = x.view(B, 1, 32*8*8)
         output = self.mlp(x) + 1e-6
 
-        rho1_iters = output[:,:,0:self.n].view(N, 1, 1, self.n).repeat(1,8,1,1)
-        rho2_iters = output[:,:,self.n:2*self.n].view(N, 1, 1, self.n).repeat(1,8,1,1)
+        rho1_iters = output[:,:,0:self.n_iters].view(B, 1, 1, self.n_iters)
+        rho2_iters = output[:,:,self.n_iters:2*self.n_iters].view(B, 1, 1, self.n_iters).repeat(1,8,1,1)
         
         return rho1_iters, rho2_iters
 
@@ -83,9 +81,10 @@ class X_Update(nn.Module):
         super(X_Update, self).__init__()
         
     def forward(self, x0, HtH, z, u1, rho1):
-        rhs = x0.sum(axis=1) + rho1 * (z - u1) 
-        lhs = HtH.sum(axis=1) + rho1
-        x = tfft.ifftn(rhs/lhs, dim=[2,3])
+        rhs = x0.sum(axis=1).unsqueeze(1) + rho1 * (z - u1) 
+        lhs = HtH.sum(axis=1).unsqueeze(1) + rho1
+        x = ifftn(rhs/lhs, dim=[-2,-1])
+
         return x.real
     
     
@@ -93,7 +92,7 @@ class Z_Update_ResUNet(nn.Module):
     """Updating Z with ResUNet as denoiser."""
     def __init__(self):
         super(Z_Update_ResUNet, self).__init__() 
-        self.net = ResUNet(in_nc=1, out_nc=1)
+        self.net = ResUNet(in_nc=1, out_nc=1, nc=[32, 64, 128, 256])
 
     def forward(self, z):
         z_out = self.net(z.float())
@@ -107,7 +106,7 @@ class H_Update(nn.Module):
     def forward(self, h0, XtX, g, u2, rho2):
         rhs = h0 + rho2 * (g - u2) 
         lhs = XtX + rho2
-        x = tfft.ifftn(rhs/lhs, dim=[2,3])
+        x = ifftn(rhs/lhs, dim=[-2,-1])
         return x.real
 
 
@@ -133,7 +132,7 @@ class PSF_PACT(nn.Module):
 
 class G_Update_CNN(nn.Module):
     """Updating G with CNN and forward model."""
-    def __init__(self):
+    def __init__(self, n_delays=8):
         super(G_Update_CNN, self).__init__() 
         self.cnn = nn.Sequential(
             Down(8,8),
@@ -146,9 +145,10 @@ class G_Update_CNN(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 5)
+            nn.Linear(64, 5),
+            nn.Softplus()
         )
-        self.psf = PSF_PACT(n_points=128)
+        self.psf = PSF_PACT(n_points=128, n_delays=n_delays)
 
     def forward(self, h0):
         N = h0.shape[0] # Batch size.
@@ -168,23 +168,30 @@ class G_Update_CNN(nn.Module):
 
 
 class Unrolled_ADMM(nn.Module):
-    def __init__(self, n_iters=8):
+    def __init__(self, n_iters=8, n_delays=8):
         super(Unrolled_ADMM, self).__init__()
         self.n = n_iters # Number of iterations.
+        self.n_delays = n_delays # Number of delays.
         self.X = X_Update() # FFT based quadratic solution.
         self.Z = Z_Update_ResUNet() # Denoiser.
         self.H = H_Update()
-        self.G = G_Update_CNN()
+        self.G = G_Update_CNN(n_delays=self.n_delays) # Model-based PSF denoiser.
         self.SubNet = SubNet(self.n)
 
     def init(self, y):
-        x = None
-        h = None
+        B = y.shape[0] # Batch size.
+        x = y[:,-1:,:,:]
+        psf_pact = PSF_PACT(n_delays=self.n_delays)
+        h = psf_pact(C0=2e-5 * torch.ones([B,self.n_delays,1,1]), 
+                     C1=2e-5 * torch.ones([B,self.n_delays,1,1]), 
+                     phi1=torch.zeros([B,self.n_delays,1,1]), 
+                     C2=2e-5 * torch.ones([B,self.n_delays,1,1]), 
+                     phi2=torch.zeros([B,self.n_delays,1,1]))
         return x, h
         
     def forward(self, y):
         device = torch.device("cuda:0" if y.is_cuda else "cpu")
-        N, _, _, _ = y.size()
+        B, _, H, W = y.size()
         
         x, h = self.init(y) # Initialization.
         rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
@@ -192,28 +199,28 @@ class Unrolled_ADMM(nn.Module):
         # Other ADMM variables.
         z = Variable(x.data.clone()).to(device)
         g = Variable(h.data.clone()).to(device)
-        u1 = torch.zeros(y.size()).to(device)
+        u1 = torch.zeros(x.size()).to(device)
         u2 = torch.zeros(h.size()).to(device)
 		
         # ADMM iterations
         for n in range(self.n):
-            _, H, Ht, HtH = psf_to_otf(h, y.size())
+            _, H, Ht, HtH = psf_to_otf(h, y.size(), device)
             
-            rho1 = rho1_iters[:,:,:,n].view(N,1,1,1)
-            rho2 = rho2_iters[:,:,:,n].view(N,1,1,1)
+            rho1 = rho1_iters[:,:,:,n].view(B,1,1,1)
+            rho2 = rho2_iters[:,:,:,n].view(B,8,1,1)
             
             # X, Z, H, G updates.
-            x = self.X(x0=conv_fft_batch(Ht, y), HtH=HtH, z=z, u1=u1,rho1=rho1)
             z = self.Z(x + u1)
+            x = self.X(x0=conv_fft_batch(Ht, y), HtH=HtH, z=z, u1=u1, rho1=rho1)
             
-            _, X, Xt, XtX = psf_to_otf(h, y.size())
-            h = self.H(h0=conv_fft_batch(Xt, y), XtX=XtX, g=g, u2=u2, rho2=rho2)
+            _, X, Xt, XtX = psf_to_otf(x, x.size(), device)
             g = self.G(h + u2)
-            
-            # Lagrangian updates.
+            h = self.H(h0=conv_fft_batch(Xt, y), XtX=XtX, g=g, u2=u2, rho2=rho2)
+
+            # Lagrangian dual variable updates.
             u1 = u1 + x - z            
             u2 = u2 + h - g
-   
+
         return x, h
 
 

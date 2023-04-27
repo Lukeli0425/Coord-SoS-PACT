@@ -10,6 +10,8 @@ saved_models/
 # nohup files
 *.out
 
+try.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

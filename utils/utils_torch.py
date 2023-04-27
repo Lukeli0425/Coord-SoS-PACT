@@ -32,8 +32,7 @@ def psf_to_otf(ker, size, device):
 	psf[:, :, -center:, -center:] = ker[:, :, :center, :center]
 
 	# otf = torch.rfft(psf, 3, onesided=False)
-	otf = torch.fft.fftn(psf, dim=[2,3])
-	H = H.to(device)
+	H = torch.fft.fftn(psf, dim=[-2,-1]).to(device)
 	Ht, HtH = torch.conj(H), torch.abs(H)**2
 
 	return psf, H, Ht, HtH
