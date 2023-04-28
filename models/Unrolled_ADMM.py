@@ -92,7 +92,7 @@ class Z_Update_ResUNet(nn.Module):
     """Updating Z with ResUNet as denoiser."""
     def __init__(self):
         super(Z_Update_ResUNet, self).__init__() 
-        self.net = ResUNet(in_nc=1, out_nc=1, nc=[32, 64, 128, 256])
+        self.net = ResUNet(in_nc=1, out_nc=1, nc=[16, 32, 64, 128])
 
     def forward(self, z):
         z_out = self.net(z.float())
@@ -119,13 +119,11 @@ class PSF_PACT(nn.Module):
         self.n_delays = n_delays
         self.delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays) * delay_step
         self.delays = self.delays.view(1,n_delays,1,1) # [1,8,1,1]
-        print(self.delays)
         
     def forward(self, C0, C1, phi1, C2, phi2, device):
         self.delays = self.delays.to(device)
         k, theta = get_fourier_coord(n_points=self.n_points, l=self.l, device=device)
         k, theta = k.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1), theta.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
-        print(k.shape, theta.shape, C0.shape)
         w = lambda theta: C0 + C1 * torch.cos(theta + phi1) + C2 * torch.cos(2 * theta + phi2) # Wavefront function.
         tf = (torch.exp(-1j*k*(self.delays - w(theta))) + torch.exp(1j*k*(self.delays - w(theta+np.pi)))) / 2
         psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
@@ -140,12 +138,12 @@ class G_Update_CNN(nn.Module):
         super(G_Update_CNN, self).__init__() 
         self.cnn = nn.Sequential(
             Down(8,8),
+            Down(8,8),
             Down(8,16),
-            Down(16,32),
-            Down(32,32)
+            Down(16,16)
         )
         self.mlp = nn.Sequential(
-            nn.Linear(32*8*8, 256),
+            nn.Linear(16*8*8, 256),
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
@@ -161,7 +159,7 @@ class G_Update_CNN(nn.Module):
         H = fftn(h0, dim=[-2,-1]).to(device)
         HtH = torch.abs(H) ** 2
         x = self.cnn(HtH.float())
-        x = x.view(N, 1, 32*8*8)
+        x = x.view(N, 1, 16*8*8)
         params = self.mlp(x) + 1e-6
         params = params.repeat(1,8,1).unsqueeze(-1)
         
@@ -216,12 +214,12 @@ class Unrolled_ADMM(nn.Module):
             rho2 = rho2_iters[:,:,:,n].view(B,8,1,1)
             
             # X, Z, H, G updates.
-            z = self.Z(x + u1)
             x = self.X(x0=conv_fft_batch(Ht, y), HtH=HtH, z=z, u1=u1, rho1=rho1)
+            z = self.Z(x + u1)
             
             _, X, Xt, XtX = psf_to_otf(x, x.size(), self.device)
-            g = self.G(h + u2, self.device)
             h = self.H(h0=conv_fft_batch(Xt, y), XtX=XtX, g=g, u2=u2, rho2=rho2)
+            g = self.G(h + u2, self.device)
 
             # Lagrangian dual variable updates.
             u1 = u1 + x - z            
@@ -232,6 +230,6 @@ class Unrolled_ADMM(nn.Module):
 
 
 if __name__ == '__main__':
-    model = Unrolled_ADMM()
+    model = Unrolled_ADMM(n_iters=4)
     total = sum([param.nelement() for param in model.parameters()])
     print("Number of parameter: %s" % (total))

@@ -131,10 +131,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
-    parser.add_argument('--n_iters', type=int, default=8)
+    parser.add_argument('--n_iters', type=int, default=2)
     parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM','DUBLID', 'ResUNet'])
     parser.add_argument('--n_epochs', type=int, default=50)
-    parser.add_argument('--lr', type=float, default=5e-4)
+    parser.add_argument('--lr', type=float, default=2e-4)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
     parser.add_argument('--batch_size', type=int, default=32)
