@@ -38,11 +38,11 @@ def psf_to_otf(ker, size, device):
 	return psf, H, Ht, HtH
 
 
-def get_fourier_coord(n_points=128, l=3.2e-3):
+def get_fourier_coord(n_points=128, l=3.2e-3, device='cuda:0'):
 	fx1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False)
 	fy1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False)
 	[fx2D, fy2D] = torch.meshgrid(fx1D, fy1D)
 	k2D = torch.sqrt(fx2D**2 + fy2D**2) * n_points
 	theta2D = torch.arctan2(fy2D, fx2D)
  
-	return k2D, theta2D
+	return k2D.to(device), theta2D.to(device)

@@ -8,14 +8,15 @@ from torch.optim import Adam
 from models.ResUNet import ResUNet
 from models.DUBLID import DUBLID
 # from models. import 
-# from models. import 
+from models.Unrolled_ADMM import Unrolled_ADMM
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import MultiScaleLoss, SSIM, get_model_name
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
-def train(model_name='DUBLID', n_epochs=10, lr=1e-4, loss='MSE',
+def train(model_name='DUBLID', n_iters=4,
+          n_epochs=10, lr=1e-4, loss='MSE',
           data_path='/mnt/WD6TB/tianaoli/dataset/LSST_23.5_deconv/', train_val_split=0.8, batch_size=32,
           model_save_path='./saved_models/', pretrained_epochs=0):
     
@@ -30,7 +31,9 @@ def train(model_name='DUBLID', n_epochs=10, lr=1e-4, loss='MSE',
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    if 'DUBLID' in model_name:
+    if 'Unrolled_ADMM' in model_name:
+        model = Unrolled_ADMM(n_iters=n_iters, n_delays=8)
+    elif 'DUBLID' in model_name:
         model = DUBLID(device=device, channels=1)
     elif 'ResUNet' in model_name:
         model = ResUNet(in_nc=8, out_nc=1)
@@ -129,9 +132,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
     parser.add_argument('--n_iters', type=int, default=8)
-    parser.add_argument('--model', type=str, default='DUBLID', choices=['DUBLID', 'ResUNet'])
+    parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM','DUBLID', 'ResUNet'])
     parser.add_argument('--n_epochs', type=int, default=50)
-    parser.add_argument('--lr', type=float, default=2e-4)
+    parser.add_argument('--lr', type=float, default=5e-4)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
     parser.add_argument('--batch_size', type=int, default=32)
@@ -139,7 +142,7 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
 
-    train(model_name=opt.model,
+    train(model_name=opt.model, n_iters=opt.n_iters,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
           data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=opt.train_val_split, batch_size=opt.batch_size,
           model_save_path='./saved_models/', pretrained_epochs=opt.pretrained_epochs)

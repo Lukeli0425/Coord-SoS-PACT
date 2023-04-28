@@ -119,8 +119,9 @@ class PSF_PACT(nn.Module):
         self.delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays) * delay_step
         self.delays = self.delays.unsqueeze(0).unsqueeze(-1).unsqueeze(-1) # [1,8,1,1]
         
-    def forward(self, C0, C1, phi1, C2, phi2):
-        k, theta = get_fourier_coord(n_points=self.n_points, l=self.l)
+    def forward(self, C0, C1, phi1, C2, phi2, device):
+        self.delays = self.delays.to(device)
+        k, theta = get_fourier_coord(n_points=self.n_points, l=self.l, device=device)
         k, theta = k.unsqueeze(0).unsqueeze(0).repeat(1,8,1,1), theta.unsqueeze(0).unsqueeze(0).repeat(1,8,1,1)
         w = lambda theta: C0 + C1 * torch.cos(theta + phi1) + C2 * torch.cos(2 * theta + phi2) # Wavefront function.
         tf = (torch.exp(-1j*k*(self.delays - w(theta))) + torch.exp(1j*k*(self.delays - w(theta+np.pi)))) / 2
@@ -150,11 +151,11 @@ class G_Update_CNN(nn.Module):
         )
         self.psf = PSF_PACT(n_points=128, n_delays=n_delays)
 
-    def forward(self, h0):
+    def forward(self, h0, device):
         N = h0.shape[0] # Batch size.
         
         # PSF parameter estimation.
-        H = fftn(h0, dim=[-2,-1])
+        H = fftn(h0, dim=[-2,-1]).to(device)
         HtH = torch.abs(H) ** 2
         x = self.cnn(HtH.float())
         x = x.view(N, 1, 32*8*8)
@@ -162,7 +163,7 @@ class G_Update_CNN(nn.Module):
         params = params.repeat(1,8,1).unsqueeze(-1)
         
         # PSF reconstruction.
-        g_out = self.psf(C0=params[:,:,0:1,:], C1=params[:,:,1:2,:], phi1=params[:,:,2:3,:], C2=params[:,:,3:4,:], phi2=params[:,:,4:,:])
+        g_out = self.psf(C0=params[:,:,0:1,:], C1=params[:,:,1:2,:], phi1=params[:,:,2:3,:], C2=params[:,:,3:4,:], phi2=params[:,:,4:,:], device=device)
 
         return g_out
 
@@ -170,6 +171,7 @@ class G_Update_CNN(nn.Module):
 class Unrolled_ADMM(nn.Module):
     def __init__(self, n_iters=8, n_delays=8):
         super(Unrolled_ADMM, self).__init__()
+        self.device = device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.n = n_iters # Number of iterations.
         self.n_delays = n_delays # Number of delays.
         self.X = X_Update() # FFT based quadratic solution.
@@ -182,29 +184,30 @@ class Unrolled_ADMM(nn.Module):
         B = y.shape[0] # Batch size.
         x = y[:,-1:,:,:]
         psf_pact = PSF_PACT(n_delays=self.n_delays)
-        h = psf_pact(C0=2e-5 * torch.ones([B,self.n_delays,1,1]), 
-                     C1=2e-5 * torch.ones([B,self.n_delays,1,1]), 
-                     phi1=torch.zeros([B,self.n_delays,1,1]), 
-                     C2=2e-5 * torch.ones([B,self.n_delays,1,1]), 
-                     phi2=torch.zeros([B,self.n_delays,1,1]))
+        h = psf_pact(C0=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+                     C1=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+                     phi1=torch.zeros([B,self.n_delays,1,1], device=self.device), 
+                     C2=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+                     phi2=torch.zeros([B,self.n_delays,1,1], device=self.device),
+                     device=self.device)
         return x, h
         
     def forward(self, y):
-        device = torch.device("cuda:0" if y.is_cuda else "cpu")
+        
         B, _, H, W = y.size()
         
         x, h = self.init(y) # Initialization.
         rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
         
         # Other ADMM variables.
-        z = Variable(x.data.clone()).to(device)
-        g = Variable(h.data.clone()).to(device)
-        u1 = torch.zeros(x.size()).to(device)
-        u2 = torch.zeros(h.size()).to(device)
+        z = Variable(x.data.clone()).to(self.device)
+        g = Variable(h.data.clone()).to(self.device)
+        u1 = torch.zeros(x.size()).to(self.device)
+        u2 = torch.zeros(h.size()).to(self.device)
 		
         # ADMM iterations
         for n in range(self.n):
-            _, H, Ht, HtH = psf_to_otf(h, y.size(), device)
+            _, H, Ht, HtH = psf_to_otf(h, y.size(), self.device)
             
             rho1 = rho1_iters[:,:,:,n].view(B,1,1,1)
             rho2 = rho2_iters[:,:,:,n].view(B,8,1,1)
@@ -213,8 +216,8 @@ class Unrolled_ADMM(nn.Module):
             z = self.Z(x + u1)
             x = self.X(x0=conv_fft_batch(Ht, y), HtH=HtH, z=z, u1=u1, rho1=rho1)
             
-            _, X, Xt, XtX = psf_to_otf(x, x.size(), device)
-            g = self.G(h + u2)
+            _, X, Xt, XtX = psf_to_otf(x, x.size(), self.device)
+            g = self.G(h + u2, self.device)
             h = self.H(h0=conv_fft_batch(Xt, y), XtX=XtX, g=g, u2=u2, rho2=rho2)
 
             # Lagrangian dual variable updates.
