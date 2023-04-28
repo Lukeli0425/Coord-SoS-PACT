@@ -179,7 +179,9 @@ class Unrolled_ADMM(nn.Module):
         self.Z = Z_Update_ResUNet() # Denoiser.
         self.H = H_Update()
         self.G = G_Update_CNN(n_delays=self.n_delays) # Model-based PSF denoiser.
-        self.SubNet = SubNet(self.n)
+        # self.SubNet = SubNet(self.n)
+        self.rho1_iters = torch.ones(size=[self.n,], requires_grad=True)
+        self.rho2_iters = torch.ones(size=[self.n,], requires_grad=True)
 
     def init(self, y):
         B = y.shape[0] # Batch size.
@@ -210,8 +212,9 @@ class Unrolled_ADMM(nn.Module):
         for n in range(self.n):
             _, H, Ht, HtH = psf_to_otf(h, y.size(), self.device)
             
-            rho1 = rho1_iters[:,:,:,n].view(B,1,1,1)
-            rho2 = rho2_iters[:,:,:,n].view(B,8,1,1)
+            # rho1 = rho1_iters[:,:,:,n].view(B,1,1,1)
+            # rho2 = rho2_iters[:,:,:,n].view(B,8,1,1)
+            rho1, rho2 = self.rho1_iters[n], self.rho2_iters[n]
             
             # X, Z, H, G updates.
             x = self.X(x0=conv_fft_batch(Ht, y), HtH=HtH, z=z, u1=u1, rho1=rho1)
