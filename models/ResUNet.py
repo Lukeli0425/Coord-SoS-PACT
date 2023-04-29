@@ -1,10 +1,12 @@
-import models.resnet_basicblock as B
-import torch.nn as nn
 import numpy as np
+import torch.nn as nn
+import models.resnet_basicblock as B
+from models.PACT import FT2D, IFT2D
+
 
 
 class ResUNet(nn.Module):
-	def __init__(self, in_nc=1, out_nc=1, nc=[64, 128, 256, 512], nb=2, act_mode='R', downsample_mode='strideconv', upsample_mode='convtranspose'):
+	def __init__(self, in_nc=1, out_nc=1, nc=[32, 64, 128, 256], nb=2, act_mode='R', downsample_mode='strideconv', upsample_mode='convtranspose'):
 		super(ResUNet, self).__init__()
 
 		self.m_head = B.conv(in_nc, nc[0], bias=False, mode='C')
@@ -39,3 +41,20 @@ class ResUNet(nn.Module):
 		x = self.m_tail(x+x1)
 		x = x[..., :h, :w]
 		return x
+
+
+
+class FT_ResUNet(nn.Module):
+	def __init__(self, in_nc=1, out_nc=1, nc=[32, 64, 128, 256], nb=2):
+		super(FT_ResUNet, self).__init__()
+		self.net = ResUNet(in_nc, out_nc, nc, nb)
+		self.ft2d = FT2D()
+		self.ift2d = IFT2D()
+
+	def forward(self, y):
+		h = self.ft2d(y)
+		h = self.net(h)
+		x = self.ift2d(h)
+		return x
+  
+  

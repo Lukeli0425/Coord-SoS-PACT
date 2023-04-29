@@ -182,7 +182,7 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
         d_delay (`float`): The delay distance [m] of the signals used in DAS. The default value is 0.
 
     Returns:
-        `numpy.ndarray`: A 2D array of size `(len(ImageY), len(ImageX))`. Image(t, s) is the reconstructed photoacoustic amplitude at the grid point (ImageX(s), ImageY(t)).
+        `numpy.ndarray`: A 2D array of size `(len(ImageY), len(ImageX))`. `Image[t, s]` is the reconstructed photoacoustic amplitude at the grid point `(ImageX[s], ImageY[t])`.
     """
 
     N_transducer = Sinogram.shape[0]

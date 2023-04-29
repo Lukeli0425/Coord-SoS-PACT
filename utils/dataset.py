@@ -49,9 +49,11 @@ class PACT_Dataset(Dataset):
         return self.n_samples
 
     def __getitem__(self, idx):
+        gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
+        gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
         obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).float()
-        gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
+        obs = obs * gt.sum() / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize to the same flux.
 
         return obs, gt
     

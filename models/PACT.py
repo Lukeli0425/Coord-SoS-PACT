@@ -7,6 +7,24 @@ from utils.utils_torch import get_fourier_coord
 
 
 
+class FT2D(nn.Module):
+    """2D Fourier Transform."""
+    def __init__(self):
+        super(FT2D, self).__init__()
+        
+    def forward(self, x):
+        return fftn(x, dim=[-2,-1]).abs()
+
+
+class IFT2D(nn.Module):
+    """2D Inverse Fourier Transform."""
+    def __init__(self):
+        super(IFT2D, self).__init__()
+        
+    def forward(self, h):
+        return fftshift(ifftn(h, dim=[-2,-1]), dim=[-2,-1]).real
+
+
 class PSF_PACT(nn.Module):
     """Updating G with CNN and PSF model."""
     def __init__(self, n_delays=8, delay_step=2e-4, n_points=128, l=3.2e-3):
@@ -14,7 +32,7 @@ class PSF_PACT(nn.Module):
         self.n_points = n_points # Size of PSF image in pixels.
         self.l = l # Length [m] of the PSF image.
         self.n_delays = n_delays
-        self.delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays) * delay_step
+        self.delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays, requires_grad=False) * delay_step
         self.delays = self.delays.view(1,n_delays,1,1) # [1,8,1,1]
         
     def forward(self, C0, C1, phi1, C2, phi2, device):

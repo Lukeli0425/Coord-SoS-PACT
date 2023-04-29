@@ -1,39 +1,29 @@
 import numpy as np
 import torch
-import torch.fft
+from torch.fft import fftn, ifftn, fftshift, ifftshift
 import torch.nn as nn
 
 
-def fftn(x):
-	x_fft = torch.fft.fftn(x, dim=[2,3])
-	return x_fft
-
-
-def ifftn(x):
-	return torch.fft.ifftn(x, dim=[2,3])
-
 
 def conv_fft_batch(H, x):
-	"""Batched version of FFT convolution using PyTorch."""
-	Y_fft = fftn(x) * H
-	y = ifftn(Y_fft).real
+	"""Batched version 2D convolution using FFT."""
+	Y_fft = fftn(x, dim=[-2,-1]) * H
+	y = fftshift(ifftn(Y_fft, dim=[-2,-1]), dim=[-2,-1]).real
 	return y
 
 
-def psf_to_otf(ker, size, device):
+def psf_to_otf(psf, size, device):
 	
-	psf = torch.zeros(size)
-	# circularly shift
+	# psf = torch.zeros(size)
 
-	center = (ker.shape[2] + 1) // 2
-	psf[:, :, :center, :center] = ker[:, :, center:, center:]
-	psf[:, :, :center, -center:] = ker[:, :, center:, :center]
-	psf[:, :, -center:, :center] = ker[:, :, :center, center:]
-	psf[:, :, -center:, -center:] = ker[:, :, :center, :center]
-
-	# otf = torch.rfft(psf, 3, onesided=False)
-	H = torch.fft.fftn(psf, dim=[-2,-1]).to(device)
-	Ht, HtH = torch.conj(H), torch.abs(H)**2
+	# center = (ker.shape[2] + 1) // 2
+	# psf[:, :, :center, :center] = ker[:, :, center:, center:]
+	# psf[:, :, :center, -center:] = ker[:, :, center:, :center]
+	# psf[:, :, -center:, :center] = ker[:, :, :center, center:]
+	# psf[:, :, -center:, -center:] = ker[:, :, :center, :center]
+	# psf = ker
+	H = fftn(psf, dim=[-2,-1]).to(device)
+	Ht, HtH = torch.conj(H), torch.abs(H) ** 2
 
 	return psf, H, Ht, HtH
 

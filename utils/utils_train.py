@@ -118,4 +118,5 @@ class MultiScaleLoss(nn.Module):
 		for i in range(self.scales):
 			output_i, target_i = self.multiscales[i](output), self.multiscales[i](target)
 			loss += self.weights[i]*self.loss(output_i, target_i)
+		return loss
 			

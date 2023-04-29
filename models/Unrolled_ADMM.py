@@ -9,7 +9,6 @@ from models.ResUNet import ResUNet
 from models.PACT import PSF_PACT
 from utils.utils_torch import conv_fft_batch, psf_to_otf, get_fourier_coord
 
-
   
 
 class DoubleConv(nn.Module):
@@ -84,16 +83,16 @@ class X_Update(nn.Module):
     def forward(self, x0, HtH, z, u1, rho1):
         rhs = x0.sum(axis=1).unsqueeze(1) + rho1 * (z - u1) 
         lhs = HtH.sum(axis=1).unsqueeze(1) + rho1
-        x = ifftn(rhs/lhs, dim=[-2,-1])
+        x = fftshift(ifftn(rhs/lhs, dim=[-2,-1]), dim=[-2,-1]).real
 
-        return x.real
+        return x
     
     
 class Z_Update_ResUNet(nn.Module):
     """Updating Z with ResUNet as denoiser."""
     def __init__(self):
         super(Z_Update_ResUNet, self).__init__() 
-        self.net = ResUNet(in_nc=1, out_nc=1, nc=[16, 32, 64, 128])
+        self.net = ResUNet(in_nc=1, out_nc=1, nc=[8, 16, 32, 64])
 
     def forward(self, z):
         z_out = self.net(z.float())
@@ -107,9 +106,19 @@ class H_Update(nn.Module):
     def forward(self, h0, XtX, g, u2, rho2):
         rhs = h0 + rho2 * (g - u2) 
         lhs = XtX + rho2
-        x = ifftn(rhs/lhs, dim=[-2,-1])
+        x = fftshift(ifftn(rhs/lhs, dim=[-2,-1]), dim=[-2,-1])
         return x.real
 
+
+class G_Update_ResUNet(nn.Module):
+    """Updating G with ResUNet as denoiser."""
+    def __init__(self):
+        super(G_Update_ResUNet, self).__init__() 
+        self.net = ResUNet(in_nc=8, out_nc=8, nc=[8, 16, 32, 64])
+
+    def forward(self, g):
+        g_out = self.net(g.float())
+        return g_out
 
 
 class G_Update_CNN(nn.Module):
@@ -158,10 +167,10 @@ class Unrolled_ADMM(nn.Module):
         self.X = X_Update() # FFT based quadratic solution.
         self.Z = Z_Update_ResUNet() # Denoiser.
         self.H = H_Update()
-        self.G = G_Update_CNN(n_delays=self.n_delays) # Model-based PSF denoiser.
+        self.G = G_Update_ResUNet() # G_Update_CNN(n_delays=self.n_delays) # Model-based PSF denoiser.
         # self.SubNet = SubNet(self.n)
-        self.rho1_iters = torch.ones(size=[self.n,], requires_grad=True)
-        self.rho2_iters = torch.ones(size=[self.n,], requires_grad=True)
+        self.rho1_iters = torch.ones(size=(self.n,), requires_grad=True)
+        self.rho2_iters = torch.ones(size=(self.n,), requires_grad=True)
 
     def init(self, y):
         B = y.shape[0] # Batch size.
@@ -180,7 +189,7 @@ class Unrolled_ADMM(nn.Module):
         B, _, H, W = y.size()
         
         x, h = self.init(y) # Initialization.
-        rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
+        # rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
         
         # Other ADMM variables.
         z = Variable(x.data.clone()).to(self.device)
@@ -202,13 +211,13 @@ class Unrolled_ADMM(nn.Module):
             
             _, X, Xt, XtX = psf_to_otf(x, x.size(), self.device)
             h = self.H(h0=conv_fft_batch(Xt, y), XtX=XtX, g=g, u2=u2, rho2=rho2)
-            g = self.G(h + u2, self.device)
+            g = self.G(h + u2)
 
             # Lagrangian dual variable updates.
             u1 = u1 + x - z            
             u2 = u2 + h - g
 
-        return x, h
+        return x#, h
 
 
 
