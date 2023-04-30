@@ -81,7 +81,7 @@ class X_Update(nn.Module):
         super(X_Update, self).__init__()
         
     def forward(self, x0, HtH, z, u1, rho1):
-        rhs = x0.sum(axis=1).unsqueeze(1) + rho1 * (z - u1) 
+        rhs = fftn(x0.sum(axis=1).unsqueeze(1) + rho1 * (z - u1), dim=[-2,-1])
         lhs = HtH.sum(axis=1).unsqueeze(1) + rho1
         x = ifftshift(ifftn(rhs/lhs, dim=[-2,-1]), dim=[-2,-1]).real
 
@@ -104,7 +104,7 @@ class H_Update(nn.Module):
         super(H_Update, self).__init__()
         
     def forward(self, h0, XtX, g, u2, rho2):
-        rhs = h0 + rho2 * (g - u2) 
+        rhs = fftn(h0 + rho2 * (g - u2) , dim=[-2,-1])
         lhs = XtX + rho2
         x = ifftshift(ifftn(rhs/lhs, dim=[-2,-1]), dim=[-2,-1])
         return x.real
