@@ -22,7 +22,7 @@ class IFT2D(nn.Module):
         super(IFT2D, self).__init__()
         
     def forward(self, h):
-        return fftshift(ifftn(h, dim=[-2,-1]), dim=[-2,-1]).real
+        return ifftshift(ifftn(h, dim=[-2,-1]), dim=[-2,-1]).real
 
 
 class PSF_PACT(nn.Module):
@@ -41,7 +41,7 @@ class PSF_PACT(nn.Module):
         k, theta = k.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1), theta.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         w = lambda theta: C0 + C1 * torch.cos(theta + phi1) + C2 * torch.cos(2 * theta + phi2) # Wavefront function.
         tf = (torch.exp(-1j*k*(self.delays - w(theta))) + torch.exp(1j*k*(self.delays - w(theta+np.pi)))) / 2
-        psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+        psf = ifftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
         psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
         
         return psf

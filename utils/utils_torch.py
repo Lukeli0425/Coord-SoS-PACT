@@ -8,11 +8,11 @@ import torch.nn as nn
 def conv_fft_batch(H, x):
 	"""Batched version 2D convolution using FFT."""
 	Y_fft = fftn(x, dim=[-2,-1]) * H
-	y = fftshift(ifftn(Y_fft, dim=[-2,-1]), dim=[-2,-1]).real
+	y = ifftshift(ifftn(Y_fft, dim=[-2,-1]), dim=[-2,-1]).real
 	return y
 
 
-def psf_to_otf(psf, size, device):
+def psf_to_otf(psf):
 	
 	# psf = torch.zeros(size)
 
@@ -22,7 +22,7 @@ def psf_to_otf(psf, size, device):
 	# psf[:, :, -center:, :center] = ker[:, :, :center, center:]
 	# psf[:, :, -center:, -center:] = ker[:, :, :center, :center]
 	# psf = ker
-	H = fftn(psf, dim=[-2,-1]).to(device)
+	H = fftn(psf, dim=[-2,-1])
 	Ht, HtH = torch.conj(H), torch.abs(H) ** 2
 
 	return psf, H, Ht, HtH
