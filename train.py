@@ -7,21 +7,21 @@ from torch.optim import Adam
 
 from models.ResUNet import ResUNet, FT_ResUNet
 from models.DUBLID import DUBLID
-# from models. import 
+from models.WienerNet import WienerNet
 from models.Unrolled_ADMM import Unrolled_ADMM
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import MultiScaleLoss, SSIM, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 
-def train(model_name='DUBLID', n_iters=4,
+def train(model_name='DUBLID', n_iters=4, nc=8,
           n_epochs=50, lr=1e-3, loss='MSE',
           data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=0.9, batch_size=32,
           model_save_path='./saved_models/', pretrained_epochs=0):
     
-    model_name = get_model_name(method=model_name, loss=loss)
+    model_name = get_model_name(method=model_name, n_iters=n_iters, nc=nc, loss=loss)
     logger = logging.getLogger('Train')
     logger.info(' Start training %s on %s data for %s epochs.', model_name, data_path, n_epochs)
     
@@ -34,10 +34,12 @@ def train(model_name='DUBLID', n_iters=4,
     
     if 'Unrolled_ADMM' in model_name:
         model = Unrolled_ADMM(n_iters=n_iters, n_delays=8)
+    elif 'WienerNet' in model_name:
+        model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
     elif 'FT_ResUNet' in model_name:
         model = FT_ResUNet(in_nc=8, out_nc=1)
     elif 'ResUNet' in model_name:
-        model = ResUNet(in_nc=8, out_nc=1)
+        model = ResUNet(in_nc=8, out_nc=1, nc=[nc, nc*2, nc*4, nc*8])
     model.to(device)
     
     if pretrained_epochs > 0:
@@ -131,8 +133,9 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
-    parser.add_argument('--n_iters', type=int, default=2)
-    parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM','FT_ResUNet', 'ResUNet'])
+    parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
+    parser.add_argument('--n_iters', type=int, default=4)
+    parser.add_argument('--nc', type=int, default=8)
     parser.add_argument('--n_epochs', type=int, default=50)
     parser.add_argument('--lr', type=float, default=5e-4)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
@@ -142,7 +145,7 @@ if __name__ == "__main__":
     opt = parser.parse_args()
 
 
-    train(model_name=opt.model, n_iters=opt.n_iters,
+    train(model_name=opt.model, n_iters=opt.n_iters, nc=opt.nc,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
           data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=opt.train_val_split, batch_size=opt.batch_size,
           model_save_path='./saved_models/', pretrained_epochs=opt.pretrained_epochs)

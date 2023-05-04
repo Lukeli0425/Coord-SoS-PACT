@@ -137,7 +137,7 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
             gt_file = os.path.join(dataset_path, folder, 'gt', f"gt_{4*idx+i}.npy")
             np.save(gt_file, gt_img)
             obs_file = os.path.join(dataset_path, folder, 'obs', f"obs_{4*idx+i}.npy")
-            np.save(obs_file,obs_img)
+            np.save(obs_file, obs_img)
         
         # Visualization.
         if idx < 5:

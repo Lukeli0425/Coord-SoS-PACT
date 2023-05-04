@@ -8,11 +8,14 @@ import numpy as np
 from math import exp
 
 
-def get_model_name(method, loss):
-    
-    model_name = f'{method}_{loss}'
+def get_model_name(method, n_iters, nc, loss):
+    if 'ADMM' in method:
+        model_name = f'{method}_{n_iters}iters_{nc}channels_{loss}'
+    else:
+        model_name = f'{method}_{nc}channels_{loss}'
     
     return model_name
+
 
 def gaussian(window_size, sigma):
     gauss = torch.Tensor([exp(-(x - window_size//2)**2/float(2*sigma**2)) for x in range(window_size)])
