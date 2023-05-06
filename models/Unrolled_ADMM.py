@@ -110,7 +110,9 @@ class Unrolled_ADMM(nn.Module):
         self.Z = Z_Update_ResUNet(nc=nc) # Denoiser.
         self.psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
         self.C0 = torch.tensor(7.8e-4, requires_grad=True)
-
+        self.psf_filter = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
+        self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
+        
         # self.SubNet = SubNet(self.n)
         self.rho_iters = torch.ones(size=(self.n,), requires_grad=True, device=self.device)
 
@@ -119,7 +121,7 @@ class Unrolled_ADMM(nn.Module):
         
         B, _, H, W = y.size()
         
-        h = self.psf_pact(C0=self.C0, C1=0, phi1=0, C2=0, phi2=0)
+        h = self.psf_pact(C0=self.C0, C1=0, phi1=0, C2=0, phi2=0) * self.psf_filter + self.psf_bias * 1e-5
         _, H, Ht, HtH = psf_to_otf(h)
         # rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
         
