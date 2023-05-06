@@ -8,7 +8,7 @@ from torch.optim import Adam
 from models.ResUNet import ResUNet, FT_ResUNet
 from models.DUBLID import DUBLID
 from models.WienerNet import WienerNet
-from models.Unrolled_ADMM import Unrolled_ADMM
+from models.Double_ADMM import Double_ADMM
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import MultiScaleLoss, SSIM, get_model_name
@@ -32,8 +32,8 @@ def train(model_name='DUBLID', n_iters=4, nc=8,
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    if 'Unrolled_ADMM' in model_name:
-        model = Unrolled_ADMM(n_iters=n_iters, n_delays=8)
+    if 'Double_ADMM' in model_name:
+        model = Double_ADMM(n_iters=n_iters, n_delays=8)
     elif 'WienerNet' in model_name:
         model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
     # elif 'FT_ResUNet' in model_name:
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
-    parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
+    parser.add_argument('--model', type=str, default='Double_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
     parser.add_argument('--n_iters', type=int, default=4)
     parser.add_argument('--nc', type=int, default=8)
     parser.add_argument('--n_epochs', type=int, default=50)
