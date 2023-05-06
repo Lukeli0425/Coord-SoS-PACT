@@ -36,8 +36,8 @@ def train(model_name='DUBLID', n_iters=4, nc=8,
         model = Unrolled_ADMM(n_iters=n_iters, n_delays=8)
     elif 'WienerNet' in model_name:
         model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
-    elif 'FT_ResUNet' in model_name:
-        model = FT_ResUNet(in_nc=8, out_nc=1)
+    # elif 'FT_ResUNet' in model_name:
+    #     model = FT_ResUNet(in_nc=8, out_nc=1)
     elif 'ResUNet' in model_name:
         model = ResUNet(in_nc=8, out_nc=1, nc=[nc, nc*2, nc*4, nc*8])
     model.to(device)
