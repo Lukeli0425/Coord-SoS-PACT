@@ -1,5 +1,6 @@
 numpy
 scipy
+scikit-image
 matplotlib
 h5py
 opencv-python

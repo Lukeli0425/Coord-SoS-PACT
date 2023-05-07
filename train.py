@@ -4,20 +4,21 @@ import os
 
 import torch
 from torch.optim import Adam
+from torch.nn.parallel import DataParallel
 
 from models.ResUNet import ResUNet, FT_ResUNet
 from models.DUBLID import DUBLID
 from models.WienerNet import WienerNet
+from models.Unrolled_ADMM import Unrolled_ADMM
 from models.Double_ADMM import Double_ADMM
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import MultiScaleLoss, SSIM, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
-
-def train(model_name='DUBLID', n_iters=4, nc=8,
-          n_epochs=50, lr=1e-3, loss='MSE',
+def train(model_name='DUBLID', n_iters=4, nc=32,
+          n_epochs=100, lr=2e-4, loss='MSE',
           data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=0.9, batch_size=32,
           model_save_path='./saved_models/', pretrained_epochs=0):
     
@@ -34,6 +35,8 @@ def train(model_name='DUBLID', n_iters=4, nc=8,
     
     if 'Double_ADMM' in model_name:
         model = Double_ADMM(n_iters=n_iters, n_delays=8)
+    elif 'Unrolled_ADMM' in model_name:
+        model = Unrolled_ADMM (n_iters=n_iters, n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
     elif 'WienerNet' in model_name:
         model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
     # elif 'FT_ResUNet' in model_name:
@@ -41,6 +44,7 @@ def train(model_name='DUBLID', n_iters=4, nc=8,
     elif 'ResUNet' in model_name:
         model = ResUNet(in_nc=8, out_nc=1, nc=[nc, nc*2, nc*4, nc*8])
     model.to(device)
+    # model = DataParallel(model, device_ids=[0, 1])
     
     if pretrained_epochs > 0:
         try:
@@ -136,11 +140,11 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='Double_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
     parser.add_argument('--n_iters', type=int, default=4)
     parser.add_argument('--nc', type=int, default=8)
-    parser.add_argument('--n_epochs', type=int, default=50)
-    parser.add_argument('--lr', type=float, default=5e-4)
+    parser.add_argument('--n_epochs', type=int, default=100)
+    parser.add_argument('--lr', type=float, default=2e-4)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--pretrained_epochs', type=int, default=0)
     opt = parser.parse_args()
 

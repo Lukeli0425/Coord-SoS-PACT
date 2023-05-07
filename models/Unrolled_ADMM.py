@@ -110,24 +110,25 @@ class Unrolled_ADMM(nn.Module):
         self.Z = Z_Update_ResUNet(nc=nc) # Denoiser.
         self.psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
         self.C0 = torch.tensor(7.8e-4, requires_grad=True)
-        self.psf_filter = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
-        self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
+        self.psf_filter = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
+        self.psf_bias = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
         
         # self.SubNet = SubNet(self.n)
         self.rho_iters = torch.ones(size=(self.n,), requires_grad=True, device=self.device)
 
         
     def forward(self, y):
-        
+        # y = y.cuda(self.device, non_blocking=True)
         B, _, H, W = y.size()
-        
+        # Other ADMM variables.
+        u = torch.zeros([B, 1, H, W], device=self.device)
+        z = torch.zeros([B, 1, H, W], device=self.device)
+        # x = y
         h = self.psf_pact(C0=self.C0, C1=0, phi1=0, C2=0, phi2=0) * self.psf_filter + self.psf_bias * 1e-5
         _, H, Ht, HtH = psf_to_otf(h)
         # rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
         
-        # Other ADMM variables.
-        z = Variable(x.data.clone()).to(self.device)
-        u = torch.zeros([B, 1, H, W], device=self.device)
+        # z = Variable(x.data.clone()).to(self.device)
         
         # ADMM iterations
         for n in range(self.n):            
@@ -136,13 +137,13 @@ class Unrolled_ADMM(nn.Module):
             rho = self.rho_iters[n]
             
             # X, Z updates.
-            z = self.Z(x + u)
             x = self.X(Ht=Ht, y=y, HtH=HtH, z=z, u=u, rho=rho)
+            z = self.Z(x + u)
 
             # Lagrangian dual variable updates.
             u = u + x - z            
 
-        return x#, h
+        return z
 
 
 
