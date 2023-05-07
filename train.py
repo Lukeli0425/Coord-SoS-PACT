@@ -120,10 +120,9 @@ def train(model_name='DUBLID', n_iters=4, nc=32,
                         val_loss/len(val_loader)))
         
         # Save model.
-        if val_loss_min > val_loss or (epoch + 1) % 5 == 0:
-            if val_loss_min > val_loss:
-                val_loss_min = val_loss
-                epoch_min = epoch
+        if val_loss_min > val_loss:
+            val_loss_min = val_loss
+            epoch_min = epoch
             model_file_name = f'{model_name}_{epoch+1+pretrained_epochs}epochs.pth'
             torch.save(model.state_dict(), os.path.join(model_save_path, model_file_name))
             logger.info(' Model saved to %s', os.path.join(model_save_path, model_file_name))
