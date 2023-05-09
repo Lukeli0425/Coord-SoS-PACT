@@ -1,8 +1,7 @@
 import numpy as np
 import torch
-from torch.fft import fftn, ifftn, fftshift, ifftshift
 import torch.nn as nn
-
+from torch.fft import fftn, fftshift, ifftn, ifftshift
 
 
 def conv_fft_batch(H, x):

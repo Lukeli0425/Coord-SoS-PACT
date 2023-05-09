@@ -1,17 +1,21 @@
-import os
 import argparse
 import logging
+import os
+from tempfile import gettempdir
+
+import matplotlib.pyplot as plt
 import numpy as np
+import scipy.io as scio
 from numpy.random import rand
 from tqdm import tqdm
-import scipy.io as scio
-import matplotlib.pyplot as plt
-from kwave.utils import *
+
 from kwave.ktransducer import *
-from utils.simulations import read_images, join_images, zero_pad, split_images
-from utils.simulations import get_medium, reorder_binary_sensor_data, forward_2D, delay_and_sum
+from kwave.utils import *
 from utils.dataset import mkdir
-from tempfile import gettempdir
+from utils.simulations import (delay_and_sum, forward_2D, get_medium,
+                               join_images, read_images,
+                               reorder_binary_sensor_data, split_images,
+                               zero_pad)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 

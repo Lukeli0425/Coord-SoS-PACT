@@ -1,11 +1,12 @@
 
+from math import exp
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.modules.loss import _Loss
-import numpy as np
-from math import exp
 
 
 def get_model_name(method, n_iters, nc, loss):

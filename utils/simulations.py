@@ -1,12 +1,14 @@
-import os 
-import numpy as np
-import numba
+import os
 from tempfile import gettempdir
+
+import numba
+import numpy as np
+
+from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
-from kwave.utils import *
 from kwave.ktransducer import *
-from kwave.kmedium import kWaveMedium
+from kwave.utils import *
 
 
 def read_images(path, files):
