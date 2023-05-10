@@ -54,13 +54,13 @@ def test_metric(method, n_iters, nc, model_file, n_samples, metric, data_path, r
     for ((obs, psf, alpha), gt), idx in zip(test_loader, tqdm(range(n_samples))):
         with torch.no_grad():
             if method == 'No_Deconv':
-                gt = gt.cpu().squeeze(dim=0).squeeze(dim=0).detach().numpy()
-                obs = obs.cpu().squeeze(dim=0).squeeze(dim=0).detach().numpy()
+                gt = gt.cpu().squeeze(0).squeeze(0).detach().numpy()
+                obs = obs.cpu().squeeze(0).squeeze(0).detach().numpy()
                 rec_metric.append(evaluate(obs, gt))
             else: # Unrolled ADMM, WienerNet, ResUNet
                 obs, psf, alpha = obs.to(device), psf.to(device), alpha.to(device)
                 rec = model(obs, psf, alpha)
-                rec = rec.cpu().squeeze(dim=0).squeeze(dim=0).detach().numpy()
+                rec = rec.cpu().squeeze(0).squeeze(0).detach().numpy()
                 rec_metric.append(evaluate(rec, gt))
     
     # Save results.
@@ -119,11 +119,11 @@ def test_time(method, n_iters, nc, model_file, n_samples, data_path, result_path
     for ((obs, psf, alpha), gt), idx in zip(test_loader, tqdm(range(n_samples))):
         with torch.no_grad():
             if method == 'No_Deconv':
-                obs = obs.cpu().squeeze(dim=0).squeeze(dim=0).detach().numpy()
+                obs = obs.cpu().squeeze(0).squeeze(0).detach().numpy()
             else: # Unrolled ADMM, WienerNet, ResUNet
                 obs, psf, alpha = obs.to(device), psf.to(device), alpha.to(device)
                 rec = model(obs, psf, alpha)
-                rec = rec.cpu().squeeze(dim=0).squeeze(dim=0).detach().numpy()
+                rec = rec.cpu().squeeze(0).squeeze(0).detach().numpy()
                 
     time_end = time.time()
     logger.info(' Tested %s on %s samples: Time = {:.4g}s.'.format(time_end-time_start),method, n_samples)
@@ -141,7 +141,6 @@ def test_time(method, n_iters, nc, model_file, n_samples, data_path, result_path
     with open(results_file, 'w') as f:
         json.dump(results, f)
     logger.info(" Time test results saved to %s.\n", results_file)
-        
 
 
 if __name__ == "__main__":
