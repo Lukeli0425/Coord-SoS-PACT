@@ -14,7 +14,7 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 def train(model_name='DUBLID', n_iters=4, nc=32,
           n_epochs=100, lr=2e-4, loss='MSE',
