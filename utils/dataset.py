@@ -47,6 +47,7 @@ class PACT_Dataset(Dataset):
         return self.n_samples
 
     def __getitem__(self, idx):
+        idx = idx if self.train else idx + 10000
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
         gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
