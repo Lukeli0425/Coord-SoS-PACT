@@ -9,22 +9,12 @@ from scipy.stats import gaussian_kde
 
 def get_color(method):
     
-    if 'Poisson' in method:
-        color = 'xkcd:blue'
-    elif 'Unrolled_ADMM' in method:
+    if 'Unrolled_ADMM' in method:
         color = 'xkcd:purple'
-    elif 'ADMMNet' in method:
-        color = 'xkcd:blue'
-    elif 'Richard-Lucy' in method:
-        color = 'xkcd:green' 
-    elif 'Tikhonet' in method:
-        color = 'xkcd:orange'
-    elif method == 'ShapeNet':
-        color = 'xkcd:pink'
-    elif method == 'FPFS':
+    elif 'WienerNet' in method:
+        color = 'xkcd:green'
+    elif 'ResUNet' in method:
         color = 'xkcd:red'
-    elif method == 'ngmix':
-        color = 'xkcd:pink'
     elif method == 'No_Deconv':
         color = 'black'
     else:
@@ -34,24 +24,8 @@ def get_color(method):
 
 def get_label(method):
     
-    if 'Poisson' in method:
-        label = 'Unrolled ADMM (Poisson)'
-    elif 'Unrolled_ADMM' in method:
+    if 'Unrolled_ADMM' in method:
         label = 'Unrolled ADMM'
-    elif 'Richard-Lucy' in method:
-        label = 'Richardson-Lucy'
-    elif method == 'Wiener':
-        label = 'Wiener'
-    elif 'Tikhonet' in method:
-        label = 'Tikhonet'
-    elif 'Identity' in method:
-        label = 'Tikhonet (Identity)'
-    elif method == 'ShapeNet':
-        label = 'ShapeNet'
-    elif method == 'FPFS':
-        label = 'FPFS'
-    elif method == 'ngmix':
-        label = 'ngmix'
     elif method == 'No_Deconv':
         label = 'No Deconv'
     else:
