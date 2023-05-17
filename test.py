@@ -52,8 +52,8 @@ def test_metric(method, n_iters, nc, model_file, n_samples, metric, data_path, r
     test_loader = get_dataloader(data_path=data_path, train=False, obs_folder=f'obs/', gt_folder=f'gt/')
     
     rec_metric = []
-    for (obs, gt), idx in zip(test_loader, tqdm(range(n_samples))):
-        with torch.no_grad():
+    with torch.no_grad():
+        for (obs, gt), idx in zip(test_loader, tqdm(range(n_samples))):
             gt = gt.squeeze(0).squeeze(0).detach().cpu().numpy()
             if method == 'No_Deconv':
                 obs = obs.squeeze(0).squeeze(0).detach().cpu().numpy()
@@ -118,10 +118,10 @@ def test_time(method, n_iters, nc, model_file, n_samples, data_path, result_path
         model.eval()
 
     time_start = time.time()
-    for (obs, gt), idx in zip(test_loader, tqdm(range(n_samples))):
-        with torch.no_grad():
+    with torch.no_grad():
+        for (obs, gt), idx in zip(test_loader, tqdm(range(n_samples))):
             if method == 'No_Deconv':
-                obs = obs.squeeze(0).squeeze(0).detach().cpu().numpy()
+                rec = obs.squeeze(0).squeeze(0).detach().cpu().numpy()
             else: # Unrolled ADMM, WienerNet, ResUNet
                 obs = obs.to(device)
                 rec = model(obs)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--test', type=str, default='shear', choices=['PSNR', 'SSIM', 'time'])
+    parser.add_argument('--test', type=str, default='time', choices=['PSNR', 'SSIM', 'time'])
     parser.add_argument('--n_samples', type=int, default=2000)
     parser.add_argument('--result_path', type=str, default='results/')
     opt = parser.parse_args()
@@ -159,22 +159,24 @@ if __name__ == "__main__":
     
     # Uncomment the methods to be tested.
     methods = {
-        'No_Deconv': (0, 0, None), 
-        'ResUNet_8channels': (0, 8, './pretrained_models/ResUNet_8channels_MSE_92epochs.pth'), 
-        'ResUNet_16channels': (0, 16, './pretrained_models/ResUNet_16channels_MSE_80epochs.pth'), 
-        'ResUNet_32channels': (0, 32, './pretrained_models/ResUNet_32channels_MSE_66epochs.pth'),
-        'WienerNet_8channels': (0, 8, './pretrained_models/WienerNet_8channels_MSE_97epochs.pth'), 
-        'WienerNet_16channels': (0, 16, './pretrained_models/WienerNet_16channels_MSE_56epochs.pth'),  
+        # 'No_Deconv': (0, 0, None), 
+        # 'ResUNet_8channels': (0, 8, './pretrained_models/ResUNet_8channels_MSE_92epochs.pth'), 
+        # 'ResUNet_16channels': (0, 16, './pretrained_models/ResUNet_16channels_MSE_80epochs.pth'), 
+        # 'ResUNet_32channels': (0, 32, './pretrained_models/ResUNet_32channels_MSE_66epochs.pth'),
+        # 'WienerNet_8channels': (0, 8, './pretrained_models/WienerNet_8channels_MSE_97epochs.pth'), 
+        # 'WienerNet_16channels': (0, 16, './pretrained_models/WienerNet_16channels_MSE_65epochs.pth'),
         'WienerNet_32channels': (0, 32, './pretrained_models/WienerNet_32channels_MSE_82epochs.pth'), 
-        'Unrolled_ADMM_4iters_8channels': (4, 8, './pretrained_models/Unrolled_ADMM_4iters_8channels_MSE_92epochs.pth'), 
-        'Unrolled_ADMM_4iters_16channels': (4, 16, './pretrained_models/Unrolled_ADMM_4iters_16channels_MSE_82epochs.pth'), 
-        'Unrolled_ADMM_4iters_32channels': (4, 32, './pretrained_models/Unrolled_ADMM_4iters_32channels_MSE_71epochs.pth'), 
-        'Unrolled_ADMM_8iters_8channels': (8, 8, './pretrained_models/Unrolled_ADMM_8iters_8channels_MSE_99epochs.pth'),
-        'Unrolled_ADMM_8iters_16channels': (8, 16, './pretrained_models/Unrolled_ADMM_8iters_16channels_MSE_96epochs.pth'),
-        'Unrolled_ADMM_8iters_32channels': (8, 32, './pretrained_models/Unrolled_ADMM_8iters_32channels_MSE_44epochs.pth'),
+        # 'WienerNet_32channels': (0, 32, './saved_models/WienerNet_32channels_MSE_39epochs.pth'), 
+        # 'Unrolled_ADMM_4iters_8channels': (4, 8, './pretrained_models/Unrolled_ADMM_4iters_8channels_MSE_92epochs.pth'), 
+        # 'Unrolled_ADMM_4iters_16channels': (4, 16, './pretrained_models/Unrolled_ADMM_4iters_16channels_MSE_82epochs.pth'), 
+        # 'Unrolled_ADMM_4iters_32channels': (4, 32, './pretrained_models/Unrolled_ADMM_4iters_32channels_MSE_71epochs.pth'), 
+        # 'Unrolled_ADMM_8iters_8channels': (8, 8, './pretrained_models/Unrolled_ADMM_8iters_8channels_MSE_99epochs.pth'),
+        # 'Unrolled_ADMM_8iters_16channels': (8, 16, './pretrained_models/Unrolled_ADMM_8iters_16channels_MSE_96epochs.pth'),
+        # 'Unrolled_ADMM_8iters_32channels': (8, 32, './pretrained_models/Unrolled_ADMM_8iters_32channels_MSE_44epochs.pth'),
     }
     
-    data_path = '/Users/luke/Downloads/SkinVessel_PACT/' # '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'
+    # data_path = '/Users/luke/Downloads/SkinVessel_PACT/' # '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'
+    data_path = '/home/mist/SkinVessel_PACT/'
     
     if opt.test in ['PSNR', 'SSIM']:
         for method, (n_iters, nc, model_file) in methods.items():
@@ -182,7 +184,7 @@ if __name__ == "__main__":
                         data_path=data_path, result_path=opt.result_path)
     elif opt.test == 'time':
         for method, (n_iters, nc, model_file) in methods.items():
-            for i in range(3): # Run 2 dummy test first to warm up the GPU.
+            for i in range(4): # Run 2 dummy test first to warm up the GPU.
                 test_time(method=method, n_iters=n_iters, nc=nc, model_file=model_file, n_samples=opt.n_samples, 
                           data_path=data_path, result_path=opt.result_path)
     else:

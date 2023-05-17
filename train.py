@@ -146,8 +146,10 @@ if __name__ == "__main__":
     parser.add_argument('--pretrained_epochs', type=int, default=0)
     opt = parser.parse_args()
 
+    # data_path = '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'
+    data_path = '/home/mist/SkinVessel_PACT/'
 
     train(model_name=opt.model, n_iters=opt.n_iters, nc=opt.nc,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
-          data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=opt.train_val_split, batch_size=opt.batch_size,
+          data_path=data_path, train_val_split=opt.train_val_split, batch_size=opt.batch_size,
           model_save_path='./saved_models/', pretrained_epochs=opt.pretrained_epochs)
