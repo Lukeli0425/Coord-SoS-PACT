@@ -166,10 +166,10 @@ if __name__ == "__main__":
         # 'WienerNet_8channels': (0, 8, './pretrained_models/WienerNet_8channels_MSE_97epochs.pth'), 
         # 'WienerNet_16channels': (0, 16, './pretrained_models/WienerNet_16channels_MSE_65epochs.pth'),
         # 'WienerNet_32channels': (0, 32, './pretrained_models/WienerNet_32channels_MSE_55epochs.pth'), 
-        # 'Unrolled_ADMM_4iters_8channels': (4, 8, './pretrained_models/Unrolled_ADMM_4iters_8channels_MSE_92epochs.pth'), 
+        'Unrolled_ADMM_4iters_8channels': (4, 8, './pretrained_models/Unrolled_ADMM_4iters_8channels_MSE_92epochs.pth'), 
         # 'Unrolled_ADMM_4iters_16channels': (4, 16, './pretrained_models/Unrolled_ADMM_4iters_16channels_MSE_71epochs.pth'), 
         # 'Unrolled_ADMM_4iters_32channels': (4, 32, './pretrained_models/Unrolled_ADMM_4iters_32channels_MSE_71epochs.pth'), 
-        'Unrolled_ADMM_4iters_32channels': (4, 32, './saved_models/Unrolled_ADMM_4iters_32channels_MSE_38epochs.pth'), 
+        # 'Unrolled_ADMM_4iters_32channels': (4, 32, './saved_models/Unrolled_ADMM_4iters_32channels_MSE_53epochs.pth'), 
         # 'Unrolled_ADMM_8iters_8channels': (8, 8, './pretrained_models/Unrolled_ADMM_8iters_8channels_MSE_99epochs.pth'),
         # 'Unrolled_ADMM_8iters_16channels': (8, 16, './pretrained_models/Unrolled_ADMM_8iters_16channels_MSE_96epochs.pth'),
         # 'Unrolled_ADMM_8iters_32channels': (8, 32, './pretrained_models/Unrolled_ADMM_8iters_32channels_MSE_44epochs.pth'),
@@ -184,7 +184,7 @@ if __name__ == "__main__":
                         data_path=data_path, result_path=opt.result_path)
     elif opt.test == 'time':
         for method, (n_iters, nc, model_file) in methods.items():
-            for i in range(4): # Run 2 dummy test first to warm up the GPU.
+            for i in range(4): # Run several dummy tests to warm up the GPU.
                 test_time(method=method, n_iters=n_iters, nc=nc, model_file=model_file, n_samples=opt.n_samples, 
                           data_path=data_path, result_path=opt.result_path)
     else:
