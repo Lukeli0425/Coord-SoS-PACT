@@ -14,7 +14,7 @@ from kwave.utils import *
 from utils.dataset import mkdir
 from utils.simulations import (delay_and_sum, forward_2D, get_medium,
                                join_images, read_images,
-                               reorder_binary_sensor_data, split_images,
+                               reorder_binary_sensor_data, transducer_response, split_images,
                                zero_pad)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -24,7 +24,6 @@ def generate_sections(vessel_data_path, sec_path, n_sec=5, min_std=0.11):
     
     # Create directories.
     mkdir(os.path.join(sec_path, 'vis'))
-    
     
     idx_sec = 0
     for idx in tqdm(range(3890)):
@@ -64,14 +63,13 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
             mkdir(os.path.join(dataset_path, folder, subfolder))
         
     if sectioning:
-        logger.info('Creating blood vessel sections...')
-        generate_sections(logger=logger,
-                          vessel_data_path=vessel_data_path,
+        logger.info(' Creating blood vessel sections...')
+        generate_sections(vessel_data_path=vessel_data_path,
                           sec_path=sec_path, 
                           n_sec=6)
     
     
-    logger.info('K-wave 2D simulation...')
+    logger.info(' K-wave 2D simulation...')
     Nx, Ny = image_size
     dx, dy = 5e-5, 5e-5
     T_sample = 1/40e6
@@ -81,24 +79,64 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
     mkdir(pathname)
     
     sec_files = os.listdir(sec_path)
-    sec_files.remove('vis')
+    if 'vis' in sec_files:
+        sec_files.remove('vis')
+
     # for idx in tqdm(range(len(sec_files)//4)):
-    for idx in tqdm(range(2500, 3000)):
+    for idx in tqdm(range(0, 4000)):
         # Simulation parameters.
         R = 0.01 + 0.004 * (rand() -0.5) # U(0.008,0.012)
         R1 = 0.006 + 0.001 * (rand() -0.5) # U(0.005, 0.007)
         offset = 0.001 * rand()
         rou = 1000
     
-        # Join and pad ground truth images.
-        gt_imgs = read_images(sec_path, sec_files[4*idx:4*idx+4])
-        gt_joint = join_images(gt_imgs)
-        gt_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(gt_joint, Nx, Ny)
+        # Join and pad initial pressure distributions.
+        IP_imgs = read_images(sec_path, sec_files[4*idx:4*idx+4])
+        IP_joint = join_images(IP_imgs)
+        IP_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(IP_joint, Nx, Ny)
         
         # K-wave 2D forward simulation.
         kgrid = kWaveGrid([Nx, Ny], [dx, dy])
         kgrid.dt = T_sample
         
+        medium_uniform = get_medium(kgrid=kgrid, 
+                                    Nx=Nx, Ny=Ny, 
+                                    sos_background=sos_background,
+                                    R=0.0, R1=0.0, offset=0.0, rou=rou)
+        
+        cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
+                                          center_pos=[0,0], arc_angle=2*np.pi)
+        sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
+        
+        # Uniform SOS distribution (ground truth).
+        sensor_data = forward_2D(p0=IP_pad, 
+                                 kgrid=kgrid, 
+                                 medium=medium_uniform,
+                                 sensor=sensor,
+                                 PML_size=PML_size,
+                                 n_start=n_start)
+        sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
+                                                 sensor=sensor, 
+                                                 kgrid=kgrid, 
+                                                 PML_size=PML_size)
+        sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
+        
+        # Delay and Sum Reconstruction.
+        recon = delay_and_sum(R_ring,
+                              kgrid.dt,
+                              medium_uniform.sound_speed_ref,
+                              sensor_data,
+                              kgrid.x_vec[pad_start_x:pad_end_x],
+                              kgrid.y_vec[pad_start_y:pad_end_y],
+                              d_delay=0.0)
+
+        # Split observation images.
+        gt_imgs = split_images([recon], img_size=(128, 128))
+        gt_imgs = [np.squeeze(gt_img, axis=0) for gt_img in gt_imgs]
+
+
+        
+        # Heterogeneous SOS distribution (observation).
         medium = get_medium(kgrid=kgrid, 
                             Nx=Nx, Ny=Ny, 
                             sos_background=sos_background,
@@ -108,7 +146,7 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
                                           center_pos=[0,0], arc_angle=2*np.pi)
         sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
         
-        sensor_data = forward_2D(p0=gt_pad, 
+        sensor_data = forward_2D(p0=IP_pad, 
                                  kgrid=kgrid, 
                                  medium=medium,
                                  sensor=sensor,
@@ -118,6 +156,7 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
                                                  sensor=sensor, 
                                                  kgrid=kgrid, 
                                                  PML_size=PML_size)
+        sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
         
         # Delay and Sum Reconstruction.
         obs_pad = []
@@ -133,7 +172,7 @@ def generate_data(dataset_path, vessel_data_path, n_train=10000, sectioning=Fals
         
         # Split observation images.
         obs_imgs = split_images(obs_pad, img_size=(128, 128))
-        print(obs_imgs[0].shape)
+        print(len(obs_imgs))
 
         # Save ground truth and observation images.
         for i, (gt_img, obs_img) in enumerate(zip(gt_imgs, obs_imgs)):
@@ -161,13 +200,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--n_train', type=int, default=10000)
+    parser.add_argument('--n_train', type=int, default=4000)
     parser.add_argument('--n_start', type=int, default=0)
     parser.add_argument('--sectioning', action="store_true")
     parser.add_argument('--n_delays', type=int, default=8)
     opt = parser.parse_args()
     
-    generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', 
+    generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT_new/', 
                   vessel_data_path='/mnt/WD6TB/tianaoli/SkinVessel/',
                   n_train=opt.n_train, sectioning=opt.sectioning,
                   n_delays=opt.n_delays,
