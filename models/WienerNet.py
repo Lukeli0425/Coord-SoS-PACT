@@ -1,4 +1,3 @@
-import math
 import numpy as np
 import torch
 from torch.fft import fftn, ifftn, fftshift, ifftshift
@@ -6,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.ResUNet import ResUNet
 from models.PACT import PSF_PACT
-from models.Double_ADMM import DoubleConv, Down
 from utils.utils_torch import conv_fft_batch, psf_to_otf
 
 
