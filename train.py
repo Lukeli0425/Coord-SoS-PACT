@@ -14,7 +14,7 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 def train(model_name='DUBLID', n_iters=4, nc=32,
           n_epochs=100, lr=2e-4, loss='MSE',
@@ -135,21 +135,20 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
-    parser.add_argument('--model', type=str, default='Double_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
+    parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
     parser.add_argument('--n_iters', type=int, default=4)
     parser.add_argument('--nc', type=int, default=8)
     parser.add_argument('--n_epochs', type=int, default=100)
-    parser.add_argument('--lr', type=float, default=2e-4)
+    parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--pretrained_epochs', type=int, default=0)
     opt = parser.parse_args()
 
-    # data_path = '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'
-    data_path = '/home/mist/SkinVessel_PACT/'
+    data_path = '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT_new/'
 
     train(model_name=opt.model, n_iters=opt.n_iters, nc=opt.nc,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
           data_path=data_path, train_val_split=opt.train_val_split, batch_size=opt.batch_size,
-          model_save_path='./saved_models/', pretrained_epochs=opt.pretrained_epochs)
+          model_save_path='./saved_models_new/', pretrained_epochs=opt.pretrained_epochs)
