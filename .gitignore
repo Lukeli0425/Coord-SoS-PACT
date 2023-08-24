@@ -6,6 +6,7 @@ SelfDeblur-master
 DeePGEM-main
 
 saved_models/
+saved_models_new/
 
 # nohup files
 *.out
