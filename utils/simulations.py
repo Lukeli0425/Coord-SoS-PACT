@@ -3,7 +3,7 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
-
+import torch
 from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
@@ -93,6 +93,19 @@ def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
     reorder_index = np.argsort(angle)
     
     return sensor_data[reorder_index]
+
+
+def transducer_response(sensor_data, T_sample):
+    """Apply transducer response to sinogram.
+
+    Args:
+        sensor_data (`numpy.ndarray`): Sinogram with shape `[N_transducer, N_T]`..
+        T_sample ('float): Sample time interval of the signals [s].
+
+    Returns:
+        _type_: _description_
+    """
+    return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) / T_sample
 
 
 def get_medium(kgrid, Nx=2024, Ny=2024, 
@@ -214,4 +227,9 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
 
 
 
-    
+if __name__ == "__main__":
+    obs_pad = np.zeros([1,256,256])
+    gt_imgs = split_images(obs_pad, img_size=(128, 128))
+    print(len(gt_imgs))
+    gt_imgs = [np.squeeze(gt_img, axis=0) for gt_img in gt_imgs]
+    print(gt_imgs[0].shape)

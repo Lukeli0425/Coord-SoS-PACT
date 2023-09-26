@@ -34,12 +34,13 @@ class PACT_Dataset(Dataset):
         self.obs_path = os.path.join(self.data_path, obs_folder)
         self.n_gt = len(os.listdir(self.gt_path))
         self.n_obs = len(os.listdir(self.obs_path))
-        if self.n_gt == self.n_obs:
-            self.n_samples = self.n_gt
-        else:
-            self.n_samples = min(self.n_gt, self.n_obs)
-            self.logger.warning("Inequal number of ground truth samples and observation samples.")
-
+        # if self.n_gt == self.n_obs:
+        #     self.n_samples = self.n_gt
+        # else:
+        #     self.n_samples = min(self.n_gt, self.n_obs)
+        #     self.logger.warning("Inequal number of ground truth samples and observation samples.")
+        self.n_samples = 4000 if self.train else 1000
+    
         self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
 
 
@@ -47,7 +48,7 @@ class PACT_Dataset(Dataset):
         return self.n_samples
 
     def __getitem__(self, idx):
-        idx = idx if self.train else idx + 10000
+        idx = idx if self.train else idx + 4000
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
         gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
