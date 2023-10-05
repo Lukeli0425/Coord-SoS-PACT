@@ -5,7 +5,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, random_split
 
-
 def mkdir(path):
     if not os.path.exists(path):
         os.mkdir(path)
@@ -32,8 +31,7 @@ class PACT_Dataset(Dataset):
         self.data_path = os.path.join(data_path, 'train' if train else 'test')
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
-        self.sf_path = os.path.join(self.data_path, psf_folder)
-        self.obs_path = os.path.join(self.data_path, obs_folder)
+        self.psf_path = os.path.join(self.data_path, psf_folder)
         self.n_gt = len(os.listdir(self.gt_path)) * 49 // 50 ## TODD ##
         self.n_obs = len(os.listdir(self.obs_path)) * 49 // 50 ## TODD ##
         self.n_psf = 49 
@@ -44,7 +42,6 @@ class PACT_Dataset(Dataset):
             self.logger.warning("Inequal number of ground truth samples and observation samples.")
     
         self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
-
 
     def __len__(self):
         return self.n_samples

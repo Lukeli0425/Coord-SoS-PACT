@@ -4,6 +4,8 @@ from tempfile import gettempdir
 import numba
 import numpy as np
 import torch
+from torch.fft import fftshift, ifftn
+
 from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
@@ -224,7 +226,17 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
 
     return Image
 
+def wavefront_fourier(C0, C1, phi1, C2, phi2):
+    return lambda theta: C0 + C1 * torch.cos(theta - phi1) + C2 * torch.cos(2 * (theta - phi2))
 
+def wavefront_real(R, r, phi, v0, v1):
+    return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
+
+def PSF(theta, k, w, delay):
+    tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
+    psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+    psf /= psf.sum(axis=(-2,-1)) # Normalization.
+    return psf
 
 
 
