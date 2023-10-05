@@ -13,14 +13,15 @@ def mkdir(path):
         
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, obs_folder='obs/', gt_folder='gt/'):
+    def __init__(self, data_path, train=True, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
-            data_path (str, optional): Path to the dataset. Defaults to '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'.
-            train (bool, optional): Whether the dataset is generated for training or testing. Defaults to True.
-            obs_folder (str, optional): Path to the observed image folder. Defaults to 'obs/'.
-            gt_folder (str, optional): Path to the ground truth image folder. Defaults to 'gt/'.
+            data_path (str, optional): Path to the dataset. Defaults to `'/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/'`.
+            train (bool, optional): Whether the dataset is generated for training or testing. Defaults to `True`.
+            obs_folder (str, optional): Path to the observed image folder. Defaults to `'obs/'`.
+            gt_folder (str, optional): Path to the ground truth image folder. Defaults to `'gt/'`.
+            gt_folder (str, optional): Path to the PSF folder. Defaults to `'psf/'`.
         """
         super(PACT_Dataset, self).__init__()
         
@@ -31,8 +32,11 @@ class PACT_Dataset(Dataset):
         self.data_path = os.path.join(data_path, 'train' if train else 'test')
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
+        self.sf_path = os.path.join(self.data_path, psf_folder)
+        self.obs_path = os.path.join(self.data_path, obs_folder)
         self.n_gt = len(os.listdir(self.gt_path)) * 49 // 50 ## TODD ##
         self.n_obs = len(os.listdir(self.obs_path)) * 49 // 50 ## TODD ##
+        self.n_psf = 49 
         if self.n_gt == self.n_obs:
             self.n_samples = self.n_gt
         else:
@@ -46,13 +50,17 @@ class PACT_Dataset(Dataset):
         return self.n_samples
 
     def __getitem__(self, idx):
-        idx = idx if self.train else idx + 4000
+        idx = idx if self.train else idx + 6370 ## TODD ##
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
         gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
         obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).float()
         obs = obs * gt.sum() / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize to the same flux.
 
+        psf_idx = idx % self.n_psf
+        psf = torch.from_numpy(np.load(os.path.join(self.psf_path, f"psf_{psf_idx}.npy"))).float()
+        psf = psf / psf.sum() # Normalize flux to 1.
+        
         return obs, gt
     
     
