@@ -106,7 +106,7 @@ def transducer_response(sensor_data, T_sample):
         T_sample ('float): Sample time interval of the signals [s].
 
     Returns:
-        _type_: _description_
+        `numpy.ndarray`: Output sinogram.
     """
     return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) / T_sample
 

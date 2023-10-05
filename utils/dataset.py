@@ -63,7 +63,7 @@ class PACT_Dataset(Dataset):
     
     
 def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, train_val_split=0.875, batch_size=16,
-                   obs_folder='obs/', gt_folder='gt/'):
+                   obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
     """Generate PyTorch dataloaders for training or testing.
 
     Args:
@@ -88,7 +88,7 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         return train_loader, val_loader
     else:
-        test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder)
+        test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
         return test_loader
     
