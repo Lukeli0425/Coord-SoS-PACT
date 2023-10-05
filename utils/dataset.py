@@ -13,8 +13,7 @@ def mkdir(path):
         
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train=True,
-                 obs_folder='obs/', gt_folder='gt/'):
+    def __init__(self, data_path, train=True, obs_folder='obs/', gt_folder='gt/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -32,14 +31,13 @@ class PACT_Dataset(Dataset):
         self.data_path = os.path.join(data_path, 'train' if train else 'test')
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
-        self.n_gt = len(os.listdir(self.gt_path))
-        self.n_obs = len(os.listdir(self.obs_path))
-        # if self.n_gt == self.n_obs:
-        #     self.n_samples = self.n_gt
-        # else:
-        #     self.n_samples = min(self.n_gt, self.n_obs)
-        #     self.logger.warning("Inequal number of ground truth samples and observation samples.")
-        self.n_samples = 4000 if self.train else 1000
+        self.n_gt = len(os.listdir(self.gt_path)) * 49 // 50 ## TODD ##
+        self.n_obs = len(os.listdir(self.obs_path)) * 49 // 50 ## TODD ##
+        if self.n_gt == self.n_obs:
+            self.n_samples = self.n_gt
+        else:
+            self.n_samples = min(self.n_gt, self.n_obs)
+            self.logger.warning("Inequal number of ground truth samples and observation samples.")
     
         self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
 
@@ -59,7 +57,7 @@ class PACT_Dataset(Dataset):
     
     
     
-def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train=True, train_val_split=0.875, batch_size=16,
+def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, train_val_split=0.875, batch_size=16,
                    obs_folder='obs/', gt_folder='gt/'):
     """Generate PyTorch dataloaders for training or testing.
 

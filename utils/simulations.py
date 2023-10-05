@@ -40,14 +40,15 @@ def join_images(images, n_row=2, n_col=2):
     return image_joint
 
 
-def split_images(images, img_size=(128, 128)):
+def split_images(images, img_size=(64, 64), step=(32, 32)):
     
-    n_x, n_y = images[0].shape[0]//img_size[0], images[0].shape[1]//img_size[1]
+    n_x, n_y = (images[0].shape[0]-img_size[0])//step[0]+1, (images[0].shape[1]-img_size[1])//step[1]+1
     images_out = [[] for i in range(n_x*n_y)]
     for image in images:
-        for idx in range(n_x):
-            for idy in range(n_y):
-                images_out[n_x*idx+idy].append(image[idx*img_size[0]:(idx+1)*img_size[0], idy*img_size[1]:(idy+1)*img_size[1]])
+        for idx in range(2*n_x-1):
+            for idy in range(2*n_y-1):
+                images_out[n_x*idx+idy].append(image[idx*step[0]:idx*step[0]+img_size[0], idy*step[1]:idy*step[1]+img_size[1]])
+                
     images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
     
     return images_out
@@ -108,19 +109,19 @@ def transducer_response(sensor_data, T_sample):
     return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) / T_sample
 
 
-def get_medium(kgrid, Nx=2024, Ny=2024, 
-               sos_background=1500.0, 
+def get_medium(kgrid, Nx=2040, Ny=2040, 
+               SoS_background=1500.0, 
                R=0.01, R1=0.06, offset=0.0, rou=1000):
     """
     Generate K-wave medium object with varying SoS distribution.
 
     Args:
-        Nx (int, optional): _description_. Defaults to 2024.
-        Ny (int, optional): _description_. Defaults to 2024.
-        sos_background (float, optional): SoS of the background medium. [m/s]. Defaults to 1500.0.
-        R (float, optional): Radius of the large circle in SoS distribution. [m]. Defaults to 0.01.
-        R1 (float, optional): Radius of the small circle in SoS distribution. [m]. Defaults to 0.06.
-        offset (float, optional): Offset of circle in SoS distribution. [m]. Defaults to 0.0.
+        Nx (int, optional): _description_. Defaults to 2040.
+        Ny (int, optional): _description_. Defaults to 2040.
+        SoS_background (float, optional): SoS of the background medium. [m/s]. Defaults to `1500.0`.
+        R (float, optional): Radius of the large circle in SoS distribution. [m]. Defaults to `0.01`.
+        R1 (float, optional): Radius of the small circle in SoS distribution. [m]. Defaults to `0.06`.
+        offset (tuple, optional): Offset of circle in SoS distribution. [m]. Defaults to `(0.0, 0.0)`.
         rou (int, optional): Density. [g/cm^3] Defaults to 1000.
 
     Returns:
@@ -130,9 +131,9 @@ def get_medium(kgrid, Nx=2024, Ny=2024,
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
     SoS = np.ones((Ny, Nx)) * 1500
     SoS[XX**2 + YY**2 < R**2] = 1600
-    SoS[XX**2 + (YY + offset)**2 < R1**2] = 1650
+    SoS[(XX + offset[0])**2 + (YY + offset[1])**2 < R1**2] = 1650
 
-    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=sos_background, density=rou)
+    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=SoS_background, density=rou)
     
     return medium
 

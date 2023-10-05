@@ -14,11 +14,11 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 def train(model_name='DUBLID', n_iters=4, nc=32,
           n_epochs=100, lr=2e-4, loss='MSE',
-          data_path='/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT/', train_val_split=0.9, batch_size=32,
+          data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train_val_split=0.9, batch_size=32,
           model_save_path='./saved_models/', pretrained_epochs=0):
     
     model_name = get_model_name(method=model_name, n_iters=n_iters, nc=nc, loss=loss)
@@ -143,12 +143,12 @@ if __name__ == "__main__":
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
     parser.add_argument('--batch_size', type=int, default=32)
-    parser.add_argument('--pretrained_epochs', type=int, default=0)
+    parser.add_argument('--pretrained_epochs', type=int, default=0) 
     opt = parser.parse_args()
 
-    data_path = '/mnt/WD6TB/tianaoli/dataset/SkinVessel_PACT_new/'
+    data_path = '/mnt/WD6TB/tianaoli/dataset/Brain/'
 
     train(model_name=opt.model, n_iters=opt.n_iters, nc=opt.nc,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
           data_path=data_path, train_val_split=opt.train_val_split, batch_size=opt.batch_size,
-          model_save_path='./saved_models_new/', pretrained_epochs=opt.pretrained_epochs)
+          model_save_path='./saved_models_Brain/', pretrained_epochs=opt.pretrained_epochs)
