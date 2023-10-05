@@ -35,6 +35,9 @@ def generate_data(dataset_path, n_train=150,
     mkdir(sec_path)
     vis_path = os.path.join(dataset_path, 'visualization')
     mkdir(vis_path)
+    coord_path = os.path.join(dataset_path, 'coordinates')
+    mkdir(coord_path)
+    
     for folder in ['train', 'test']:
         mkdir(os.path.join(dataset_path, folder))
         for subfolder in ['gt', 'obs', 'SoS']:
