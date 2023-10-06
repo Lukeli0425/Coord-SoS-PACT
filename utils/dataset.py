@@ -31,7 +31,7 @@ class PACT_Dataset(Dataset):
         self.data_path = os.path.join(data_path, 'train' if train else 'test')
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
-        self.psf_path = os.path.join(self.data_path, psf_folder)
+        self.psf_path = os.path.join(data_path, psf_folder)
         self.n_gt = len(os.listdir(self.gt_path)) * 49 // 50 ## TODD ##
         self.n_obs = len(os.listdir(self.obs_path)) * 49 // 50 ## TODD ##
         self.n_psf = 49 
@@ -49,16 +49,18 @@ class PACT_Dataset(Dataset):
     def __getitem__(self, idx):
         idx = idx if self.train else idx + 6370 ## TODD ##
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
-        gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
+        gt = gt / gt.sum() # Normalize flux to 1.
         
         obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).float()
-        obs = obs * gt.sum() / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize to the same flux.
-
-        psf_idx = idx % self.n_psf
-        psf = torch.from_numpy(np.load(os.path.join(self.psf_path, f"psf_{psf_idx}.npy"))).float()
-        psf = psf / psf.sum() # Normalize flux to 1.
+        obs = obs / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize flux to 1.
+        # gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
+        # obs = (obs - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
-        return obs, gt
+        psf_idx = idx % self.n_psf # Pick corresponding PSF for each patch.
+        psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
+        psf = psf / psf.sum() # Normalize flux to 1.
+
+        return obs, psf, gt
     
     
     
@@ -96,6 +98,6 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
     
 if __name__ == '__main__':
     train_loader, val_loader = get_dataloader()
-    for idx, (obs, gt) in enumerate(train_loader):
-        print(obs.shape, gt.shape)
+    for idx, (obs, psf, gt) in enumerate(train_loader):
+        print(obs.shape, psf.shape, gt.shape)
         break

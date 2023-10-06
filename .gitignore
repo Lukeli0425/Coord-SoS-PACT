@@ -6,10 +6,11 @@ SelfDeblur-master
 DeePGEM-main
 
 saved_models/
-saved_models_new/
+saved_models_Brain/
 
 # nohup files
 *.out
+out/
 
 try.py
 

@@ -15,17 +15,19 @@ from tqdm import tqdm
 from kwave.ktransducer import *
 from kwave.utils import *
 from utils.dataset import mkdir
-from utils.simulations import (delay_and_sum, forward_2D, get_medium,
+from utils.simulations import (PSF, delay_and_sum, forward_2D, get_medium,
                                reorder_binary_sensor_data, transducer_response,
-                               zero_pad)
+                               wavefront_fourier, wavefront_real, zero_pad)
+from utils.utils_torch import get_fourier_coord
+
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 
 def generate_data(dataset_path, n_train=150, 
                   image_size=(2040, 2040), PML_size=4, 
-                  SoS_background = 1500.0, R_ring=0.05, N_transducer=512,
-                  SoS_das=1512.0, n_delays=8, delay_step=1e-4,
+                  SoS_background=1500.0, R_ring=0.05, N_transducer=512,
+                  SoS_das=1500.0, n_delays=8, delay_step=1e-4,
                   n_start=0):
     
     logger = logging.getLogger('DataGenerator')
@@ -35,8 +37,8 @@ def generate_data(dataset_path, n_train=150,
     mkdir(sec_path)
     vis_path = os.path.join(dataset_path, 'visualization')
     mkdir(vis_path)
-    coord_path = os.path.join(dataset_path, 'coordinates')
-    mkdir(coord_path)
+    psf_path = os.path.join(dataset_path, 'psf')
+    mkdir(psf_path)
     
     for folder in ['train', 'test']:
         mkdir(os.path.join(dataset_path, folder))
@@ -56,13 +58,14 @@ def generate_data(dataset_path, n_train=150,
     sec_files = os.listdir(sec_path)
     if 'vis' in sec_files:
         sec_files.remove('vis')
+    
 
     for idx in tqdm(range(0, len(sec_files))):
         # Simulation parameters.
-        R = 0.006 + 7.5e-4 * (rand() -0.5) # U(0.009,0.011)
-        R1 = 0.003 + 3e-4 * (rand() -0.5) # U(0.005, 0.007)
-        offset = (1e-3 * rand(), 1e-3 * rand())
-        rou = 1000
+        R = 6.8e-3 + 0.8e-4 * (rand() -0.5) # U(0.009,0.011)
+        R1 = 3e-3 + 0.3e-4 * (rand() -0.5) # U(0.005, 0.007)
+        offset = (5e-4 * rand(), 5e-4 * rand())
+        rou = 1000 # Density [kg/m^3].
     
         # Pad initial pressure distributions.
         IP_img = np.load(os.path.join(sec_path, f'{idx}.npy'))
@@ -141,7 +144,6 @@ def generate_data(dataset_path, n_train=150,
 
 
         # Crop and save ground truth and observation images.
-        # np.save(IP_img, obs_imgs)
         folder = 'train' if idx < n_train else 'test'
         for i in range(7):
             for j in range(7):
@@ -184,6 +186,38 @@ def generate_data(dataset_path, n_train=150,
                         plt.title(f'Observation({k})')
                     plt.savefig(os.path.join(vis_path, f'vis_{idx}_patch_{i}_{j}.jpg'), bbox_inches='tight')
                     plt.close()
+                    
+    # Calculate PSF based on location of patch.
+    logger.info(' Simulating PSFs...')
+    R = 6.8e-3 # Radius to center [m].
+    v0, v1 = 1500.0, 1600.0 # Background SoS & SoS in tissue [m/s].
+    offset = (1-v0/v1) * R * 7/8
+    delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays) * delay_step + offset
+    l = 3.2e-3 # Patch size [m].
+    for i in range(7):
+        for j in range(7):
+            x, y = (j-3)*l / 2, (3-i)*l / 2
+            r, phi = np.sqrt(x**2 + y**2), np.arctan2(x, y)
+            w_real = wavefront_real(R, torch.tensor(r), torch.tensor(phi), v0, v1)
+            k2D, theta2D = get_fourier_coord(n_points=64, l=3.2e-3, device='cpu')
+            psfs = []
+            for id, delay in enumerate(delays):
+                psfs.append(PSF(theta2D, k2D, w_real, delay))
+            psf = torch.stack(psfs, dim=0)
+            torch.save(psf, os.path.join(psf_path, f'psf_{i*7+j}.pth'))
+            
+            # Visualization.
+            fig = plt.figure(figsize=(16, 5))
+            for id, delay in enumerate(delays):
+                plt.subplot(2,4,id+1)
+                plt.imshow(psfs[id])
+                plt.xticks([])
+                plt.yticks([])
+                plt.title('Delay={:.2f}mm'.format(delays[id]*1e3), fontsize=14)
+            plt.tight_layout()
+            plt.savefig(os.path.join(psf_path, f'psf_vis_{i}_{j}.jpg'))
+            plt.close()
+
 
 
 if __name__ == '__main__':
