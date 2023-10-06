@@ -43,19 +43,19 @@ class WienerNet(nn.Module):
         #     nn.Linear(64, 5),
         #     nn.Softplus()
         # )
-        self.psf = PSF_PACT(n_points=128, n_delays=n_delays, device=self.device)
-        self.C0 = torch.tensor(7.8e-4, requires_grad=True)
-        self.psf_filter = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
-        self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
+        # self.psf = PSF_PACT(n_points=128, n_delays=n_delays, device=self.device)
+        # self.C0 = torch.tensor(7.8e-4, requires_grad=True)
+        # self.psf_filter = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
+        # self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
         
         self.wiener = Wiener()
-        self.lam = torch.tensor(0.01, requires_grad=True)
+        self.lam = torch.tensor(0.01, requires_grad=True, device=self.device)
         self.denoiser = ResUNet(in_nc=n_delays, out_nc=1, nb=2, nc=nc)
         
-    def forward(self, y):
+    def forward(self, y, psf):
         # psf = self.kernel_estimator(y)
         
-        N = y.shape[0] # Batch size.
+        # N = y.shape[0] # Batch size.
         
         # # PSF parameter estimation.
         # H = fftn(y, dim=[-2,-1])
@@ -72,12 +72,12 @@ class WienerNet(nn.Module):
         #                C2=params[:,:,3:4,:], 
         #                phi2=params[:,:,4:,:]) * self.psf_filter + self.psf_bias * 1e-5
         
-        psf = self.psf(C0=self.C0, 
-                       C1=0, 
-                       phi1=0, 
-                       C2=0, 
-                       phi2=0) * self.psf_filter + self.psf_bias * 1e-5
-        psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
+        # psf = self.psf(C0=self.C0, 
+        #                C1=0, 
+        #                phi1=0, 
+        #                C2=0, 
+        #                phi2=0) * self.psf_filter + self.psf_bias * 1e-5
+        # psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
         
         x = self.wiener(y, psf, self.lam)
         x = self.denoiser(x)
