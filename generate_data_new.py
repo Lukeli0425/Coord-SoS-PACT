@@ -62,87 +62,93 @@ def generate_data(dataset_path, n_train=150,
 
     for idx in tqdm(range(0, len(sec_files))):
         # Simulation parameters.
-        R = 6.8e-3 + 0.8e-4 * (rand() -0.5) # U(0.009,0.011)
-        R1 = 3e-3 + 0.3e-4 * (rand() -0.5) # U(0.005, 0.007)
-        offset = (5e-4 * rand(), 5e-4 * rand())
-        rou = 1000 # Density [kg/m^3].
+        # R = 6.8e-3 + 0.8e-4 * (rand() -0.5) # U(0.009,0.011)
+        # R1 = 3e-3 + 0.3e-4 * (rand() -0.5) # U(0.005, 0.007)
+        # offset = (5e-4 * rand(), 5e-4 * rand())
+        # rou = 1000 # Density [kg/m^3].
     
-        # Pad initial pressure distributions.
-        IP_img = np.load(os.path.join(sec_path, f'{idx}.npy'))
-        IP_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(IP_img, Nx, Ny)
+        # # Pad initial pressure distributions.
+        # IP_img = np.load(os.path.join(sec_path, f'{idx}.npy'))
+        # IP_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(IP_img, Nx, Ny)
         
-        # K-wave 2D forward simulation.
-        kgrid = kWaveGrid([Nx, Ny], [dx, dy])
-        kgrid.dt = T_sample
+        # # K-wave 2D forward simulation.
+        # kgrid = kWaveGrid([Nx, Ny], [dx, dy])
+        # kgrid.dt = T_sample
         
-        medium_uniform = get_medium(kgrid=kgrid, 
-                                    Nx=Nx, Ny=Ny, 
-                                    SoS_background=SoS_background,
-                                    R=0.0, R1=0.0, offset=(0.0, 0.0), rou=rou)
+        # medium_uniform = get_medium(kgrid=kgrid, 
+        #                             Nx=Nx, Ny=Ny, 
+        #                             SoS_background=SoS_background,
+        #                             R=0.0, R1=0.0, offset=(0.0, 0.0), rou=rou)
         
-        cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
-                                          center_pos=[0,0], arc_angle=2*np.pi)
-        sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
+        # cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
+        #                                   center_pos=[0,0], arc_angle=2*np.pi)
+        # sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
         
-        # Uniform SoS distribution (ground truth).
-        sensor_data = forward_2D(p0=IP_pad, 
-                                 kgrid=kgrid, 
-                                 medium=medium_uniform,
-                                 sensor=sensor,
-                                 PML_size=PML_size,
-                                 n_start=n_start)
-        sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
-                                                 sensor=sensor, 
-                                                 kgrid=kgrid, 
-                                                 PML_size=PML_size)
-        sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
+        # # Uniform SoS distribution (ground truth).
+        # sensor_data = forward_2D(p0=IP_pad, 
+        #                          kgrid=kgrid, 
+        #                          medium=medium_uniform,
+        #                          sensor=sensor,
+        #                          PML_size=PML_size,
+        #                          n_start=n_start)
+        # sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
+        #                                          sensor=sensor, 
+        #                                          kgrid=kgrid, 
+        #                                          PML_size=PML_size)
+        # sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
         
-        # Delay and Sum Reconstruction.
-        gt_img = delay_and_sum(R_ring,
-                               kgrid.dt,
-                               medium_uniform.sound_speed_ref,
-                               sensor_data,
-                               kgrid.x_vec[pad_start_x:pad_end_x],
-                               kgrid.y_vec[pad_start_y:pad_end_y],
-                               d_delay=0)
+        # # Delay and Sum Reconstruction.
+        # gt_img = delay_and_sum(R_ring,
+        #                        kgrid.dt,
+        #                        medium_uniform.sound_speed_ref,
+        #                        sensor_data,
+        #                        kgrid.x_vec[pad_start_x:pad_end_x],
+        #                        kgrid.y_vec[pad_start_y:pad_end_y],
+        #                        d_delay=0)
 
         
-        # Heterogeneous SoS distribution (observation).
-        medium = get_medium(kgrid=kgrid, 
-                            Nx=Nx, Ny=Ny, 
-                            SoS_background=SoS_background,
-                            R=R, R1=R1, offset=offset, rou=rou)
+        # # Heterogeneous SoS distribution (observation).
+        # medium = get_medium(kgrid=kgrid, 
+        #                     Nx=Nx, Ny=Ny, 
+        #                     SoS_background=SoS_background,
+        #                     R=R, R1=R1, offset=offset, rou=rou)
         
-        cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
-                                          center_pos=[0,0], arc_angle=2*np.pi)
-        sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
+        # cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
+        #                                   center_pos=[0,0], arc_angle=2*np.pi)
+        # sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
         
-        sensor_data = forward_2D(p0=IP_pad, 
-                                 kgrid=kgrid, 
-                                 medium=medium,
-                                 sensor=sensor,
-                                 PML_size=PML_size,
-                                 n_start=n_start)
-        sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
-                                                 sensor=sensor, 
-                                                 kgrid=kgrid, 
-                                                 PML_size=PML_size)
-        sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
+        # sensor_data = forward_2D(p0=IP_pad, 
+        #                          kgrid=kgrid, 
+        #                          medium=medium,
+        #                          sensor=sensor,
+        #                          PML_size=PML_size,
+        #                          n_start=n_start)
+        # sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
+        #                                          sensor=sensor, 
+        #                                          kgrid=kgrid, 
+        #                                          PML_size=PML_size)
+        # sensor_data = transducer_response(sensor_data, T_sample) # Add transducer response.
         
-        # Delay and Sum Reconstruction.
-        recons = []
-        for d_delay in d_delays:
-            recon = delay_and_sum(R_ring,
-                                  kgrid.dt,
-                                  SoS_das,
-                                  sensor_data,
-                                  kgrid.x_vec[pad_start_x:pad_end_x],
-                                  kgrid.y_vec[pad_start_y:pad_end_y],
-                                  d_delay=d_delay)
-            recons.append(recon)
-        obs_imgs = np.array(recons) # Stack in to 3D array of shape [8, 256, 256].
+        # # Delay and Sum Reconstruction.
+        # recons = []
+        # for d_delay in d_delays:
+        #     recon = delay_and_sum(R_ring,
+        #                           kgrid.dt,
+        #                           SoS_das,
+        #                           sensor_data,
+        #                           kgrid.x_vec[pad_start_x:pad_end_x],
+        #                           kgrid.y_vec[pad_start_y:pad_end_y],
+        #                           d_delay=d_delay)
+        #     recons.append(recon)
+        # obs_imgs = np.array(recons) # Stack in to 3D array of shape [8, 256, 256].
 
-
+        gt_file = os.path.join(dataset_path, folder, 'gt', f"gt_large_{idx}.npy")
+        np.save(gt_file, gt_img)
+        obs_file = os.path.join(dataset_path, folder, 'obs', f"obs_large_{idx}.npy")
+        np.save(obs_file, obs_imgs)
+        obs_imgs /= obs_imgs.mean()
+        gt_img /= gt_img.mean() 
+        
         # Crop and save ground truth and observation images.
         folder = 'train' if idx < n_train else 'test'
         for i in range(7):
@@ -229,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_delays', type=int, default=8)
     opt = parser.parse_args()
     
-    generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/Brain/', 
+    generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/Brain1/', 
                   n_train=opt.n_train,
                   n_delays=opt.n_delays,
                   n_start=opt.n_start)

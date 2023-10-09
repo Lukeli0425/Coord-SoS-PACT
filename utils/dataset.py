@@ -49,16 +49,19 @@ class PACT_Dataset(Dataset):
     def __getitem__(self, idx):
         idx = idx if self.train else idx + 6370 ## TODD ##
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
-        gt = gt / gt.sum() # Normalize flux to 1.
+        # gt = gt / gt.sum() # Normalize flux to 1.
         
         obs = torch.from_numpy(np.load(os.path.join(self.obs_path, f"obs_{idx}.npy"))).float()
-        obs = obs / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize flux to 1.
+        # obs = obs / obs.sum(dim=[-2,-1]).unsqueeze(-1).unsqueeze(-1) # Normalize flux to 1.
         # gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         # obs = (obs - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
         psf_idx = idx % self.n_psf # Pick corresponding PSF for each patch.
         psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
-        psf = psf / psf.sum() # Normalize flux to 1.
+        # psf = psf / psf.sum() # Normalize flux to 1.
+
+        gt /= (obs.sum()/8)
+        obs /= (obs.sum()/8)
 
         return obs, psf, gt
     
