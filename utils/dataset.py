@@ -28,12 +28,12 @@ class PACT_Dataset(Dataset):
         
         # Initialize parameters
         self.train = train
-        self.data_path = os.path.join(data_path, 'train' if train else 'test')
+        self.data_path = data_path
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
         self.psf_path = os.path.join(data_path, psf_folder)
-        self.n_gt = len(os.listdir(self.gt_path)) * 49 // 50 ## TODD ##
-        self.n_obs = len(os.listdir(self.obs_path)) * 49 // 50 ## TODD ##
+        self.n_gt = len(os.listdir(self.gt_path))
+        self.n_obs = len(os.listdir(self.obs_path))
         self.n_psf = 49 
         if self.n_gt == self.n_obs:
             self.n_samples = self.n_gt
@@ -60,8 +60,8 @@ class PACT_Dataset(Dataset):
         psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
         # psf = psf / psf.sum() # Normalize flux to 1.
 
-        gt /= (obs.sum()/8)
-        obs /= (obs.sum()/8)
+        # gt /= (obs.sum()/8)
+        # obs /= (obs.sum()/8)
 
         return obs, psf, gt
     
@@ -80,7 +80,7 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         gt_folder (str, optional): Path to the ground truth image folder. Defaults to `'gt/'`.
 
     Returns:
-        train_loader (`torch.utils.data.DataLoader`):  PyTorch dataloader for train dataset.
+        train_loader (`torch.utils.data.DataLoader`): PyTorch dataloader for train dataset.
         val_loader (`torch.utils.data.DataLoader`): PyTorch dataloader for valid dataset.
         test_loader (`torch.utils.data.DataLoader`): PyTorch dataloader for test dataset.
     """
@@ -100,7 +100,14 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
     
     
 if __name__ == '__main__':
-    train_loader, val_loader = get_dataloader()
+    train_loader, val_loader = get_dataloader(batch_size=1)
+    test_loader = get_dataloader(train=False)
+    pos, neg = 0, 0
     for idx, (obs, psf, gt) in enumerate(train_loader):
-        print(obs.shape, psf.shape, gt.shape)
-        break
+        if obs.mean() < 0:
+            neg += 1
+        else:
+            pos += 1
+            
+    print(pos, neg)
+        

@@ -78,7 +78,7 @@ class WienerNet(nn.Module):
         #                C2=0, 
         #                phi2=0) * self.psf_filter + self.psf_bias * 1e-5
         # psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
-        alpha = y.mean()
+        alpha = 1 # y.mean()
         x = self.wiener(y/alpha, psf, self.lam)
         x = self.denoiser(x) * alpha
         

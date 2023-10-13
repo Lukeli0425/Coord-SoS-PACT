@@ -14,7 +14,7 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 def train(model_name='WienerNet', n_iters=4, nc=32,
           n_epochs=100, lr=2e-4, loss='MSE',
@@ -127,7 +127,7 @@ def train(model_name='WienerNet', n_iters=4, nc=32,
             logger.info(' Model saved to %s', os.path.join(model_save_path, model_file_name))
 
         # Plot loss curve.
-        plot_loss(train_loss_list, val_loss_list, epoch_min, model_save_path, model_name)
+        plot_loss(train_loss_list, val_loss_list, epoch_min, 'out/', model_name)
 
 
 
@@ -138,8 +138,8 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
     parser.add_argument('--n_iters', type=int, default=4)
     parser.add_argument('--nc', type=int, default=16)
-    parser.add_argument('--n_epochs', type=int, default=100)
-    parser.add_argument('--lr', type=float, default=2.5e-4)
+    parser.add_argument('--n_epochs', type=int, default=200)
+    parser.add_argument('--lr', type=float, default=5e-3)
     parser.add_argument('--loss', type=str, default='MSE', choices=['MSE', 'MultiScale', 'SSIM'])
     parser.add_argument('--train_val_split', type=float, default=0.9)
     parser.add_argument('--batch_size', type=int, default=32)

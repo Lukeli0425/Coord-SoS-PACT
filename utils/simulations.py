@@ -108,7 +108,7 @@ def transducer_response(sensor_data, T_sample):
     Returns:
         `numpy.ndarray`: Output sinogram.
     """
-    return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) / T_sample
+    return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) # / T_sample
 
 
 def get_medium(kgrid, Nx=2040, Ny=2040, 

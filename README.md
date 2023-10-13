@@ -14,3 +14,10 @@ Create a virtual environment and download the required packages:
 ```zsh
 pip install -r requirements.txt
 ```
+
+## Train
+
+```
+nohup python3 train.py --model WienerNet --loss MSE --lr 5e-3 --nc 16 > out/wiener_16_mse.out 2>&1 &
+nohup python3 train.py --model WienerNet --loss MultiScale --lr 5e-4 --nc 16 > out/wiener_16_mul.out 2>&1 &
+```
