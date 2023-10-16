@@ -171,8 +171,8 @@ class Double_ADMM(nn.Module):
         self.H = H_Update()
         self.G = G_Update_CNN(n_delays=self.n_delays, device=self.device) # Model-based PSF denoiser.
         # self.SubNet = SubNet(self.n)
-        self.rho1_iters = torch.ones(size=(self.n,), requires_grad=True, device=self.device)
-        self.rho2_iters = torch.ones(size=(self.n,), requires_grad=True, device=self.device)
+        self.rho1_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device))
+        self.rho2_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device))
 
     def init(self, y):
         B = y.shape[0] # Batch size.
@@ -185,7 +185,7 @@ class Double_ADMM(nn.Module):
                      phi2=1e-3 * torch.ones([B,self.n_delays,1,1], device=self.device)) + 1e-6
         return x, h
         
-    def forward(self, y):
+    def forward(self, y, psf):
         
         B, _, H, W = y.size()
         

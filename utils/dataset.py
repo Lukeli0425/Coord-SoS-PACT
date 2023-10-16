@@ -12,7 +12,7 @@ def mkdir(path):
         
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=6370, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -32,6 +32,7 @@ class PACT_Dataset(Dataset):
         self.gt_path = os.path.join(self.data_path, gt_folder)
         self.obs_path = os.path.join(self.data_path, obs_folder)
         self.psf_path = os.path.join(data_path, psf_folder)
+        
         self.n_gt = len(os.listdir(self.gt_path))
         self.n_obs = len(os.listdir(self.obs_path))
         self.n_psf = 49 
@@ -40,14 +41,17 @@ class PACT_Dataset(Dataset):
         else:
             self.n_samples = min(self.n_gt, self.n_obs)
             self.logger.warning("Inequal number of ground truth samples and observation samples.")
-    
-        self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.", 'train' if self.train else 'test', self.n_samples)
+        self.n_train = n_train
+        self.n_test = self.n_samples - self.n_train
+        
+        self.logger.info(" Successfully constructed %s dataset. Total Samples: %s.",
+                         'train' if self.train else 'test', self.n_train if self.train else self.n_test)
 
     def __len__(self):
-        return self.n_samples
+        return self.n_train if self.train else self.n_test
 
     def __getitem__(self, idx):
-        idx = idx if self.train else idx + 6370 ## TODD ##
+        idx = idx if self.train else idx + self.n_train ## TODD ##
         gt = torch.from_numpy(np.load(os.path.join(self.gt_path, f"gt_{idx}.npy"))).unsqueeze(0).float()
         # gt = gt / gt.sum() # Normalize flux to 1.
         
@@ -60,8 +64,8 @@ class PACT_Dataset(Dataset):
         psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
         # psf = psf / psf.sum() # Normalize flux to 1.
 
-        # gt /= (obs.sum()/8)
-        # obs /= (obs.sum()/8)
+        gt /= obs.abs().mean()
+        obs /= obs.abs().mean()
 
         return obs, psf, gt
     

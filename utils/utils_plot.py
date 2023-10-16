@@ -38,7 +38,7 @@ def plot_loss(train_loss, val_loss, epoch_min, save_path, model_name):
     plt.figure(figsize=(12,7))
     plt.plot(range(1, n_epochs+1), train_loss, '-o', markersize=4, label='Training Loss')
     plt.plot(range(1, n_epochs+1), val_loss, '-o', markersize=4, label='Validation Loss')
-    plt.plot([epoch_min+1], [val_loss[epoch_min]], 'ro', markersize=7, label='Best Epoch')
+    plt.plot([epoch_min+1], [val_loss[epoch_min]], 'ro', markersize=7, label=f'Best Epoch ({epoch_min+1})')
     plt.title(f'{model_name} Loss Curve', fontsize=18)
     plt.xlabel('Epoch', fontsize=14)
     plt.ylabel('Loss', fontsize=14)

@@ -49,12 +49,12 @@ class WienerNet(nn.Module):
         # self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
         
         self.wiener = Wiener()
-        self.lam = torch.tensor(0.1, requires_grad=True, device=self.device)
+        self.lam = nn.Parameter(0.25 * torch.ones([8,1,1], requires_grad=True, device=self.device))
         self.denoiser = ResUNet(in_nc=n_delays, out_nc=1, nb=2, nc=nc)
         
     def forward(self, y, psf):
+        # print(self.lam)
         # psf = self.kernel_estimator(y)
-        
         # N = y.shape[0] # Batch size.
         
         # # PSF parameter estimation.
@@ -78,9 +78,9 @@ class WienerNet(nn.Module):
         #                C2=0, 
         #                phi2=0) * self.psf_filter + self.psf_bias * 1e-5
         # psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
-        alpha = 1 # y.mean()
-        x = self.wiener(y/alpha, psf, self.lam)
-        x = self.denoiser(x) * alpha
+
+        x = self.wiener(y, psf, self.lam)
+        x = self.denoiser(x)
         
         return x 
         
