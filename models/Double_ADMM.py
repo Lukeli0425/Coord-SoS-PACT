@@ -132,16 +132,16 @@ class G_Update_CNN(nn.Module):
             Down(16,16)
         )
         self.mlp = nn.Sequential(
-            nn.Linear(16*8*8, 256),
+            nn.Linear(16*4*4, 256),
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
-            nn.Linear(64, 5),
+            nn.Linear(64, 6),
             nn.Softplus()
         )
-        self.psf = PSF_PACT(n_points=128, n_delays=n_delays, device=device)
-        self.psf_filter = torch.ones([1,n_delays,128,128], device=device, requires_grad=True)
-        self.psf_bias = torch.ones([1,n_delays,128,128], device=device, requires_grad=True)
+        self.psf = PSF_PACT(n_points=64, n_delays=n_delays, device=device)
+        # self.psf_filter = torch.ones([1,n_delays,64,64], device=device, requires_grad=True)
+        # self.psf_bias = torch.ones([1,n_delays,64,64], device=device, requires_grad=True)
 
     def forward(self, h0):
         N = h0.shape[0] # Batch size.
@@ -150,12 +150,12 @@ class G_Update_CNN(nn.Module):
         H = fftn(h0, dim=[-2,-1])
         HtH = torch.abs(H) ** 2
         x = self.cnn(HtH.float())
-        x = x.view(N, 1, 16*8*8)
+        x = x.view(N, 1, 16*4*4)
         params = self.mlp(x) + 1e-6
         params = params.repeat(1,8,1).unsqueeze(-1)
         
         # PSF reconstruction.
-        g_out = self.psf(C0=params[:,:,0:1,:], C1=params[:,:,1:2,:], phi1=params[:,:,2:3,:], C2=params[:,:,3:4,:], phi2=params[:,:,4:,:]) * self.psf_filter + self.psf_bias * 1e-5
+        g_out = self.psf(C0=params[:,:,0:1,:], C1=params[:,:,1:2,:], phi1=params[:,:,2:3,:], C2=params[:,:,3:4,:], phi2=params[:,:,4:5,:], offset=params[:,:,5:,:]) # * self.psf_filter + self.psf_bias * 1e-5
 
         return g_out
 
@@ -171,25 +171,25 @@ class Double_ADMM(nn.Module):
         self.H = H_Update()
         self.G = G_Update_CNN(n_delays=self.n_delays, device=self.device) # Model-based PSF denoiser.
         # self.SubNet = SubNet(self.n)
-        self.rho1_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device))
-        self.rho2_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device))
+        self.rho1_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device) * 0.25)
+        self.rho2_iters = nn.Parameter(torch.ones(size=(self.n,), requires_grad=True, device=self.device) * 0.25)
 
-    def init(self, y):
-        B = y.shape[0] # Batch size.
+    def init(self, y, psf):
+        # B = y.shape[0] # Batch size.
         x = y[:,3:4,:,:]
-        psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
-        h = psf_pact(C0=7.5e-4 * torch.ones([B,self.n_delays,1,1], device=self.device), 
-                     C1=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
-                     phi1=1e-3 * torch.ones([B,self.n_delays,1,1], device=self.device), 
-                     C2=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
-                     phi2=1e-3 * torch.ones([B,self.n_delays,1,1], device=self.device)) + 1e-6
-        return x, h
+        # psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
+        # h = psf_pact(C0=7.5e-4 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+        #              C1=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+        #              phi1=1e-3 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+        #              C2=2e-5 * torch.ones([B,self.n_delays,1,1], device=self.device), 
+        #              phi2=1e-3 * torch.ones([B,self.n_delays,1,1], device=self.device)) + 1e-6
+        return x, psf
         
     def forward(self, y, psf):
         
         B, _, H, W = y.size()
         
-        x, h = self.init(y) # Initialization.
+        x, h = self.init(y, psf) # Initialization.
         # rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
         
         # Other ADMM variables.

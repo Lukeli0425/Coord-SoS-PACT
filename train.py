@@ -14,7 +14,7 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 def train(model_name='WienerNet', n_iters=4, nc=16,
           n_epochs=200, lr=1e-3, loss='MSE',
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
     parser.add_argument('--model', type=str, default='Unrolled_ADMM', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
-    parser.add_argument('--n_iters', type=int, default=4)
+    parser.add_argument('--n_iters', type=int, default=8)
     parser.add_argument('--nc', type=int, default=16)
     parser.add_argument('--n_epochs', type=int, default=200)
     parser.add_argument('--lr', type=float, default=1e-3)
