@@ -220,7 +220,7 @@ class Double_ADMM(nn.Module):
             u1 = u1 + x - z            
             u2 = u2 + h - g
 
-        return x#, h
+        return x #, h
 
 
 

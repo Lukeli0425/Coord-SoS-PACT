@@ -28,7 +28,7 @@ def generate_data(dataset_path, n_train=150,
                   image_size=(2040, 2040), PML_size=4, 
                   SoS_background=1500.0, R_ring=0.05, N_transducer=512,
                   SoS_das=1500.0, n_delays=8, delay_step=1e-4,
-                  n_start=0):
+                  smooth=True,  n_start=0):
     
     logger = logging.getLogger('DataGenerator')
     logger.info(' Generating data...')
@@ -95,6 +95,7 @@ def generate_data(dataset_path, n_train=150,
                                  medium=medium_uniform,
                                  sensor=sensor,
                                  PML_size=PML_size,
+                                 smooth=smooth,
                                  n_start=n_start)
         sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
                                                  sensor=sensor, 
@@ -136,6 +137,7 @@ def generate_data(dataset_path, n_train=150,
                                  medium=medium,
                                  sensor=sensor,
                                  PML_size=PML_size,
+                                 smooth=smooth,
                                  n_start=n_start)
         sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
                                                  sensor=sensor, 
@@ -240,5 +242,6 @@ if __name__ == '__main__':
     generate_data(dataset_path='/mnt/WD6TB/tianaoli/dataset/Brain/', 
                   n_train=opt.n_train,
                   n_delays=opt.n_delays,
+                  smooth=True,
                   n_start=opt.n_start)
     

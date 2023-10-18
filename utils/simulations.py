@@ -140,7 +140,7 @@ def get_medium(kgrid, Nx=2040, Ny=2040,
     return medium
 
 
-def forward_2D(p0, kgrid, medium, sensor, PML_size=12, n_start=0):
+def forward_2D(p0, kgrid, medium, sensor, PML_size=4, smooth=True, n_start=0):
     """2D forward simluation with K-wave.
 
     Args:
@@ -148,7 +148,7 @@ def forward_2D(p0, kgrid, medium, sensor, PML_size=12, n_start=0):
         kgrid (`kWaveGrid`): K-wave grid object.
         medium (`kWaveMedium`): K-wave medium object.
         sensor (`kSensor`): K-wave sensor object.
-        PML_size (int, optional): Size of PML. Defaults to 12.
+        PML_size (int, optional): Size of PML. Defaults to 4.
 
     Returns:
         `numpy.ndarray`: Photoacoustic data collected by tranceducers with shape `(N_transducer, N_T)`.
@@ -160,7 +160,8 @@ def forward_2D(p0, kgrid, medium, sensor, PML_size=12, n_start=0):
     source.p0 = p0
 
     # Smooth the initial pressure distribution and restore the magnitude.
-    # source.p0 = smooth(source.p0, True)
+    if smooth:
+        source.p0 = smooth(source.p0, True)
 
     # Create the time array.
     kgrid.makeTime(medium.sound_speed)
