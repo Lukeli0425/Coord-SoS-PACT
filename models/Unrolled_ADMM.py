@@ -43,37 +43,37 @@ from utils.utils_torch import psf_to_otf
 #         return self.maxpool_conv(x)
 
 
-# class SubNet(nn.Module):
-#     def __init__(self, n_iters=8):
-#         super(SubNet, self).__init__()
-#         self.n_iters = n_iters
-#         self.cnn = nn.Sequential(
-#             Down(8,8),
-#             Down(8,16),
-#             Down(16,32),
-#             Down(32,32)
-#         )
-#         self.mlp = nn.Sequential(
-#             nn.Linear(32*8*8, 256),
-#             nn.ReLU(inplace=True),
-#             nn.Linear(256, 64),
-#             nn.ReLU(inplace=True),
-#             nn.Linear(64, 2*self.n_iters),
-#             nn.Softplus()
-#         )
+class SubNet(nn.Module):
+    def __init__(self, n_iters=8):
+        super(SubNet, self).__init__()
+        self.n_iters = n_iters
+        self.cnn = nn.Sequential(
+            Down(8,8),
+            Down(8,16),
+            Down(16,32),
+            Down(32,32)
+        )
+        self.mlp = nn.Sequential(
+            nn.Linear(32*8*8, 256),
+            nn.ReLU(inplace=True),
+            nn.Linear(256, 64),
+            nn.ReLU(inplace=True),
+            nn.Linear(64, 2*self.n_iters),
+            nn.Softplus()
+        )
         
-#     def forward(self, y):
-#         B, _, h, w  = y.size()
-#         H = fftn(y, dim=[-2,-1])
-#         HtH = torch.abs(H) ** 2
-#         x = self.cnn(HtH.float())
-#         x = x.view(B, 1, 32*8*8)
-#         output = self.mlp(x) + 1e-6
+    def forward(self, y):
+        B, _, h, w  = y.size()
+        H = fftn(y, dim=[-2,-1])
+        HtH = torch.abs(H) ** 2
+        x = self.cnn(HtH.float())
+        x = x.view(B, 1, 32*8*8)
+        output = self.mlp(x) + 1e-6
 
-#         rho1_iters = output[:,:,0:self.n_iters].view(B, 1, 1, self.n_iters)
-#         rho2_iters = output[:,:,self.n_iters:2*self.n_iters].view(B, 1, 1, self.n_iters).repeat(1,8,1,1)
+        rho1_iters = output[:,:,0:self.n_iters].view(B, 1, 1, self.n_iters)
+        rho2_iters = output[:,:,self.n_iters:2*self.n_iters].view(B, 1, 1, self.n_iters).repeat(1,8,1,1)
         
-#         return rho1_iters, rho2_iters
+        return rho1_iters, rho2_iters
 
 
 class X_Update(nn.Module):
