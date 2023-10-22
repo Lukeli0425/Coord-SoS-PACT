@@ -55,6 +55,26 @@ def split_images(images, img_size=(64, 64), step=(32, 32)):
     
     return images_out
     
+    
+def center(img):
+    """Calculate the center of an image.
+
+    Args:
+        img (`numpy.ndarray`): 2D image.
+
+    Returns:
+        `tuple`: Indices of the ceenter pixel.
+    """
+    Nx, Ny = img.shape
+    x_sum, y_sum = 0, 0
+    for i in range(Nx):
+        for j in range(Ny):
+            x_sum += i * img[i,j]
+            y_sum += j * img[i,j]
+    x = int(x_sum / img.sum())
+    y = int(y_sum / img.sum())
+    return (x, y)
+
 
 def zero_pad(image, Nx, Ny):
     """Pads image with zeros.
@@ -111,20 +131,20 @@ def transducer_response(sensor_data, T_sample):
     return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) # / T_sample
 
 
-def get_medium(kgrid, Nx=2040, Ny=2040, 
+def get_medium(kgrid, Nx=2552, Ny=2552, 
                SoS_background=1500.0, 
                R=0.01, R1=0.06, offset=0.0, rou=1000):
     """
     Generate K-wave medium object with varying SoS distribution.
 
     Args:
-        Nx (int, optional): _description_. Defaults to 2040.
-        Ny (int, optional): _description_. Defaults to 2040.
+        Nx (int, optional): _description_. Defaults to `2552`.
+        Ny (int, optional): _description_. Defaults to `2552`.
         SoS_background (float, optional): SoS of the background medium. [m/s]. Defaults to `1500.0`.
         R (float, optional): Radius of the large circle in SoS distribution. [m]. Defaults to `0.01`.
         R1 (float, optional): Radius of the small circle in SoS distribution. [m]. Defaults to `0.06`.
         offset (tuple, optional): Offset of circle in SoS distribution. [m]. Defaults to `(0.0, 0.0)`.
-        rou (int, optional): Density. [g/cm^3] Defaults to 1000.
+        rou (int, optional): Density. [g/cm^3] Defaults to `1000`.
 
     Returns:
         `kWaveMedium`: The medium object with varying SoS distribution.
@@ -133,14 +153,14 @@ def get_medium(kgrid, Nx=2040, Ny=2040,
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
     SoS = np.ones((Ny, Nx)) * 1500
     SoS[XX**2 + YY**2 < R**2] = 1600
-    SoS[(XX + offset[0])**2 + (YY + offset[1])**2 < R1**2] = 1650
+    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = 1650
 
     medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=SoS_background, density=rou)
     
     return medium
 
 
-def forward_2D(p0, kgrid, medium, sensor, PML_size=4, smooth=True, n_start=0):
+def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=4, n_start=0):
     """2D forward simluation with K-wave.
 
     Args:
@@ -160,11 +180,11 @@ def forward_2D(p0, kgrid, medium, sensor, PML_size=4, smooth=True, n_start=0):
     source.p0 = p0
 
     # Smooth the initial pressure distribution and restore the magnitude.
-    if smooth:
-        source.p0 = smooth(source.p0, True)
+    source.p0 = smooth(source.p0, False)
 
     # Create the time array.
     kgrid.makeTime(medium.sound_speed)
+    kgrid.setTime(4000, T_sample)
 
     # Set the input arguements: force the PML to be outside the computational grid switch off p0 smoothing within kspaceFirstOrder2D.
     input_args = {
