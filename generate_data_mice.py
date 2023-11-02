@@ -6,10 +6,9 @@ from tempfile import gettempdir
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.random import shuffle
+from numpy.random import rand, choice, shuffle
 import scipy.io as scio
 import torch
-from numpy.random import rand
 from torch import nn
 from tqdm import tqdm
 
@@ -26,7 +25,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 
 def generate_data(dataset_path, n_train=150, 
-                  image_size=(2552, 2552), PML_size=4, 
+                  image_size=(2544, 2544), PML_size=8, 
                   SoS_background=1500.0, R_ring=0.05, N_transducer=512,
                   SoS_das=1500.0, n_delays=8, delay_step=1e-4,
                   smooth=True,  n_start=0):
@@ -57,7 +56,7 @@ def generate_data(dataset_path, n_train=150,
     
     Nx, Ny = image_size
     dx, dy = 4e-5, 4e-5
-    R = 7.4e-3 # Radius to center [m].
+    R = 9.2e-3 # Radius to center [m].
     l = 3.2e-3 # Patch size [m].
     T_sample = 1/80e6
     v0, v1 = SoS_background, 1600.0 # Background SoS & SoS in tissue [m/s].
@@ -67,18 +66,19 @@ def generate_data(dataset_path, n_train=150,
     pathname = os.path.join(gettempdir(), f'{n_start}')
     mkdir(pathname)
     
-    for idx in tqdm(range(0, mice_full_recon.shape[0])):
+    # for idx in tqdm(range(51, mice_full_recon.shape[0])):
+    for idx in tqdm(range(100, 120)):
         # Simulation parameters.
-        R = 7.4e-3 + 1e-4 * (rand() -0.5)
-        R1 = 2.6e-3 + 0.3e-4 * (rand() -0.5)
-        offset = (5e-4 * rand(), 5e-4 * rand())
+        R = 9.2e-3 + 1e-4 * rand() * choice([1,-1])
+        R1 = 2.6e-3 + 3e-4 * rand() * choice([1,-1])
+        offset = ((10+rand()*2)*1e-4 * choice([1,-1]), (10+rand()*2)*1e-4 * choice([1,-1]))
         rou = 1000 # Density [kg/m^3].
 
         # Resizing, centering and cropping.
         img = mice_full_recon[idx, :, :]
-        img = cv2.resize(img, (384, 384)) # Resize to (384, 384).
+        img = cv2.resize(img, (640, 640)) # Resize to (384, 384).
         x_c, y_c = center(img)
-        IP_img = img[x_c-160:x_c+160, y_c-160:y_c+160]
+        IP_img = img[x_c-280:x_c+280, y_c-280:y_c+280]
         np.save(os.path.join(IP_path, f"IP_{idx}.npy"), IP_img) # Save initial pressure.
         
         # Pad initial pressure distributions.
@@ -176,13 +176,12 @@ def generate_data(dataset_path, n_train=150,
         np.save(os.path.join(fullimg_path, 'distortion', f"fullimg_{idx}.npy"), obs_imgs) # Save full observation image.
         
         # Crop and save ground truth and observation images.
-        for i in range(9):
-            for j in range(9):
-                gt_file = os.path.join(gt_path, f"gt_{idx*81+9*i+j}.npy")
-                np.save(gt_file, gt_img[32*i:32*i+64, 32*j:32*j+64])
-                obs_file = os.path.join(obs_path, f"obs_{idx*81+9*i+j}.npy")
-                np.save(obs_file, obs_imgs[:, 32*i:32*i+64, 32*j:32*j+64])
-                
+        for i in range(13):
+            for j in range(13):
+                gt_file = os.path.join(gt_path, f"gt_{idx*169+13*i+j}.npy")
+                np.save(gt_file, gt_img[40*i:40*i+80, 40*j:40*j+80])
+                obs_file = os.path.join(obs_path, f"obs_{idx*169+13*i+j}.npy")
+                np.save(obs_file, obs_imgs[:, 40*i:40*i+80, 40*j:40*j+80])
 
         # Visualization.
         if idx < 5:
@@ -199,32 +198,32 @@ def generate_data(dataset_path, n_train=150,
             plt.close()
             
             # Small patch.
-            for i in range(9):
-                for j in range(9):
+            for i in range(13):
+                for j in range(13):
                     plt.figure(figsize=(12,12))
                     plt.subplot(3,3,1)
-                    plt.imshow(gt_img[32*i:32*i+64, 32*j:32*j+64])
+                    plt.imshow(gt_img[40*i:40*i+80, 40*j:40*j+80])
                     plt.title('Ground Truth')
                     for k in range(8):
                         plt.subplot(3,3,k+2)
-                        plt.imshow(obs_imgs[k, 32*i:32*i+64, 32*j:32*j+64])
+                        plt.imshow(obs_imgs[k, 40*i:40*i+80, 40*j:40*j+80])
                         plt.title(f'Observation({k})')
                     plt.savefig(os.path.join(vis_path, f'vis_{idx}_patch_{i}_{j}.jpg'), bbox_inches='tight')
                     plt.close()
                     
     # Calculate PSF based on location of patch.
     logger.info(' Simulating PSFs...')
-    for i in range(9):
-        for j in range(9):
-            x, y = (j-4)*l / 2, (4-i)*l / 2
+    for i in range(13):
+        for j in range(13):
+            x, y = (j-6)*l / 2, (6-i)*l / 2
             r, phi = np.sqrt(x**2 + y**2), np.arctan2(x, y)
             w_real = wavefront_real(R, torch.tensor(r), torch.tensor(phi), v0, v1)
-            k2D, theta2D = get_fourier_coord(n_points=64, l=3.2e-3, device='cpu')
+            k2D, theta2D = get_fourier_coord(n_points=80, l=l, device='cpu')
             psfs = []
             for id, delay in enumerate(delays):
                 psfs.append(PSF(theta2D, k2D, w_real, delay))
             psf = torch.stack(psfs, dim=0)
-            torch.save(psf, os.path.join(psf_path, f'psf_{i*9+j}.pth'))
+            torch.save(psf, os.path.join(psf_path, f'psf_{i*13+j}.pth'))
             
             # Visualization.
             fig = plt.figure(figsize=(16, 5))

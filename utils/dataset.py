@@ -12,7 +12,7 @@ def mkdir(path):
         
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, n_train=6370, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=16900, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -35,7 +35,7 @@ class PACT_Dataset(Dataset):
         
         self.n_gt = len(os.listdir(self.gt_path))
         self.n_obs = len(os.listdir(self.obs_path))
-        self.n_psf = 49 
+        self.n_psf = 169 
         if self.n_gt == self.n_obs:
             self.n_samples = self.n_gt
         else:
@@ -93,8 +93,8 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         train_size = int(train_val_split * len(train_dataset))
         val_size = len(train_dataset) - train_size
         train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
         return train_loader, val_loader
     else:
         test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)

@@ -27,7 +27,7 @@ def psf_to_otf(psf):
 	return psf, H, Ht, HtH
 
 
-def get_fourier_coord(n_points=64, l=3.2e-3, device='cuda:0'):
+def get_fourier_coord(n_points=80, l=3.2e-3, device='cuda:0'):
 	fx1D = torch.linspace(-np.pi/l, np.pi/l, n_points)
 	fy1D = torch.linspace(-np.pi/l, np.pi/l, n_points)
 	[fx2D, fy2D] = torch.meshgrid(fx1D, fy1D, indexing='xy')

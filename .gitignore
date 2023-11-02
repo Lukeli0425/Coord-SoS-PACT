@@ -7,6 +7,7 @@ DeePGEM-main
 
 saved_models/
 saved_models_Brain/
+saved_models_Mice/
 
 # nohup files
 *.out

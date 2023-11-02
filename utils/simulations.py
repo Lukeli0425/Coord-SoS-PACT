@@ -3,6 +3,7 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
+from numpy.random import rand, choice
 import torch
 from torch.fft import fftshift, ifftn
 
@@ -65,6 +66,7 @@ def center(img):
     Returns:
         `tuple`: Indices of the ceenter pixel.
     """
+    img = np.abs(img)
     Nx, Ny = img.shape
     x_sum, y_sum = 0, 0
     for i in range(Nx):
@@ -153,7 +155,7 @@ def get_medium(kgrid, Nx=2552, Ny=2552,
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
     SoS = np.ones((Ny, Nx)) * 1500
     SoS[XX**2 + YY**2 < R**2] = 1600
-    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = 1650
+    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = 1600 + (20 + 40 * rand()) * choice([1,-1])  
 
     medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=SoS_background, density=rou)
     
@@ -247,11 +249,17 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
 
     return Image
 
+
 def wavefront_fourier(C0, C1, phi1, C2, phi2):
     return lambda theta: C0 + C1 * torch.cos(theta - phi1) + C2 * torch.cos(2 * (theta - phi2))
 
+
 def wavefront_real(R, r, phi, v0, v1):
-    return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
+    if r < R:
+        return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
+    else:
+        return lambda theta: (1-v0/v1) * 2 * torch.sqrt(torch.maximum(R**2 - (r*torch.sin(theta-phi))**2, torch.zeros_like(theta))) * (torch.cos(phi-theta) >= 0)
+
 
 def PSF(theta, k, w, delay):
     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
