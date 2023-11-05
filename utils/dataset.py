@@ -12,7 +12,7 @@ def mkdir(path):
         
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, n_train=16900, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=25350, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -93,8 +93,8 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         train_size = int(train_val_split * len(train_dataset))
         val_size = len(train_dataset) - train_size
         train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=6)
         return train_loader, val_loader
     else:
         test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)

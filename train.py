@@ -14,8 +14,8 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
-torch.set_num_threads(4)
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+torch.set_num_threads(8)
 
 def train(model_name='WienerNet', n_iters=4, nc=16,
           n_epochs=200, lr=1e-3, loss='MultiScale',
@@ -32,7 +32,6 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
     train_loader, val_loader = get_dataloader(data_path=data_path, train=True, train_val_split=train_val_split, batch_size=batch_size)
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
     
     if 'Double_ADMM' in model_name:
         model = Double_ADMM(n_iters=n_iters, n_delays=8)

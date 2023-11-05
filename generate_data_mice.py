@@ -21,7 +21,7 @@ from utils.simulations import (PSF, center, delay_and_sum, forward_2D,
                                wavefront_real, zero_pad)
 from utils.utils_torch import get_fourier_coord
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0, 1'
 
 
 def generate_data(dataset_path, n_train=150, 
@@ -67,7 +67,7 @@ def generate_data(dataset_path, n_train=150,
     mkdir(pathname)
     
     # for idx in tqdm(range(51, mice_full_recon.shape[0])):
-    for idx in tqdm(range(100, 120)):
+    for idx in tqdm(range(162, 170)):
         # Simulation parameters.
         R = 9.2e-3 + 1e-4 * rand() * choice([1,-1])
         R1 = 2.6e-3 + 3e-4 * rand() * choice([1,-1])

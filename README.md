@@ -19,6 +19,12 @@ pip install -r requirements.txt
 ## Train
 
 ```zsh
+nohup python3 train.py --model WienerNet --loss MSE --lr 1e-3 --nc 8 > out/wiener_8_mse.out 2>&1 &
+nohup python3 train.py --model WienerNet --loss MultiScale --lr 1e-3 --nc 8 > out/wiener_8_mul.out 2>&1 &
+
 nohup python3 train.py --model WienerNet --loss MSE --lr 1e-3 --nc 16 > out/wiener_16_mse.out 2>&1 &
 nohup python3 train.py --model WienerNet --loss MultiScale --lr 1e-3 --nc 16 > out/wiener_16_mul.out 2>&1 &
+
+nohup python3 train.py --model WienerNet --loss MSE --lr 1e-3 --nc 32 > out/wiener_32_mse.out 2>&1 &
+nohup python3 train.py --model WienerNet --loss MultiScale --lr 1e-3 --nc 32 > out/wiener_32_mul.out 2>&1 &
 ```
