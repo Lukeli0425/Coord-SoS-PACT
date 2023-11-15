@@ -14,7 +14,7 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 torch.set_num_threads(8)
 
 def train(model_name='WienerNet', n_iters=4, nc=16,
@@ -29,7 +29,7 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
     if not os.path.exists(model_save_path):
         os.mkdir(model_save_path)
     
-    train_loader, val_loader = get_dataloader(data_path=data_path, train=True, train_val_split=train_val_split, batch_size=batch_size)
+    train_loader, val_loader = get_dataloader(data_path=data_path, train=True, train_val_split=train_val_split, batch_size=batch_size, gt_folder='gold/')
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     

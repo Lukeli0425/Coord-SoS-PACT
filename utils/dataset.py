@@ -62,7 +62,6 @@ class PACT_Dataset(Dataset):
         
         psf_idx = idx % self.n_psf # Pick corresponding PSF for each patch.
         psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
-        # psf = psf / psf.sum() # Normalize flux to 1.
 
         gt /= obs.abs().mean()
         obs /= obs.abs().mean()
@@ -93,8 +92,8 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         train_size = int(train_val_split * len(train_dataset))
         val_size = len(train_dataset) - train_size
         train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=6)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         return train_loader, val_loader
     else:
         test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)
