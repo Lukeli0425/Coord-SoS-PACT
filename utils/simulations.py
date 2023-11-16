@@ -3,59 +3,59 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
-from numpy.random import rand, choice
 import torch
+from numpy.fft import fft, ifft
+from numpy.random import choice, rand
 from torch.fft import fftshift, ifftn
 
 from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
-from kwave.options import SimulationOptions
 from kwave.ktransducer import *
+from kwave.options import SimulationOptions
 from kwave.utils import *
 
-
-def read_images(path, files):
-    return [np.load(os.path.join(path, file)) for file in files]
-
-
-def subtract_background(image):
-    """Conduct background subtraction to blood vessel section images.
-
-    Args:
-        image (`numpy.ndarray`): Input blood vessel section image.
-
-    Returns:
-        `numpy.ndarray`: Background subtracted blood vessel section image.
-    """
-    return image - image[0,0]
+# def read_images(path, files):
+#     return [np.load(os.path.join(path, file)) for file in files]
 
 
-def join_images(images, n_row=2, n_col=2):
+# def subtract_background(image):
+#     """Conduct background subtraction to blood vessel section images.
+
+#     Args:
+#         image (`numpy.ndarray`): Input blood vessel section image.
+
+#     Returns:
+#         `numpy.ndarray`: Background subtracted blood vessel section image.
+#     """
+#     return image - image[0,0]
+
+
+# def join_images(images, n_row=2, n_col=2):
     
-    if len(images) != n_row * n_col:
-        raise ValueError('Number of images does not match the number of rows and columns.')
+#     if len(images) != n_row * n_col:
+#         raise ValueError('Number of images does not match the number of rows and columns.')
 
-    images_row = []
-    for i in range(n_row):
-        images_row.append(np.concatenate(images[n_row*i:n_row*i+n_col], axis=1))
-    image_joint = np.concatenate(images_row , axis=0)
+#     images_row = []
+#     for i in range(n_row):
+#         images_row.append(np.concatenate(images[n_row*i:n_row*i+n_col], axis=1))
+#     image_joint = np.concatenate(images_row , axis=0)
     
-    return image_joint
+#     return image_joint
 
 
-def split_images(images, img_size=(64, 64), step=(32, 32)):
+# def split_images(images, img_size=(64, 64), step=(32, 32)):
     
-    n_x, n_y = (images[0].shape[0]-img_size[0])//step[0]+1, (images[0].shape[1]-img_size[1])//step[1]+1
-    images_out = [[] for i in range(n_x*n_y)]
-    for image in images:
-        for idx in range(2*n_x-1):
-            for idy in range(2*n_y-1):
-                images_out[n_x*idx+idy].append(image[idx*step[0]:idx*step[0]+img_size[0], idy*step[1]:idy*step[1]+img_size[1]])
+#     n_x, n_y = (images[0].shape[0]-img_size[0])//step[0]+1, (images[0].shape[1]-img_size[1])//step[1]+1
+#     images_out = [[] for i in range(n_x*n_y)]
+#     for image in images:
+#         for idx in range(2*n_x-1):
+#             for idy in range(2*n_y-1):
+#                 images_out[n_x*idx+idy].append(image[idx*step[0]:idx*step[0]+img_size[0], idy*step[1]:idy*step[1]+img_size[1]])
                 
-    images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
+#     images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
     
-    return images_out
+#     return images_out
     
     
 def center(img):
@@ -99,6 +99,15 @@ def zero_pad(image, Nx, Ny):
     return image_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y)
 
 
+def get_water_SoS(t):
+    """Calculate the speed of sound of water at temperature `t` in Celsius."""
+    a = [1.402385e3, 5.038813, -5.799136e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
+    SoS = 0
+    for i in range(len(a)):
+        SoS += a[i] * t**i
+    return SoS
+
+
 def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
     """Reorder the binary sensor data collected by a ring array in angular order.
 
@@ -121,7 +130,7 @@ def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
     return sensor_data[reorder_index]
 
 
-def transducer_response(sensor_data, T_sample):
+def transducer_response(sensor_data):
     """Apply transducer response to sinogram.
 
     Args:
@@ -131,11 +140,27 @@ def transducer_response(sensor_data, T_sample):
     Returns:
         `numpy.ndarray`: Output sinogram.
     """
-    return -2 * (sensor_data[:,1:] - sensor_data[:,:-1]) # / T_sample
+
+    sensor_data = np.append(sensor_data, np.zeros((sensor_data.shape[0],1)), axis=1)
+    return -2 * (sensor_data[:,1:] - sensor_data[:,:-1])
+
+
+def deconvolve_sinogram(sinogram, EIR, t0):
+    delta = np.zeros_like(EIR)
+    delta[0, t0] = 1
+    
+    delta_ft = fft(delta, axis=1)
+    EIR_ft = fft(EIR, axis=1)
+    Sinogram_ft = fft(sinogram, axis=1)
+    
+    Sinogram_ft *= np.exp(1j * (np.angle(delta_ft) - np.angle(EIR_ft)))
+    
+    sinogram_deconv = np.real(ifft(Sinogram_ft, axis=1))
+    return sinogram_deconv
 
 
 def get_medium(kgrid, Nx=2552, Ny=2552, 
-               SoS_background=1500.0, 
+               v0=1500.0, v1=1600.0, v2=1650.0, 
                R=0.01, R1=0.06, offset=0.0, rou=1000):
     """
     Generate K-wave medium object with varying SoS distribution.
@@ -154,16 +179,16 @@ def get_medium(kgrid, Nx=2552, Ny=2552,
     """
 
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
-    SoS = np.ones((Ny, Nx)) * 1500
-    SoS[XX**2 + YY**2 < R**2] = 1600
-    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = 1600 + (20 + 40 * rand()) * choice([1,-1])  
+    SoS = np.ones((Ny, Nx)) * v0
+    SoS[XX**2 + YY**2 < R**2] = v1
+    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = v2
 
-    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=SoS_background, density=rou)
+    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=v0, density=rou)
     
     return medium
 
 
-def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=4, n_start=0):
+def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=8):
     """2D forward simluation with K-wave.
 
     Args:
@@ -171,19 +196,19 @@ def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=4, n_start=0):
         kgrid (`kWaveGrid`): K-wave grid object.
         medium (`kWaveMedium`): K-wave medium object.
         sensor (`kSensor`): K-wave sensor object.
-        PML_size (int, optional): Size of PML. Defaults to 4.
+        PML_size (int, optional): Size of PML. Defaults to 8.
 
     Returns:
         `numpy.ndarray`: Photoacoustic data collected by tranceducers with shape `(N_transducer, N_T)`.
     """
     
-    pathname = os.path.join(gettempdir(), f'{n_start}')
+    pathname = os.path.join(gettempdir())
 
     source = kSource()
     source.p0 = p0
 
     # Smooth the initial pressure distribution and restore the magnitude.
-    source.p0 = smooth(source.p0, False)
+    # source.p0 = smooth(source.p0, False)
 
     # Create the time array.
     kgrid.makeTime(medium.sound_speed)
@@ -194,7 +219,7 @@ def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=4, n_start=0):
         'PMLInside': False,
         'PMLSize': PML_size,
         'Smooth': False,
-        'SaveToDisk': os.path.join(pathname, f'example_input_{n_start}.h5'),
+        'SaveToDisk': os.path.join(pathname, f'input.h5'),
         'SaveToDiskExit': False, 
     }
 
@@ -269,6 +294,14 @@ def PSF(theta, k, w, delay):
     return psf
 
 
+def get_delays(R, v0, v1, n_delays, mode='linear'):
+    if mode == 'linear':
+        return np.linspace(0, (1-v0/v1) * R, n_delays)
+    elif mode == 'quadric':
+        return (1-v0/v1) * R * np.sqrt(np.linspace(0,1,n_delays))
+    else:
+        raise NotImplementedError
+    
 
 if __name__ == "__main__":
     obs_pad = np.zeros([1,256,256])
