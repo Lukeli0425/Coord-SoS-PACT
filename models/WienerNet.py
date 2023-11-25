@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from torch.fft import fftn, ifftn, fftshift, ifftshift
+from torch.fft import fft2, ifft2, fftn, ifftn, fftshift, ifftshift
 import torch.nn as nn
 import torch.nn.functional as F
 from models.ResUNet import ResUNet
@@ -14,10 +14,12 @@ class Wiener(nn.Module):
         super(Wiener, self).__init__()
         
     def forward(self, y, h, lam):
-        _, H, Ht, HtH = psf_to_otf(h)
-        rhs = Ht * fftn(y, dim=[-2,-1]) #.sum(axis=1).unsqueeze(1)
+        H = fft2(h)
+        Ht, HtH = torch.conj(H), torch.abs(H) ** 2
+        
+        rhs = Ht * fft2(y) #.sum(axis=1).unsqueeze(1)
         lhs = HtH + lam
-        x = ifftshift(ifftn(rhs/lhs, dim=[-2,-1]), dim=[-2,-1]).real
+        x = ifftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
         return x
 

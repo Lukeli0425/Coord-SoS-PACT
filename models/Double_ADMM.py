@@ -132,25 +132,25 @@ class G_Update_CNN(nn.Module):
             Down(16,16)
         )
         self.mlp = nn.Sequential(
-            nn.Linear(16*4*4, 256),
+            nn.Linear(16*5*5, 256),
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
             nn.Linear(64, 6),
             nn.Softplus()
         )
-        self.psf = PSF_PACT(n_points=64, n_delays=n_delays, device=device)
+        self.psf = PSF_PACT(n_points=80, n_delays=n_delays, device=device)
         # self.psf_filter = torch.ones([1,n_delays,64,64], device=device, requires_grad=True)
         # self.psf_bias = torch.ones([1,n_delays,64,64], device=device, requires_grad=True)
 
     def forward(self, h0):
         N = h0.shape[0] # Batch size.
-        
+        # print(h0.shape)
         # PSF parameter estimation.
         H = fftn(h0, dim=[-2,-1])
         HtH = torch.abs(H) ** 2
         x = self.cnn(HtH.float())
-        x = x.view(N, 1, 16*4*4)
+        x = x.view(N, 1, 16*5*5)
         params = self.mlp(x) + 1e-6
         params = params.repeat(1,8,1).unsqueeze(-1)
         

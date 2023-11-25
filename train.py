@@ -14,8 +14,8 @@ from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '0'
-torch.set_num_threads(8)
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# torch.set_num_threads(16)
 
 def train(model_name='WienerNet', n_iters=4, nc=16,
           n_epochs=200, lr=1e-3, loss='MultiScale',
@@ -36,14 +36,14 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
     if 'Double_ADMM' in model_name:
         model = Double_ADMM(n_iters=n_iters, n_delays=8)
     elif 'Unrolled_ADMM' in model_name:
-        model = Unrolled_ADMM (n_iters=n_iters, n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
+        model = Unrolled_ADMM (n_iters=n_iters, nc=[nc, nc*2, nc*4, nc*8])
     elif 'WienerNet' in model_name:
         model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
     # elif 'FT_ResUNet' in model_name:
     #     model = FT_ResUNet(in_nc=8, out_nc=1)
     elif 'ResUNet' in model_name:
         model = ResUNet(in_nc=8, out_nc=1, nc=[nc, nc*2, nc*4, nc*8])
-    model.cuda()
+    model.to(device)
     # model = DataParallel(model, device_ids=[0, 1])
     
     if pretrained_epochs > 0:
@@ -60,7 +60,7 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
         loss_fn = torch.nn.MSELoss()
     elif loss == 'MultiScale':
         loss_fn = MultiScaleLoss()
-    loss_fn = loss_fn.cuda()
+    loss_fn = loss_fn.to(device)
     
     optimizer = Adam(params=model.parameters(), lr = lr)
 
@@ -71,7 +71,7 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
         train_loss = 0.0
         for idx, (obs, psf, gt) in enumerate(train_loader):
             optimizer.zero_grad()
-            obs, psf, gt = obs.cuda(), psf.cuda(), gt.cuda()
+            obs, psf, gt = obs.to(device), psf.to(device), gt.to(device)
             rec = model(obs, psf)
             loss = loss_fn(gt, rec)
             loss.backward()
@@ -79,12 +79,12 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
             train_loss = loss.item()
             
             # Evaluate on valid dataset.
-            if (idx+1) % 20 == 0:
+            if (idx+1) % 40 == 0:
                 val_loss = 0.0
                 model.eval()
                 with torch.no_grad():
                     for _, (obs, psf, gt) in enumerate(val_loader):
-                        obs, psf, gt = obs.cuda(), psf.cuda(), gt.cuda()
+                        obs, psf, gt = obs.to(device), psf.to(device), gt.to(device)
                         rec = model(obs, psf)
                         loss = loss_fn(gt, rec)
                         val_loss += loss.item()
@@ -99,7 +99,7 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
         model.eval()
         with torch.no_grad():
             for _, (obs, psf, gt) in enumerate(train_loader):
-                obs, psf, gt = obs.cuda(), psf.cuda(), gt.cuda()
+                obs, psf, gt = obs.to(device), psf.to(device), gt.to(device)
                 rec = model(obs, psf)
                 loss = loss_fn(gt, rec)
                 train_loss += loss.item()
@@ -109,7 +109,7 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
         model.eval()
         with torch.no_grad():
             for _, (obs, psf, gt) in enumerate(val_loader):
-                obs, psf, gt = obs.cuda(), psf.cuda(), gt.cuda()
+                obs, psf, gt = obs.to(device), psf.to(device), gt.to(device)
                 rec = model(obs, psf)
                 loss = loss_fn(gt, rec)
                 val_loss += loss.item()
@@ -148,9 +148,9 @@ if __name__ == "__main__":
     parser.add_argument('--pretrained_epochs', type=int, default=0) 
     opt = parser.parse_args()
 
-    data_path = '/mnt/WD6TB/tianaoli/dataset/Mice/'
+    data_path = '/mnt/WD6TB/tianaoli/dataset/Mice_new1/'
 
     train(model_name=opt.model, n_iters=opt.n_iters, nc=opt.nc,
           n_epochs=opt.n_epochs, lr=opt.lr, loss=opt.loss,
           data_path=data_path, train_val_split=opt.train_val_split, batch_size=opt.batch_size,
-          model_save_path='./saved_models_Mice/', pretrained_epochs=opt.pretrained_epochs)
+          model_save_path='./saved_models_Mice_new1/', pretrained_epochs=opt.pretrained_epochs)

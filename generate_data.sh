@@ -1,5 +1,6 @@
-for n in {0,5,10,15,20};
-do
+#!/bin/zsh
+
+for n in {0..269}; do
+   # echo $n
    python generate_data_mice.py --n_start $n
-   # python try.py --n $n
 done

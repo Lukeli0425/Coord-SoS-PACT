@@ -8,6 +8,9 @@ DeePGEM-main
 saved_models/
 saved_models_Brain/
 saved_models_Mice/
+saved_models_Mice_new/
+
+tmp.ipynb
 
 # nohup files
 *.out

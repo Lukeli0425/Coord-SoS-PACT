@@ -26,7 +26,7 @@ class IFT2D(nn.Module):
 
 
 class PSF_PACT(nn.Module):
-    def __init__(self, n_delays=8, delay_step=1e-4, n_points=64, l=3.2e-3, device='cpu'):
+    def __init__(self, n_delays=8, delay_step=1e-4, n_points=80, l=3.2e-3, device='cpu'):
         super(PSF_PACT, self).__init__() 
         self.device = device
         self.n_points = n_points # Size of PSF image in pixels.

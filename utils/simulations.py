@@ -3,6 +3,7 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
+from sympy import im
 import torch
 from numpy.fft import fft, ifft
 from numpy.random import choice, rand
@@ -97,6 +98,20 @@ def zero_pad(image, Nx, Ny):
     image_pad[pad_start_x:pad_end_x, pad_start_y:pad_end_y] = image
     
     return image_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y)
+
+
+def random_rotate(img):
+    angle = choice([0, 90, 180, 270])
+    flip_x, flip_y = choice([True, False]), choice([True, False])
+    if flip_x:
+        img = np.flip(img, axis=-2)
+    if flip_y:
+        img = np.flip(img, axis=-1)
+
+    img = np.rot90(img, k=angle//90, axes=(-2,-1))
+
+    return img
+    
 
 
 def get_water_SoS(t):
@@ -202,7 +217,7 @@ def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=8):
         `numpy.ndarray`: Photoacoustic data collected by tranceducers with shape `(N_transducer, N_T)`.
     """
     
-    pathname = os.path.join(gettempdir())
+    pathname = gettempdir()
 
     source = kSource()
     source.p0 = p0
@@ -219,7 +234,7 @@ def forward_2D(p0, kgrid, medium, sensor, T_sample, PML_size=8):
         'PMLInside': False,
         'PMLSize': PML_size,
         'Smooth': False,
-        'SaveToDisk': os.path.join(pathname, f'input.h5'),
+        'SaveToDisk': os.path.join(pathname, 'input.h5'),
         'SaveToDiskExit': False, 
     }
 
@@ -293,6 +308,12 @@ def PSF(theta, k, w, delay):
     psf /= psf.sum(axis=(-2,-1)) # Normalization.
     return psf
 
+# def PSF(theta, k, w, delay):
+#     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
+#     # psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+#     # psf = tf/psf.sum(axis=(-2,-1)) # Normalization.
+#     return tf
+
 
 def get_delays(R, v0, v1, n_delays, mode='linear'):
     if mode == 'linear':
@@ -304,8 +325,11 @@ def get_delays(R, v0, v1, n_delays, mode='linear'):
     
 
 if __name__ == "__main__":
-    obs_pad = np.zeros([1,256,256])
-    gt_imgs = split_images(obs_pad, img_size=(128, 128))
-    print(len(gt_imgs))
-    gt_imgs = [np.squeeze(gt_img, axis=0) for gt_img in gt_imgs]
-    print(gt_imgs[0].shape)
+    # obs_pad = np.zeros([1,256,256])
+    # gt_imgs = split_images(obs_pad, img_size=(128, 128))
+    # print(len(gt_imgs))
+    # gt_imgs = [np.squeeze(gt_img, axis=0) for gt_img in gt_imgs]
+    # print(gt_imgs[0].shape)
+    
+    img = np.zeros([560, 560])
+    img = random_rotate(img)

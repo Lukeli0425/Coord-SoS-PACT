@@ -5,14 +5,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, random_split
 
-def mkdir(path):
-    if not os.path.exists(path):
-        os.mkdir(path)
-        
-        
+
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, n_train=25350, obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=21970, obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -20,7 +16,7 @@ class PACT_Dataset(Dataset):
             train (bool, optional): Whether the dataset is generated for training or testing. Defaults to `True`.
             obs_folder (str, optional): Path to the observed image folder. Defaults to `'obs/'`.
             gt_folder (str, optional): Path to the ground truth image folder. Defaults to `'gt/'`.
-            gt_folder (str, optional): Path to the PSF folder. Defaults to `'psf/'`.
+            psf_folder (str, optional): Path to the PSF folder. Defaults to `'psf/'`.
         """
         super(PACT_Dataset, self).__init__()
         
@@ -35,7 +31,7 @@ class PACT_Dataset(Dataset):
         
         self.n_gt = len(os.listdir(self.gt_path))
         self.n_obs = len(os.listdir(self.obs_path))
-        self.n_psf = 169 
+        # self.n_psf = 169 
         if self.n_gt == self.n_obs:
             self.n_samples = self.n_gt
         else:
@@ -60,18 +56,18 @@ class PACT_Dataset(Dataset):
         # gt = (gt - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         # obs = (obs - gt.min()) / (gt.max() - gt.min()) # Normalize to [0, 1].
         
-        psf_idx = idx % self.n_psf # Pick corresponding PSF for each patch.
-        psf = torch.load(os.path.join(self.psf_path, f"psf_{psf_idx}.pth"))
+        # psf_idx = idx # Pick corresponding PSF for each patch.
+        psf = torch.load(os.path.join(self.psf_path, f"psf_{idx}.pth"))
 
-        gt /= obs.abs().mean()
+        gt /= gt.abs().mean()
         obs /= obs.abs().mean()
 
         return obs, psf, gt
     
     
     
-def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, train_val_split=0.875, batch_size=16,
-                   obs_folder='obs/', gt_folder='gt/', psf_folder='psf/'):
+def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Mice_new1/', train=True, train_val_split=0.875, batch_size=64, num_workers=22, pin_memory=False,
+                   obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
     """Generate PyTorch dataloaders for training or testing.
 
     Args:
@@ -88,12 +84,12 @@ def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Brain/', train=True, t
         test_loader (`torch.utils.data.DataLoader`): PyTorch dataloader for test dataset.
     """
     if train:
-        train_dataset = PACT_Dataset(data_path=data_path, train=True)
+        train_dataset = PACT_Dataset(data_path=data_path, train=True, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)
         train_size = int(train_val_split * len(train_dataset))
         val_size = len(train_dataset) - train_size
         train_dataset, val_dataset = random_split(train_dataset, [train_size, val_size])
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin_memory)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
         return train_loader, val_loader
     else:
         test_dataset = PACT_Dataset(data_path=data_path, train=False, obs_folder=obs_folder, gt_folder=gt_folder, psf_folder=psf_folder)
@@ -107,10 +103,7 @@ if __name__ == '__main__':
     test_loader = get_dataloader(train=False)
     pos, neg = 0, 0
     for idx, (obs, psf, gt) in enumerate(train_loader):
-        if obs.mean() < 0:
-            neg += 1
-        else:
-            pos += 1
+        pass
             
-    print(pos, neg)
+    # print(pos, neg)
         

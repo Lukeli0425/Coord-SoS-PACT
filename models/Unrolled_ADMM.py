@@ -108,25 +108,32 @@ class Unrolled_ADMM(nn.Module):
         self.n_delays = n_delays # Number of delays.
         self.X = X_Update() # FFT based quadratic solution.
         self.Z = Z_Update_ResUNet(nc=nc) # Denoiser.
-        self.psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
-        self.C0 = torch.tensor(7.8e-4, requires_grad=True)
-        self.psf_filter = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
-        self.psf_bias = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
+        # self.psf_pact = PSF_PACT(n_delays=self.n_delays, device=self.device)
+        # self.C0 = torch.tensor(7.8e-4, requires_grad=True)
+        # self.psf_filter = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
+        # self.psf_bias = torch.ones([1,n_delays,128,128], requires_grad=True, device=self.device)
         
         # self.SubNet = SubNet(self.n)
         self.rho_iters = torch.ones(size=(self.n,), requires_grad=True, device=self.device)
 
-        
-    def forward(self, y):
+    def init_l2(self, y, H,):
+        Ht, HtH = torch.conj(H), torch.abs(H)**2
+        rhs = tfft.fftn(conv_fft_batch(Ht, y/alpha), dim=[2,3])
+        lhs = HtH + (1/alpha)
+        x0 = torch.real(tfft.ifftn(rhs/lhs, dim=[2,3]))
+        x0 = torch.clamp(x0,0,1)
+        return x0
+
+    def forward(self, y, h):
         # y = y.cuda(self.device, non_blocking=True)
         B, _, H, W = y.size()
         # Other ADMM variables.
-        u = torch.zeros([B, 1, H, W], device=self.device)
-        z = torch.zeros([B, 1, H, W], device=self.device)
+        z = Variable(x.data.clone()).to(self.device)
+        u = torch.zeros(x.size()).to(self.device)
         # x = y
-        h = self.psf_pact(C0=self.C0, C1=0, phi1=0, C2=0, phi2=0) * self.psf_filter + self.psf_bias * 1e-5
+        # h = self.psf_pact(C0=self.C0, C1=0, phi1=0, C2=0, phi2=0) * self.psf_filter + self.psf_bias * 1e-5
         _, H, Ht, HtH = psf_to_otf(h)
-        # rho1_iters, rho2_iters = self.SubNet(y) 	# Hyperparameters.
+        # rho1_iters, rho2_iters = self.SubNet(y)     # Hyperparameters.
         
         # z = Variable(x.data.clone()).to(self.device)
         
