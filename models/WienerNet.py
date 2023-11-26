@@ -51,7 +51,7 @@ class WienerNet(nn.Module):
         # self.psf_bias = torch.ones([1,n_delays,128,128], device=self.device, requires_grad=True)
         
         self.wiener = Wiener()
-        self.lam = nn.Parameter(0.25 * torch.ones([8,1,1], requires_grad=True, device=self.device))
+        self.lam = nn.Parameter(0.2 * torch.ones([8,1,1], requires_grad=True, device=self.device))
         self.denoiser = ResUNet(in_nc=n_delays, out_nc=1, nb=2, nc=nc)
         
     def forward(self, y, psf):

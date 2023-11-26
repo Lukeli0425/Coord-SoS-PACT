@@ -61,7 +61,7 @@ class PACT_Data_Generator():
             # self.logger.critical(' Failed loading information from %s.', self.info_file)
 
 
-    def gerenate_params(self, n_total=269, R_ring=0.05, N_transducer=512, n_delays=8, image_size=(2544, 2544), PML_size=8):
+    def gerenate_params(self, n_total=274, R_ring=0.05, N_transducer=512, n_delays=8, image_size=(2544, 2544), PML_size=8):
         """Generate simulation parameters and save to json file.
 
         Args:
@@ -150,72 +150,72 @@ class PACT_Data_Generator():
             rou = params[k]['density'] # Density [kg/m^3].
             delays = get_delays(R, v0, v1, n_delays, 'linear')
 
-            # Resizing, centering and cropping.
-            img = mice_full_recon[idx, :, :]
-            img = cv2.resize(img, (640, 640)) # Resize to (384, 384).
-            x_c, y_c = center(img)
-            IP_img = img[x_c-280:x_c+280, y_c-280:y_c+280]
+            # # Resizing, centering and cropping.
+            # img = mice_full_recon[idx, :, :]
+            # img = cv2.resize(img, (640, 640)) # Resize to (384, 384).
+            # x_c, y_c = center(img)
+            # IP_img = img[x_c-280:x_c+280, y_c-280:y_c+280]
             
-            # Randomly rotate.
-            IP_img = random_rotate(IP_img)
-            np.save(os.path.join(self.IP_path, f"IP_{k}.npy"), IP_img) # Save initial pressure.
+            # # Randomly rotate.
+            # IP_img = random_rotate(IP_img)
+            # np.save(os.path.join(self.IP_path, f"IP_{k}.npy"), IP_img) # Save initial pressure.
             
-            # Pad initial pressure distributions.
-            IP_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(IP_img, Nx, Ny)
+            # # Pad initial pressure distributions.
+            # IP_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y) = zero_pad(IP_img, Nx, Ny)
             
-            # K-wave 2D forward simulation.
-            kgrid = kWaveGrid([Nx, Ny], [dx, dy])
-            kgrid.dt = T_sample / 2
+            # # K-wave 2D forward simulation.
+            # kgrid = kWaveGrid([Nx, Ny], [dx, dy])
+            # kgrid.dt = T_sample / 2
             
-            medium = get_medium(kgrid=kgrid, Nx=Nx, Ny=Ny, 
-                                v0=v0, v1=v1, v2=v2,
-                                R=R, R1=R1, offset=offset, rou=rou)
+            # medium = get_medium(kgrid=kgrid, Nx=Nx, Ny=Ny, 
+            #                     v0=v0, v1=v1, v2=v2,
+            #                     R=R, R1=R1, offset=offset, rou=rou)
             
-            cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
-                                            center_pos=[0,0], arc_angle=2*np.pi)
-            sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
+            # cart_sensor_mask = makeCartCircle(radius=R_ring, num_points=N_transducer,
+            #                                 center_pos=[0,0], arc_angle=2*np.pi)
+            # sensor = kSensor(cart_sensor_mask) # Assign to sensor structure.
             
-            sensor_data = forward_2D(p0=IP_pad, 
-                                    kgrid=kgrid, 
-                                    medium=medium,
-                                    sensor=sensor,
-                                    T_sample=T_sample/2,
-                                    PML_size=PML_size)
-            sensor_data = sensor_data[:, ::2]
-            sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
-                                                    sensor=sensor, 
-                                                    kgrid=kgrid, 
-                                                    PML_size=PML_size)
-            sinogram = transducer_response(sensor_data) # Add transducer response.
+            # sensor_data = forward_2D(p0=IP_pad, 
+            #                         kgrid=kgrid, 
+            #                         medium=medium,
+            #                         sensor=sensor,
+            #                         T_sample=T_sample/2,
+            #                         PML_size=PML_size)
+            # sensor_data = sensor_data[:, ::2]
+            # sensor_data = reorder_binary_sensor_data(sensor_data=sensor_data, 
+            #                                         sensor=sensor, 
+            #                                         kgrid=kgrid, 
+            #                                         PML_size=PML_size)
+            # sinogram = transducer_response(sensor_data) # Add transducer response.
             
-            np.save(os.path.join(self.sino_path, f"sinogram_{k}.npy"), sinogram) # Save sinogram.
-            np.save(os.path.join(self.SoS_path, f"SoS_{k}.npy"), medium.sound_speed) # Save SoS distribution.
+            # np.save(os.path.join(self.sino_path, f"sinogram_{k}.npy"), sinogram) # Save sinogram.
+            # np.save(os.path.join(self.SoS_path, f"SoS_{k}.npy"), medium.sound_speed) # Save SoS distribution.
             
-            sinogram_deconv = deconvolve_sinogram(sinogram, EIR, np.argmax(EIR))
+            # sinogram_deconv = deconvolve_sinogram(sinogram, EIR, np.argmax(EIR))
         
-            # Delay and Sum Reconstruction.
-            recons = []
-            for d_delay in delays:
-                recon = delay_and_sum(R_ring,
-                                    T_sample,
-                                    v0,
-                                    sinogram_deconv,
-                                    kgrid.x_vec[pad_start_x:pad_end_x],
-                                    kgrid.y_vec[pad_start_y:pad_end_y],
-                                    d_delay=d_delay)
-                recons.append(recon)
-            obs_imgs = np.array(recons) # Stack in to 3D array of shape [8, 256, 256].
+            # # Delay and Sum Reconstruction.
+            # recons = []
+            # for d_delay in delays:
+            #     recon = delay_and_sum(R_ring,
+            #                         T_sample,
+            #                         v0,
+            #                         sinogram_deconv,
+            #                         kgrid.x_vec[pad_start_x:pad_end_x],
+            #                         kgrid.y_vec[pad_start_y:pad_end_y],
+            #                         d_delay=d_delay)
+            #     recons.append(recon)
+            # obs_imgs = np.array(recons) # Stack in to 3D array of shape [8, 256, 256].
             
-            np.save(os.path.join(self.obs_full_path, f"fullimg_{k}.npy"), obs_imgs) # Save full observation image.
+            # np.save(os.path.join(self.obs_full_path, f"fullimg_{k}.npy"), obs_imgs) # Save full observation image.
             
             
             for i in range(13):
                 for j in range(13):
-                    # Crop and save ground truth and observation images.
-                    gt_file = os.path.join(self.gold_path, f"gt_{k*169+13*i+j}.npy")
-                    np.save(gt_file, IP_img[40*i:40*i+80, 40*j:40*j+80])
-                    obs_file = os.path.join(self.obs_path, f"obs_{k*169+13*i+j}.npy")
-                    np.save(obs_file, obs_imgs[:, 40*i:40*i+80, 40*j:40*j+80])
+                    # # Crop and save ground truth and observation images.
+                    # gt_file = os.path.join(self.gold_path, f"gt_{k*169+13*i+j}.npy")
+                    # np.save(gt_file, IP_img[40*i:40*i+80, 40*j:40*j+80])
+                    # obs_file = os.path.join(self.obs_path, f"obs_{k*169+13*i+j}.npy")
+                    # np.save(obs_file, obs_imgs[:, 40*i:40*i+80, 40*j:40*j+80])
 
                     # Calculate PSF based on location of patch.
                     R += 0.1e-3 * rand() * choice([-1, 1])
@@ -230,17 +230,17 @@ class PACT_Data_Generator():
                     torch.save(psf, os.path.join(self.psf_path, f'psf_{k*169+13*i+j}.pth'))
                     
                     # Visualization.
-                    # if k < 4 and i == 5 and j == 3:
-                    #     plt.figure(figsize=(16, 5))
-                    #     for id, delay in enumerate(delays):
-                    #         plt.subplot(2,4,id+1)
-                    #         plt.imshow(psfs[id])
-                    #         plt.xticks([])
-                    #         plt.yticks([])
-                    #         plt.title('Delay={:.2f}mm'.format(delays[id]*1e3), fontsize=14)
-                    #     plt.tight_layout()
-                    #     plt.savefig(os.path.join(self.vis_path, f'psf_vis_{k}_({i}_{j}).jpg'))
-                    #     plt.close()
+                    if k < 4 and i == 5 and j == 3:
+                        plt.figure(figsize=(16, 5))
+                        for id, delay in enumerate(delays):
+                            plt.subplot(2,4,id+1)
+                            plt.imshow(psfs[id])
+                            plt.xticks([])
+                            plt.yticks([])
+                            plt.title('Delay={:.2f}mm'.format(delays[id]*1e3), fontsize=14)
+                        plt.tight_layout()
+                        plt.savefig(os.path.join(self.vis_path, f'psf_vis_{k}_({i}_{j}).jpg'))
+                        plt.close()
                     
             
             # # Visualization.

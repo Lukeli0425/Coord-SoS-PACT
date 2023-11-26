@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, n_train=21970, obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=10000, obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
