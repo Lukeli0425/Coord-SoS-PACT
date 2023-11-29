@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 class PACT_Dataset(Dataset):
     """Simulated PACT Dataset inherited from `torch.utils.data.Dataset`."""
-    def __init__(self, data_path, train=True, n_train=10000, obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
+    def __init__(self, data_path, train=True, n_train=130*169, obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
         """Construction function for the PyTorch PACT Dataset.
 
         Args:
@@ -66,7 +66,7 @@ class PACT_Dataset(Dataset):
     
     
     
-def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Mice_new1/', train=True, train_val_split=0.875, batch_size=64, num_workers=22, pin_memory=False,
+def get_dataloader(data_path='/mnt/WD6TB/tianaoli/dataset/Mice_new1/', train=True, train_val_split=0.875, batch_size=64, num_workers=18, pin_memory=True,
                    obs_folder='obs/', gt_folder='gold/', psf_folder='psf/'):
     """Generate PyTorch dataloaders for training or testing.
 
