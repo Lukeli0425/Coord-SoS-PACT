@@ -1,5 +1,5 @@
-
 from math import exp
+from pyexpat import model
 
 import numpy as np
 import torch
@@ -10,10 +10,14 @@ from torch.nn.modules.loss import _Loss
 
 
 def get_model_name(method, n_iters, nc, loss):
-    if 'ADMM' in method:
+    if 'Unrolled_ADMM' in method:
         model_name = f'{method}_{n_iters}iters_{nc}channels_{loss}'
-    else:
+    elif 'ADMM' in method:
+        model_name = f'{method}_{n_iters}iters_{loss}'
+    elif ' WienerNet' in method:
         model_name = f'{method}_{nc}channels_{loss}'
+    elif 'Wiener' in method:
+        model_name = f'{method}_{loss}'
     
     return model_name
 

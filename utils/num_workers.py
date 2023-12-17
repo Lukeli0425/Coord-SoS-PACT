@@ -1,6 +1,6 @@
-from time import time
 import multiprocessing as mp
-import torch
+from time import time
+
 from dataset import get_dataloader
 
 if __name__ == '__main__':

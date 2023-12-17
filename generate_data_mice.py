@@ -3,21 +3,21 @@ import json
 import logging
 import os
 from pathlib import Path
-from tempfile import gettempdir
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from numpy.random import choice, rand
 from tqdm import tqdm
-import cv2
 
 from kwave.ktransducer import *
 from kwave.utils import *
 from utils.simulations import (PSF, center, deconvolve_sinogram, delay_and_sum,
                                forward_2D, get_delays, get_medium,
-                               get_water_SoS, reorder_binary_sensor_data,
-                               transducer_response, wavefront_real, zero_pad, random_rotate)
+                               get_water_SoS, random_rotate,
+                               reorder_binary_sensor_data, transducer_response,
+                               wavefront_real, zero_pad)
 from utils.utils_torch import get_fourier_coord
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'

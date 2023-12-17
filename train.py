@@ -9,7 +9,8 @@ from models.Double_ADMM import Double_ADMM
 from models.DUBLID import DUBLID
 from models.ResUNet import FT_ResUNet, ResUNet
 from models.Unrolled_ADMM import Unrolled_ADMM
-from models.WienerNet import WienerNet
+from models.ADMM import ADMM_Batched
+from models.WienerNet import Wiener_Batched, WienerNet, Wiener
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name
@@ -37,12 +38,15 @@ def train(model_name='WienerNet', n_iters=4, nc=16,
         model = Double_ADMM(n_iters=n_iters, n_delays=8)
     elif 'Unrolled_ADMM' in model_name:
         model = Unrolled_ADMM (n_iters=n_iters, nc=[nc, nc*2, nc*4, nc*8])
+    elif 'ADMM' in model_name:
+        model = ADMM_Batched()
     elif 'WienerNet' in model_name:
-        model = WienerNet(n_delays=8, nc=[nc, nc*2, nc*4, nc*8])
-    # elif 'FT_ResUNet' in model_name:
-    #     model = FT_ResUNet(in_nc=8, out_nc=1)
+        model = WienerNet(nc=[nc, nc*2, nc*4, nc*8])
+    elif 'Wiener' in model_name:
+        model = Wiener_Batched()
     elif 'ResUNet' in model_name:
         model = ResUNet(in_nc=8, out_nc=1, nc=[nc, nc*2, nc*4, nc*8])
+    
     model.to(device)
     # model = DataParallel(model, device_ids=[0, 1])
     
@@ -137,7 +141,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description='Arguments for training.')
-    parser.add_argument('--model', type=str, default='WienerNet', choices=['Unrolled_ADMM', 'Double_ADMM', 'WienerNet', 'FT_ResUNet', 'ResUNet'])
+    parser.add_argument('--model', type=str, default='WienerNet', choices=['Unrolled_ADMM', 'Double_ADMM', 'ADMM', 'WienerNet', 'Wiener', 'ResUNet'])
     parser.add_argument('--n_iters', type=int, default=8)
     parser.add_argument('--nc', type=int, default=16)
     parser.add_argument('--n_epochs', type=int, default=200)
