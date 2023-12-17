@@ -1,15 +1,12 @@
-import math
-import numpy as np
 import torch
-from torch.fft import fftn, ifftn, fftshift, ifftshift
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
-from models.ResUNet import ResUNet
-from models.PACT import PSF_PACT
-from utils.utils_torch import conv_fft_batch, psf_to_otf, get_fourier_coord
+from torch.fft import fftn, fftshift, ifftn, ifftshift
 
-  
+from models.PACT import PSF_PACT
+from models.ResUNet import ResUNet
+from utils.utils_torch import conv_fft_batch, get_fourier_coord, psf_to_otf
+
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""

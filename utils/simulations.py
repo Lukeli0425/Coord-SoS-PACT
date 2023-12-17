@@ -3,17 +3,16 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
-from sympy import im
 import torch
 from numpy.fft import fft, ifft
 from numpy.random import choice, rand
+from sympy import im
 from torch.fft import fftshift, ifftn
 
 from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
 from kwave.ktransducer import *
-from kwave.options import SimulationOptions
 from kwave.utils import *
 
 # def read_images(path, files):
