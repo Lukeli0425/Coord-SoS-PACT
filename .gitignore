@@ -13,6 +13,9 @@ saved_models_Mice_new1/
 
 tmp.ipynb
 
+# large data
+tutorials/data/
+
 # nohup files
 *.out
 out/
