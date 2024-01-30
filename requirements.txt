@@ -6,5 +6,4 @@ h5py
 opencv-python
 torch
 torchvision
-tqdm
 numba
