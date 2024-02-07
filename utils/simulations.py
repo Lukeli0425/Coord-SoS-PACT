@@ -324,6 +324,14 @@ def get_delays(R, v0, v1, n_delays, mode='linear'):
     else:
         raise NotImplementedError
     
+def get_water_SoS(t):
+    """Calculate the speed of sound of water at temperature `t` in Celsius."""
+    a = [1.402385e3, 5.038815, -5.799156e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
+    SoS = 0
+    for i in range(len(a)):
+        SoS += a[i] * t**i
+    return SoS
+
 
 if __name__ == "__main__":
     # obs_pad = np.zeros([1,256,256])

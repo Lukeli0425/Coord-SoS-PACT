@@ -3,6 +3,7 @@ scipy
 scikit-image
 matplotlib
 h5py
+hdf5storage
 opencv-python
 torch
 torchvision
