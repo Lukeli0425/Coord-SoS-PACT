@@ -13,6 +13,13 @@ saved_models_Mice_new1/
 
 tmp.ipynb
 
+# Private data
+data/EIR_TUNGSTEN.mat
+data/RING_ERROR_NEW.mat
+data/RING_ERROR_OLD.mat
+data/LEAF_PHANTOM.mat
+data/ANIMAL_LAYER.mat
+
 # large data
 tutorials/data/
 
