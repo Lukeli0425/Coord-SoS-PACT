@@ -14,8 +14,8 @@ from kwave.utils import *
 from utils.dataset import mkdir
 from utils.simulations import (delay_and_sum, forward_2D, get_medium,
                                join_images, read_images,
-                               reorder_binary_sensor_data, transducer_response, split_images,
-                               zero_pad)
+                               reorder_binary_sensor_data, split_images,
+                               transducer_response, zero_pad)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 

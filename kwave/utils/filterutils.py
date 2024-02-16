@@ -2,9 +2,9 @@ import numpy as np
 import scipy
 from scipy.signal import lfilter
 
-from .misc import sinc
-from .conversionutils import scale_SI
 from .checkutils import num_dim2
+from .conversionutils import scale_SI
+from .misc import sinc
 
 
 def filterTimeSeries(kgrid, medium, signal, *args):

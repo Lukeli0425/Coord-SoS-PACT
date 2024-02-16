@@ -1,10 +1,10 @@
 import numpy as np
 
+from .checkutils import is_number, num_dim2
+from .conversionutils import scale_time
+from .interputils import interpolate2D
 from .kutils import get_win
 from .tictoc import TicToc
-from .conversionutils import scale_time
-from .checkutils import num_dim2, is_number
-from .interputils import interpolate2D
 
 
 def expand_matrix(matrix, exp_coeff, edge_val=None):

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from scipy.spatial.transform import Rotation as R
-import numpy as np
 
-from uff.uff_io import Serializable
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
 from uff.position import Position
+from uff.uff_io import Serializable
 
 
 @dataclass

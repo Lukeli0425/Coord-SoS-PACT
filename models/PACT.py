@@ -1,10 +1,9 @@
-
 import numpy as np
 import torch
-from torch.fft import fftn, ifftn, fftshift, ifftshift
 import torch.nn as nn
-from utils.utils_torch import get_fourier_coord
+from torch.fft import fftn, fftshift, ifftn, ifftshift
 
+from utils.utils_torch import get_fourier_coord
 
 
 class FT2D(nn.Module):

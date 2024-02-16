@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def get_pml(Nx, dx, dt, c, pml_size, pml_alpha, staggered, dimension, axisymmetric=False):
     """
         getPML returns a 1D perfectly matched layer variable based on the given size and absorption coefficient.

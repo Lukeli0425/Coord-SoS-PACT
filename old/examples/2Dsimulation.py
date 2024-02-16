@@ -1,15 +1,17 @@
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tempfile import gettempdir
 
+import matplotlib.pyplot as plt
+
+from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
-from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC,kspaceFirstOrder2DG
+from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC, kspaceFirstOrder2DG
+from kwave.ktransducer import *
 from kwave.utils import *
 from kwave.utils import dotdict
-from kwave.ktransducer import *
-from kwave.kmedium import kWaveMedium
-import matplotlib.pyplot as plt
 
 # pathname for the input and output files
 pathname = gettempdir()

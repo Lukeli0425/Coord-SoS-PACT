@@ -1,9 +1,10 @@
 import tempfile
 
 from kwave.executor import Executor
-from kwave.kWaveSimulation import kWaveSimulation
-from kwave.kWaveSimulation_helper import retract_transducer_grid_size, save_to_disk_func
 from kwave.kspaceFirstOrder import *
+from kwave.kWaveSimulation import kWaveSimulation
+from kwave.kWaveSimulation_helper import (retract_transducer_grid_size,
+                                          save_to_disk_func)
 from kwave.utils import *
 
 

@@ -1,5 +1,6 @@
-import numpy as np
 from itertools import compress
+
+import numpy as np
 
 
 def largest_prime_factor(n):

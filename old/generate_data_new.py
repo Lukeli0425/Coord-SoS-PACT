@@ -20,7 +20,6 @@ from utils.simulations import (PSF, delay_and_sum, forward_2D, get_medium,
                                wavefront_fourier, wavefront_real, zero_pad)
 from utils.utils_torch import get_fourier_coord
 
-
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 

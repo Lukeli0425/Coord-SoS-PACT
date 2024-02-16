@@ -1,10 +1,10 @@
-import os
 import multiprocessing as mp
+import os
+from pathlib import Path
 
 import h5py
 import numpy as np
 import requests
-from pathlib import Path
 
 PRIMITIVE_INTS = (int, np.int32, np.int64)
 PRIMITIVE_FLOATS = (float, np.float32, np.float64)

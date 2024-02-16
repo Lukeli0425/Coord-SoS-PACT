@@ -1,5 +1,6 @@
-from kwave import kWaveMedium
 import numpy as np
+
+from kwave import kWaveMedium
 
 
 def set_sound_speed_ref(medium: kWaveMedium, elastic_code: bool, kspace_elastic_code: bool):

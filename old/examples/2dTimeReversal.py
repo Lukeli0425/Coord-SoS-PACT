@@ -1,23 +1,24 @@
-import sys
 import logging
 import os
+import sys
 from tkinter import W
+
 # 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
 sys.path.append("D:\Tsinghua\Biooptics\K-wave\k-wave-python-master\k-wave-python-master")
-from kwave.kgrid import kWaveGrid
+from tempfile import gettempdir
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as scio
-import matplotlib.pyplot as plt
+
+from kwave.kgrid import kWaveGrid
+from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
-from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC,kspaceFirstOrder2DG
+from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC, kspaceFirstOrder2DG
+from kwave.ktransducer import *
+from kwave.utils import dotdict
 from kwave.utils.maputils import makeDisc
 from kwave.utils.matrixutils import smooth
-from kwave.utils import dotdict
-from kwave.ktransducer import *
-from kwave.kmedium import kWaveMedium
-from tempfile import gettempdir
-import matplotlib.pyplot as plt
-
 
 filepath = "./data/input/sinogram.mat"
 data = scio.loadmat(filepath)

@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 
-from uff import Probe, Wave, Event, TimedEvent
+from uff import Event, Probe, TimedEvent, Wave
 from uff.excitation import Excitation
 from uff.uff_io import Serializable
 

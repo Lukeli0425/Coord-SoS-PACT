@@ -1,17 +1,21 @@
 import os
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tempfile import gettempdir
-from kwave.kgrid import kWaveGrid
-from kwave.ksensor import kSensor
-from kwave.ksource import kSource
-from kwave.kspaceFirstOrder3D import kspaceFirstOrder3DC,kspaceFirstOrder3DG
-from kwave.utils import *
-from kwave.ktransducer import *
-from kwave.kmedium import kWaveMedium
+
 import matplotlib.pyplot as plt
 import scipy.io as scio
 from scipy.io import savemat
+
+from kwave.kgrid import kWaveGrid
+from kwave.kmedium import kWaveMedium
+from kwave.ksensor import kSensor
+from kwave.ksource import kSource
+from kwave.kspaceFirstOrder3D import kspaceFirstOrder3DC, kspaceFirstOrder3DG
+from kwave.ktransducer import *
+from kwave.utils import *
+
 pathname = gettempdir()
 
 # =========================================================================

@@ -5,7 +5,8 @@ import numpy as np
 import uff
 from uff import ChannelData
 from uff.uff_io import Serializable
-from uff.utils import is_keys_str_decimals, snake_to_camel_case, save_dict_to_hdf5, load_uff_dict
+from uff.utils import (is_keys_str_decimals, load_uff_dict, save_dict_to_hdf5,
+                       snake_to_camel_case)
 
 
 class UFF(Serializable):

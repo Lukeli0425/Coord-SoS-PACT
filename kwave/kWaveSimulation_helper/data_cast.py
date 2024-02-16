@@ -1,6 +1,5 @@
-from kwave import kWaveMedium, kWaveGrid, SimulationOptions
-from kwave.utils import cast_to_type
-from kwave.utils import dotdict
+from kwave import SimulationOptions, kWaveGrid, kWaveMedium
+from kwave.utils import cast_to_type, dotdict
 
 
 def dataCast(data_cast, medium: kWaveMedium, kgrid: kWaveGrid, opt: SimulationOptions, values: dotdict, flags: dotdict):

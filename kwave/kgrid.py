@@ -1,8 +1,8 @@
 import math
+import sys
 from dataclasses import dataclass
 
 import numpy as np
-import sys
 
 from kwave.data import Array
 from kwave.enums import DiscreteCosine, DiscreteSine

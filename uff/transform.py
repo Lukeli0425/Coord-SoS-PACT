@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from uff.rotation import Rotation
 from uff.position import Position
+from uff.rotation import Rotation
 from uff.translation import Translation
 from uff.uff_io import Serializable
 

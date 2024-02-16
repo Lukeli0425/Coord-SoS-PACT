@@ -1,3 +1,5 @@
+import functools
+import math
 import os
 from operator import itemgetter
 from tempfile import gettempdir
@@ -6,14 +8,11 @@ from warnings import warn
 import numpy as np
 from numpy.fft import ifftshift
 from scipy.io import savemat
-from kwave.ksource import kSource
-from kwave.kgrid import *
-from kwave.ktransducer import *
-from kwave.utils import dotdict
-import math
-import functools
 
-from kwave.utils import is_unix
+from kwave.kgrid import *
+from kwave.ksource import kSource
+from kwave.ktransducer import *
+from kwave.utils import dotdict, is_unix
 
 
 def kspaceFirstOrderG(func):

@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+
 import numpy as np
+
 from kwave.utils import get_h5_literals
 
 

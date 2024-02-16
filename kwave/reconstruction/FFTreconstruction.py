@@ -1,18 +1,19 @@
-import sys
 import logging
 import os
+import sys
 from tkinter import W
+
 # 把当前文件所在文件夹的父文件夹路径加入到PYTHONPATH
 sys.path.append("D:\Tsinghua\Biooptics\K-wave\k-wave-python-master\k-wave-python-master")
-from kwave.kgrid import kWaveGrid
-from numpy.fft import fftshift,fftn,ifftn,ifftshift
-from scipy.interpolate import interp2d
-from kwave.utils.interputils import interpolate2D
+import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as scio
-import matplotlib.pyplot as plt
-import cv2
+from numpy.fft import fftn, fftshift, ifftn, ifftshift
+from scipy.interpolate import interp2d
 
+from kwave.kgrid import kWaveGrid
+from kwave.utils.interputils import interpolate2D
 
 filepath = "D:\Tsinghua\Biooptics/linear_array/data/linear/1.mat"
 data = scio.loadmat(filepath)

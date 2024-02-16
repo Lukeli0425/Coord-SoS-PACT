@@ -4,7 +4,7 @@ from warnings import warn
 import numpy as np
 
 from kwave.kgrid import kWaveGrid
-from kwave.utils import num_dim2, matlab_find
+from kwave.utils import matlab_find, num_dim2
 
 
 @dataclass

@@ -1,11 +1,11 @@
 import os
 
+import numpy as np
 from scipy.io import savemat
 
-from kwave import kWaveMedium, kWaveGrid, SimulationOptions
-from kwave.utils import scale_time, TicToc, num_dim2, write_matrix, write_attributes
-from kwave.utils import dotdict
-import numpy as np
+from kwave import SimulationOptions, kWaveGrid, kWaveMedium
+from kwave.utils import (TicToc, dotdict, num_dim2, scale_time,
+                         write_attributes, write_matrix)
 
 
 def save_to_disk_func(

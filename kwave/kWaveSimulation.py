@@ -1,11 +1,11 @@
 from warnings import warn
 
-from kwave.kWaveSimulation_helper import *
 from kwave.kgrid import *
 from kwave.kmedium import kWaveMedium
 from kwave.ksensor import kSensor
 from kwave.ksource import kSource
 from kwave.ktransducer import NotATransducer
+from kwave.kWaveSimulation_helper import *
 from kwave.options import SimulationOptions
 from kwave.recorder import Recorder
 from kwave.utils import *

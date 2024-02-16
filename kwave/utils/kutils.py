@@ -4,8 +4,8 @@ from math import floor
 import numpy as np
 import scipy
 
-from .misc import sinc, ndgrid, gaussian
 from .conversionutils import db2neper
+from .misc import gaussian, ndgrid, sinc
 
 
 def check_stability(kgrid, medium):

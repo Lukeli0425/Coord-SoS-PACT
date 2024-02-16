@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from uff.uff_io import Serializable
 from uff.position import Position
+from uff.uff_io import Serializable
 
 
 @dataclass

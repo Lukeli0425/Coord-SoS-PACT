@@ -1,9 +1,9 @@
+import numpy as np
 from numpy.fft import ifftshift
 
 from kwave import SimulationOptions, kWaveGrid
 from kwave.data import Array
 from kwave.utils import dotdict
-import numpy as np
 
 # Note from Farid: This function/file is very suspicios. I'm pretty sure that the implementation is not correct.
 # Full test-coverage is required for bug-fixes!
