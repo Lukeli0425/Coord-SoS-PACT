@@ -20,7 +20,7 @@ class FISTA_Batched(nn.Module):
         H = fft2(h)
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
-        alpha = 0.01 / torch.max(HtH.real)
+        alpha = 0.01 / torch.max(HtH.real) # 2/1
         
         
         for idx in range(self.n_iters):
