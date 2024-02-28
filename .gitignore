@@ -13,6 +13,9 @@ saved_models_Mice_new1/
 
 tmp.ipynb
 
+# old/
+TFs/
+ 
 # Private data
 data/EIR_TUNGSTEN.mat
 data/RING_ERROR_NEW.mat
