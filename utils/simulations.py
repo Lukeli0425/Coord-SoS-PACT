@@ -76,6 +76,7 @@ def center(img):
             y_sum += j * img[i,j]
     x = int(x_sum / img.sum())
     y = int(y_sum / img.sum())
+    
     return (x, y)
 
 
@@ -84,7 +85,7 @@ def zero_pad(image, Nx, Ny):
 
     Args:
         image (`numpy.ndarray`): Input image.
-        N (`int`): Image size atter padding.
+        N (`int`): Image size after padding.
 
     Returns:
         `numpy.ndarray`: Padded image.
@@ -92,8 +93,8 @@ def zero_pad(image, Nx, Ny):
     
     image_pad = np.zeros((Nx, Ny))
     
-    pad_start_x, pad_end_x = (Nx-image.shape[0])//2, (Nx+image.shape[0])//2
-    pad_start_y, pad_end_y = (Ny-image.shape[1])//2, (Ny+image.shape[1])//2
+    pad_start_x, pad_end_x = (Nx-image.shape[-2])//2, (Nx+image.shape[-2])//2
+    pad_start_y, pad_end_y = (Ny-image.shape[-1])//2, (Ny+image.shape[-1])//2
     image_pad[pad_start_x:pad_end_x, pad_start_y:pad_end_y] = image
     
     return image_pad, (pad_start_x, pad_end_x), (pad_start_y, pad_end_y)

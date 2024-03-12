@@ -27,12 +27,12 @@ class Wiener_Batched(nn.Module):
         self.lam = nn.Parameter(torch.tensor(lam), requires_grad=True)
         
     def forward(self, y, h):
-        H = fft2(h)
+        H = fft2(fftshift(h))
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
-        rhs = (Ht * fft2(y)).sum(axis=-3).unsqueeze(-3)
+        rhs = (Ht * fft2(fftshift(y))).sum(axis=-3).unsqueeze(-3)
         lhs = (HtH + self.lam).sum(axis=-3).unsqueeze(-3)
-        x = ifftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
+        x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
         return x
 
