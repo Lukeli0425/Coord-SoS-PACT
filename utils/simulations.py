@@ -5,8 +5,7 @@ import numba
 import numpy as np
 import torch
 from numpy.fft import fft, ifft
-from numpy.random import choice, rand
-from sympy import im
+from numpy.random import choice
 from torch.fft import fftshift, ifftn
 
 from kwave.kmedium import kWaveMedium

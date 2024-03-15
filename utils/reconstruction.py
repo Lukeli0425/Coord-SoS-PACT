@@ -1,8 +1,8 @@
-from netrc import NetrcParseError
+import math
+
 import numba
 import numpy as np
 from numpy.fft import fft, fft2, fftshift, ifft, ifft2, ifftshift
-import math
 
 
 def deconvolve_sinogram(sinogram, EIR):
@@ -73,7 +73,44 @@ def delay_and_sum(R_ring, T_sample, v0, sinogram, x_vec, y_vec, d_delay=0, ring_
             Image[t, s] = related_data.mean()
     return Image
 
+
 def gaussian_kernel(sigma, size):
     function = lambda x, y: np.exp(-((x-(size-1)/2)**2 + (y-(size-1)/2)**2) / (2*(sigma**2)))
     kernel = np.fromfunction(function, (size, size), dtype=float)
     return kernel / np.sum(kernel)
+
+
+def get_r_C0(i, j, R, l, v0, v1):
+    x, y = (j-12)*l / 4, (12-i)*l / 4
+    r = np.sqrt(x**2 + y**2)
+    C0 = np.maximum(0, (1-v0/v1) * R * (1 - (r**2)/(4*R**2)))
+    return r, C0
+
+
+def get_weights(C0, delays, attention):
+    """Calculates the weights for combining different delay channels in deconvolution
+
+    Args:
+        C0 (`float`): The zeroth order harmonic expansion coefficient of wavefront function.
+        delays (`numpy.ndarray`): The array of delays used in delay-and-sum recontruction.
+        attention (`string`): The type of attention weights (`['uniform', 'onehot', 'euclidean']`).
+
+    Raises:
+        NotImplementedError: The input `attention` type is not implemented.
+
+    Returns:
+        `numpy.ndarray`: The weights for different delay channels with shape `[n_delay, 1, 1]`.
+    """
+    n_delays = delays.shape[0]
+    if attention == 'uniform':
+        return np.ones([n_delays,1,1]) 
+    elif attention == 'euclidean':
+        distance = (delays.reshape([n_delays,1,1])-C0) ** 2
+        weights = np.exp(distance) / np.exp(distance).sum()
+        return weights / weights.sum() * n_delays
+    elif attention == 'onehot':
+        weights = np.zeros([n_delays,1,1])
+        weights[np.argmin(np.abs(delays-C0))] = 1
+        return weights
+    else: 
+        raise NotImplementedError('Attention type not implemented.')
