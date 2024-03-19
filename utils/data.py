@@ -15,23 +15,25 @@ def load_mat(file):
     """
     dict = h5py.File(file)
     keys = list(dict.keys())
+
     if len(keys) == 1:
         return np.array(dict[keys[0]])
     else:
-        print(keys)
         data = ()
         for key in keys:
             data += (np.array(dict[key]), )
         return data
     
 
-def save_mat(file_name, data):
+def save_mat(file_name, data, key='data'):
     """Save data to `.mat` file.
 
     Args:
         file_name (`str`): Path to file.
-        data (`dict`): The dictionary of data to be saved.
+        data (`numpy.ndarray`): The dictionary of data to be saved.
+        key (`str`, optional): The key to be used in the dictionary. Defaults to 'data'.
     """
     if os.path.exists(file_name):
         os.remove(file_name)
-    hdf5storage.savemat(file_name, data)
+    hdf5storage.savemat(file_name, {key: data})
+    

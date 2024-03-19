@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
 from models.ResUNet import ResUNet
+from utils.utils_torch import get_fourier_coord
 
 
 class Wiener(nn.Module):
@@ -22,16 +23,18 @@ class Wiener(nn.Module):
 
 
 class Wiener_Batched(nn.Module):
-    def __init__(self, lam=0.1):
+    def __init__(self, lam):
         super(Wiener_Batched, self).__init__()
-        self.lam = nn.Parameter(torch.tensor(lam), requires_grad=True)
+        self.lam = nn.Parameter(torch.tensor(lam))
+        self.k, self.theta = get_fourier_coord(device='cuda:0')
+        self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, h):
-        H = fft2(fftshift(h))
+        H = fft2(ifftshift(h))
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
-        rhs = (Ht * fft2(fftshift(y))).sum(axis=-3).unsqueeze(-3)
-        lhs = (HtH + self.lam).sum(axis=-3).unsqueeze(-3)
+        rhs = (Ht * fft2(ifftshift(y))).sum(axis=-3).unsqueeze(-3)
+        lhs = (HtH + self.lam).sum(axis=-3).unsqueeze(-3) #  * ((1/self.k)**2)
         x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
         return x

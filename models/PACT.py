@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.fft import fftn, fftshift, ifftn, ifftshift
+from torch.fft import fft2, ifft2, fftn, fftshift, ifftn, ifftshift
 
 from utils.utils_torch import get_fourier_coord
 
@@ -41,6 +41,22 @@ class PSF_PACT(nn.Module):
         w = lambda theta: C0 + C1 * torch.cos(theta + phi1) + C2 * torch.cos(2 * theta + phi2) # Wavefront function.
         tf = (torch.exp(-1j*k*(self.delays + offset - w(theta))) + torch.exp(1j*k*(self.delays + offset - w(theta+np.pi)))) / 2
         psf = ifftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+        psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
+        
+        return psf
+    
+    
+class PSF_PACT(nn.Module):
+    def __init__(self, n_points=80, l=3.2e-3, device='cuda:0'):
+        super(PSF_PACT, self).__init__() 
+        self.device = device
+        self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l, device=device)
+        self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        
+    def forward(self, w):
+        tf = (torch.exp(-1j*self.k2D*(self.delays - w(self.theta2D))) + torch.exp(1j*self.k2D*(self.delays - w(self.theta2D+np.pi)))) / 2
+        psf = fftshift(ifft2(tf), dim=[-2,-1]).abs()
         psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
         
         return psf

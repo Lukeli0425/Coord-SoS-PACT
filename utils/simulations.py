@@ -14,48 +14,6 @@ from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
 from kwave.ktransducer import *
 from kwave.utils import *
 
-# def read_images(path, files):
-#     return [np.load(os.path.join(path, file)) for file in files]
-
-
-# def subtract_background(image):
-#     """Conduct background subtraction to blood vessel section images.
-
-#     Args:
-#         image (`numpy.ndarray`): Input blood vessel section image.
-
-#     Returns:
-#         `numpy.ndarray`: Background subtracted blood vessel section image.
-#     """
-#     return image - image[0,0]
-
-
-# def join_images(images, n_row=2, n_col=2):
-    
-#     if len(images) != n_row * n_col:
-#         raise ValueError('Number of images does not match the number of rows and columns.')
-
-#     images_row = []
-#     for i in range(n_row):
-#         images_row.append(np.concatenate(images[n_row*i:n_row*i+n_col], axis=1))
-#     image_joint = np.concatenate(images_row , axis=0)
-    
-#     return image_joint
-
-
-# def split_images(images, img_size=(64, 64), step=(32, 32)):
-    
-#     n_x, n_y = (images[0].shape[0]-img_size[0])//step[0]+1, (images[0].shape[1]-img_size[1])//step[1]+1
-#     images_out = [[] for i in range(n_x*n_y)]
-#     for image in images:
-#         for idx in range(2*n_x-1):
-#             for idy in range(2*n_y-1):
-#                 images_out[n_x*idx+idy].append(image[idx*step[0]:idx*step[0]+img_size[0], idy*step[1]:idy*step[1]+img_size[1]])
-                
-#     images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
-    
-#     return images_out
-    
     
 def center(img):
     """Calculate the center of an image.
