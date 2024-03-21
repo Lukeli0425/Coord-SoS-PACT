@@ -71,15 +71,6 @@ def random_rotate(img):
     
 
 
-def get_water_SoS(t):
-    """Calculate the speed of sound of water at temperature `t` in Celsius."""
-    a = [1.402385e3, 5.038813, -5.799136e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
-    SoS = 0
-    for i in range(len(a)):
-        SoS += a[i] * t**i
-    return SoS
-
-
 def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
     """Reorder the binary sensor data collected by a ring array in angular order.
 
@@ -250,22 +241,12 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
     return Image
 
 
-def wavefront_fourier(C0, C1, phi1, C2, phi2):
-    return lambda theta: C0 + C1 * torch.cos(theta - phi1) + C2 * torch.cos(2 * (theta - phi2))
 
-
-def wavefront_real(R, r, phi, v0, v1):
-    if r < R:
-        return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
-    else:
-        return lambda theta: (1-v0/v1) * 2 * torch.sqrt(torch.maximum(R**2 - (r*torch.sin(theta-phi))**2, torch.zeros_like(theta))) * (torch.cos(phi-theta) >= 0)
-
-
-def PSF(theta, k, w, delay):
-    tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
-    psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
-    psf /= psf.sum(axis=(-2,-1)) # Normalization.
-    return psf
+# def PSF(theta, k, w, delay):
+#     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
+#     psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+#     psf /= psf.sum(axis=(-2,-1)) # Normalization.
+#     return psf
 
 # def PSF(theta, k, w, delay):
 #     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2

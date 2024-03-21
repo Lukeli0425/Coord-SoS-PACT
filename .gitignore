@@ -15,6 +15,9 @@ saved_models_Mice_new1/
 
 # old/
 TFs/
+TF_simulation/
+TF_phantom/
+TF_invivo/
 results_old/
  
 # Private data

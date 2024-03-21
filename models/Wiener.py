@@ -23,10 +23,10 @@ class Wiener(nn.Module):
 
 
 class Wiener_Batched(nn.Module):
-    def __init__(self, lam):
+    def __init__(self, lam, device='cuda:0'):
         super(Wiener_Batched, self).__init__()
-        self.lam = nn.Parameter(torch.tensor(lam))
-        self.k, self.theta = get_fourier_coord(device='cuda:0')
+        self.lam = torch.tensor(lam).to(device)
+        self.k, self.theta = get_fourier_coord(n_points=80, l=3.2e-3,device=device)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, h):
@@ -34,7 +34,7 @@ class Wiener_Batched(nn.Module):
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
         rhs = (Ht * fft2(ifftshift(y))).sum(axis=-3).unsqueeze(-3)
-        lhs = (HtH + self.lam).sum(axis=-3).unsqueeze(-3) #  * ((1/self.k)**2)
+        lhs = (HtH + self.lam * ((self.k.mean()/self.k))).sum(axis=-3).unsqueeze(-3) 
         x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
         return x
