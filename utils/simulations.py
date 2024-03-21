@@ -14,48 +14,6 @@ from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
 from kwave.ktransducer import *
 from kwave.utils import *
 
-# def read_images(path, files):
-#     return [np.load(os.path.join(path, file)) for file in files]
-
-
-# def subtract_background(image):
-#     """Conduct background subtraction to blood vessel section images.
-
-#     Args:
-#         image (`numpy.ndarray`): Input blood vessel section image.
-
-#     Returns:
-#         `numpy.ndarray`: Background subtracted blood vessel section image.
-#     """
-#     return image - image[0,0]
-
-
-# def join_images(images, n_row=2, n_col=2):
-    
-#     if len(images) != n_row * n_col:
-#         raise ValueError('Number of images does not match the number of rows and columns.')
-
-#     images_row = []
-#     for i in range(n_row):
-#         images_row.append(np.concatenate(images[n_row*i:n_row*i+n_col], axis=1))
-#     image_joint = np.concatenate(images_row , axis=0)
-    
-#     return image_joint
-
-
-# def split_images(images, img_size=(64, 64), step=(32, 32)):
-    
-#     n_x, n_y = (images[0].shape[0]-img_size[0])//step[0]+1, (images[0].shape[1]-img_size[1])//step[1]+1
-#     images_out = [[] for i in range(n_x*n_y)]
-#     for image in images:
-#         for idx in range(2*n_x-1):
-#             for idy in range(2*n_y-1):
-#                 images_out[n_x*idx+idy].append(image[idx*step[0]:idx*step[0]+img_size[0], idy*step[1]:idy*step[1]+img_size[1]])
-                
-#     images_out = [np.array(image) for image in images_out] # Convert each stack to numpy.ndarray.
-    
-#     return images_out
-    
     
 def center(img):
     """Calculate the center of an image.
@@ -111,15 +69,6 @@ def random_rotate(img):
 
     return img
     
-
-
-def get_water_SoS(t):
-    """Calculate the speed of sound of water at temperature `t` in Celsius."""
-    a = [1.402385e3, 5.038813, -5.799136e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
-    SoS = 0
-    for i in range(len(a)):
-        SoS += a[i] * t**i
-    return SoS
 
 
 def reorder_binary_sensor_data(sensor_data, sensor, kgrid, PML_size):
@@ -292,22 +241,12 @@ def delay_and_sum(R_ring, T_sample, V_sound, Sinogram, ImageX, ImageY, d_delay=0
     return Image
 
 
-def wavefront_fourier(C0, C1, phi1, C2, phi2):
-    return lambda theta: C0 + C1 * torch.cos(theta - phi1) + C2 * torch.cos(2 * (theta - phi2))
 
-
-def wavefront_real(R, r, phi, v0, v1):
-    if r < R:
-        return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
-    else:
-        return lambda theta: (1-v0/v1) * 2 * torch.sqrt(torch.maximum(R**2 - (r*torch.sin(theta-phi))**2, torch.zeros_like(theta))) * (torch.cos(phi-theta) >= 0)
-
-
-def PSF(theta, k, w, delay):
-    tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
-    psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
-    psf /= psf.sum(axis=(-2,-1)) # Normalization.
-    return psf
+# def PSF(theta, k, w, delay):
+#     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
+#     psf = fftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
+#     psf /= psf.sum(axis=(-2,-1)) # Normalization.
+#     return psf
 
 # def PSF(theta, k, w, delay):
 #     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2

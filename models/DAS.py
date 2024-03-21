@@ -41,7 +41,7 @@ class DAS(nn.Module):
             sinogram[:, 0] = 0
             sinogram[:, -1] = 0
         
-        id_time = torch.round((self.distance_to_transducer - d_delay + ring_error) / (v0 * self.T_sample)).int()
+        id_time = torch.round((self.distance_to_transducer + ring_error - d_delay) / (v0 * self.T_sample)).int()
         if self.clip:
             id_time = id_time.maximum(torch.zeros_like(id_time)).minimum(torch.ones_like(id_time) * (sinogram.shape[1]-1))
        
