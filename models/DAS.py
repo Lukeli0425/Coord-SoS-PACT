@@ -4,7 +4,7 @@ from torch import nn
 
 class DAS(nn.Module):
     """Delay-And-Sum image reconstruction module Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, mode='zero', clip=False):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, mode='zero', clip=False, device='cuda:0'):
         """Initialize parameters of the Delay-And-Sum module.
 
         Args:
@@ -17,23 +17,23 @@ class DAS(nn.Module):
             clip (bool, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
         """
         super(DAS, self).__init__()
-        
-        self.R_ring = torch.tensor(R_ring)
+        self.device = device
+        self.R_ring = torch.tensor(R_ring, device=self.device)
         self.N_transducer = N_transducer
-        self.T_sample = torch.tensor(T_sample)
-        self.x_vec = torch.tensor(x_vec).view(1, -1, 1)
-        self.y_vec = torch.tensor(y_vec).view(1, 1, -1)
+        self.T_sample = torch.tensor(T_sample, device=self.device)
+        self.x_vec = torch.tensor(x_vec, device=self.device).view(1, -1, 1)
+        self.y_vec = torch.tensor(y_vec, device=self.device).view(1, 1, -1)
         self.H, self.W = self.x_vec.shape[1], self.y_vec.shape[2]
         self.mode = mode
         self.clip = clip
         
-        angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer) + 1).view(-1, 1, 1)
+        angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
         self.x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         self.y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
         self.distance_to_transducer = torch.sqrt((self.x_transducer - self.x_vec)**2 + (self.y_transducer - self.y_vec)**2)
         self.id_transducer = torch.arange(self.N_transducer).view(self.N_transducer,1,1).repeat(1,self.H,self.W)
 
-    def forward(self, sinogram, v0, d_delay=torch.zeros(1), ring_error=torch.zeros(1)):
+    def forward(self, sinogram, v0, d_delay, ring_error):
         if sinogram.shape[0] != self.N_transducer:
             raise ValueError('Invalid number of transducer in the sinogram.')
         
