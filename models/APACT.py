@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
-# from models.WienerNet import Wiener_Batched
 from utils.utils_torch import get_fourier_coord
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
