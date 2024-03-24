@@ -87,7 +87,7 @@ class APACT(nn.Module):
     def load_params(self):
         """Load the precalculated wavefront parameters from `self.data_path`."""
         # self.TFs = torch.from_numpy(np.load(os.path.join(self.data_path, 'TFs.npy'))).to(self.device)
-        self.params = torch.from_numpy(np.load(os.path.join(self.data_path, 'params.npy'))).to(self.device)
+        self.params = torch.load(os.path.join(self.data_path, 'params.pth')).to(self.device)
         self.N = self.params.shape[0]
         self.logger.info('Successfully loaded transfer functions.')
 
@@ -104,10 +104,10 @@ class APACT(nn.Module):
                 for y in ys:
                     # tfs.append(self.tf(dc, x, y))
                     params.append((dc, x, y))
-                    np.save(os.path.join(self.data_path, f'TF_{idx}.npy'), self.tf(dc, x, y))
+                    torch.save(self.tf(dc, x, y), os.path.join(self.data_path, f'TF_{idx}.pth'))
                     idx += 1
         # np.save(os.path.join(self.data_path, 'TFs.npy'), np.array(tfs))
-        np.save(os.path.join(self.data_path, 'params.npy'), np.array(params))
+        torch.save(torch.tensor(params), os.path.join(self.data_path, 'params.pth'))
     
     def forward(self, y):
         best_loss, best_x = torch.inf, None
@@ -116,7 +116,7 @@ class APACT(nn.Module):
         Y = fft2(ifftshift(y, dim=(-2,-1)))
         
         for idx in range(self.N):
-            H = torch.from_numpy(np.load(os.path.join(self.data_path, f'TF_{idx}.npy'))).unsqueeze(0).to(self.device)
+            H = torch.load(os.path.join(self.data_path, f'TF_{idx}.pth')).unsqueeze(0).to(self.device)
             Ht, HtH = H.conj(), H.abs() ** 2
             rhs = (Y * Ht).sum(axis=-3).unsqueeze(-3)
             lhs = HtH.sum(axis=-3).unsqueeze(-3)

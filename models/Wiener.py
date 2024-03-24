@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
 from models.ResUNet import ResUNet
-from utils.utils_torch import get_fourier_coord
+from utils.utils_torch import get_fourier_coord, pad_double, crop_half
 
 
 class Wiener(nn.Module):
@@ -21,15 +21,26 @@ class Wiener(nn.Module):
         
         return x
 
+def pad(img, device='cuda:0'):
+    B, C, H, W = img.shape
+    img_pad = torch.zeros(B, C, H*2, W*2, device=device)
+    img_pad[:,:,H//2:3*H//2, W//2:3*W//2] = img
+    return img_pad
 
+def crop(img):
+    B, C, H, W = img.shape
+    return img[:,:,H//4:3*H//4, W//4:3*W//4]
+    
 class Wiener_Batched(nn.Module):
     def __init__(self, lam, device='cuda:0'):
         super(Wiener_Batched, self).__init__()
-        self.lam = torch.tensor(lam).to(device)
-        self.k, self.theta = get_fourier_coord(n_points=80, l=3.2e-3,device=device)
+        self.device = device
+        self.lam = torch.tensor(lam, device=device)
+        self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, h):
+        y, h = pad_double(y), pad_double(h)
         H = fft2(ifftshift(h))
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
@@ -37,7 +48,7 @@ class Wiener_Batched(nn.Module):
         lhs = (HtH + self.lam * ((self.k.mean()/self.k))).sum(axis=-3).unsqueeze(-3) 
         x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
-        return x
+        return crop_half(x)
 
 
 class WienerNet(nn.Module):

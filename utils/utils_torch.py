@@ -3,6 +3,18 @@ import torch
 from torch.fft import fftn, fftshift, ifftn, ifftshift
 
 
+def pad_double(img):
+    B, C, H, W = img.shape
+    img_pad = torch.zeros(B, C, H*2, W*2, device=img.device)
+    img_pad[:,:,H//2:3*H//2, W//2:3*W//2] = img
+    return img_pad
+
+
+def crop_half(img):
+    B, C, H, W = img.shape
+    return img[:,:,H//4:3*H//4, W//4:3*W//4]
+    
+    
 def conv_fft_batch(H, x):
 	"""Batched version 2D convolution using FFT."""
 	Y_fft = fftn(x, dim=[-2,-1]) * H
@@ -27,10 +39,9 @@ def psf_to_otf(psf):
 
 
 def get_fourier_coord(n_points=80, l=3.2e-3, device='cuda:0'):
-	fx1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False)
-	fy1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False)
+	fx1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False, device=device)
+	fy1D = torch.linspace(-np.pi/l, np.pi/l, n_points, requires_grad=False, device=device)
 	[fx2D, fy2D] = torch.meshgrid(fx1D, fy1D, indexing='xy')
 	k2D = torch.sqrt(fx2D**2 + fy2D**2) * n_points
 	theta2D = torch.arctan2(fy2D, fx2D) + np.pi/2 # Add `np.pi/2` to match the polar definition of the theta.
- 
-	return k2D.to(device), theta2D.to(device)
+	return k2D, theta2D
