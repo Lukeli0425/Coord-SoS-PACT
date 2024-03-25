@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
-from utils.utils_torch import get_fourier_coord
+from utils.utils_torch import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
@@ -63,11 +63,11 @@ class APACT(nn.Module):
         self.amp = amp
         self.step = step
         self.delays = delays
-        self.k, self.theta = get_fourier_coord(device=self.device)
+        self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=self.device)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
         # Forawrd models and dconvolution models
-        self.tf = TF_APACT(delays=self.delays)
+        self.tf = TF_APACT(delays=self.delays, n_points=160, l=6.4e-3, device=self.device)
         # self.deconv = Deconv_APACT()
         self.loss = MSELoss()
         
@@ -102,18 +102,16 @@ class APACT(nn.Module):
         for dc in dcs:
             for x in xs:
                 for y in ys:
-                    # tfs.append(self.tf(dc, x, y))
                     params.append((dc, x, y))
                     torch.save(self.tf(dc, x, y), os.path.join(self.data_path, f'TF_{idx}.pth'))
                     idx += 1
-        # np.save(os.path.join(self.data_path, 'TFs.npy'), np.array(tfs))
         torch.save(torch.tensor(params), os.path.join(self.data_path, 'params.pth'))
     
     def forward(self, y):
         best_loss, best_x = torch.inf, None
         best_tf, best_params = None, None
         
-        Y = fft2(ifftshift(y, dim=(-2,-1)))
+        Y = fft2(ifftshift(pad_double(y), dim=(-2,-1)))
         
         for idx in range(self.N):
             H = torch.load(os.path.join(self.data_path, f'TF_{idx}.pth')).unsqueeze(0).to(self.device)
@@ -130,7 +128,6 @@ class APACT(nn.Module):
                 best_tf = H
                 best_params = self.params[idx]
         
-        
         # H, Ht = self.TFs, self.TFs.conj()
         # rhs = (Ht * Y).sum(axis=-3).unsqueeze(-3)
         # lhs = (Ht * H).sum(axis=-3).unsqueeze(-3) + 0.002
@@ -144,7 +141,7 @@ class APACT(nn.Module):
         # best_x = ifft2(X[best_idx]).real
         # # best_x = x[best_idx]
                 
-        return best_x, best_tf, best_params, best_loss
+        return crop_half(best_x), best_tf, best_params, best_loss
     
 
 if __name__ == '__main__':
