@@ -81,6 +81,12 @@ def gaussian_kernel(sigma, size):
     return kernel / np.sum(kernel)
 
 
+def get_coordinates(i, j, l):
+    x, y = (j-12)*l / 4, (12-i)*l / 4
+    r, phi = np.sqrt(x**2 + y**2), np.arctan2(x, y)
+    return x, y, r, phi
+
+
 def get_r_C0(i, j, R, l, v0, v1):
     x, y = (j-12)*l / 4, (12-i)*l / 4
     r = np.sqrt(x**2 + y**2)
