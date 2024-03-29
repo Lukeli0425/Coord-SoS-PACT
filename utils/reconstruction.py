@@ -2,8 +2,10 @@ import math
 
 import numba
 import numpy as np
-from numpy.fft import fft, fft2, fftshift, ifft, ifft2, ifftshift
 import torch
+from numpy.fft import fft, fft2, fftshift, ifft, ifft2, ifftshift
+from scipy.integrate import trapezoid
+from scipy.interpolate import CloughTocher2DInterpolator, interp1d
 
 
 def deconvolve_sinogram(sinogram, EIR):
@@ -94,6 +96,14 @@ def get_r_C0(i, j, R, l, v0, v1):
     return r, C0
 
 
+def get_fourier_params(r, phi, R, v0, v1):
+    C0 = (1-v0/v1) * R * (1 - (r**2)/(4*R**2))
+    C1 = (1-v0/v1) * r 
+    C2 = (1-v0/v1) * r**2 / (4*R)
+    phi1, phi2 = phi, phi
+    return C0, C1, phi1, C2, phi2
+
+
 def wavefront_fourier(C0, C1, phi1, C2, phi2):
     return lambda theta: C0 + C1 * torch.cos(theta - phi1) + C2 * torch.cos(2 * (theta - phi2))
 
@@ -103,6 +113,21 @@ def wavefront_real(R, r, phi, v0, v1):
         return lambda theta: (1-v0/v1) * (torch.sqrt(R**2 - (r*torch.sin(theta-phi))**2) + r * torch.cos(theta-phi))
     else:
         return lambda theta: (1-v0/v1) * 2 * torch.sqrt(torch.maximum(R**2 - (r*torch.sin(theta-phi))**2, torch.zeros_like(theta))) * (torch.cos(phi-theta) >= 0)
+
+
+def wavefront_SoS(SoS, x_vec, y_vec, v0, R, x, y, r, phi, N=512, N_int=256):
+    x_vec, y_vec = np.meshgrid(x_vec, y_vec)
+    f_sos = CloughTocher2DInterpolator(list(zip(x_vec.reshape(-1), y_vec.reshape(-1))), SoS.reshape(-1))
+    thetas = np.arange(0, 2*np.pi, 2*np.pi/N)
+    wfs = []
+    for theta in thetas:
+        l = (np.sqrt(R**2 - (r*np.sin(theta-phi))**2) + r*np.cos(theta-phi))
+        ls = np.linspace(0, l, N_int)
+        vs = np.array([f_sos(x-l*np.sin(phi), y-l*np.cos(phi)) for l in ls]).reshape(-1)
+        wfs.append(trapezoid(1-v0/vs, ls, l/N_int))
+
+    f_wf = interp1d(thetas, wfs, kind='cubic')    
+    return lambda theta: f_wf(np.mod(theta, 2*np.pi))
 
 
 def get_weights(C0, delays, attention):
