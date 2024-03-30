@@ -123,8 +123,8 @@ def wavefront_SoS(SoS, x_vec, y_vec, v0, R, x, y, r, phi, N=512, N_int=256):
     for theta in thetas:
         l = (np.sqrt(R**2 - (r*np.sin(theta-phi))**2) + r*np.cos(theta-phi))
         ls = np.linspace(0, l, N_int)
-        vs = np.array([f_sos(x-l*np.sin(phi), y-l*np.cos(phi)) for l in ls]).reshape(-1)
-        wfs.append(trapezoid(1-v0/vs, ls, l/N_int))
+        vs = np.array([f_sos(x-l*np.sin(theta), -y+l*np.cos(theta)) for l in ls]).reshape(-1)
+        wfs.append(trapezoid(1-v0/vs, ls))
 
     f_wf = interp1d(thetas, wfs, kind='cubic')    
     return lambda theta: f_wf(np.mod(theta, 2*np.pi))
