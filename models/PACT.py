@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.fft import fft2, ifft2, fftn, fftshift, ifftn, ifftshift
+from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
 from utils.utils_torch import get_fourier_coord
 
@@ -60,3 +60,17 @@ class PSF_PACT(nn.Module):
         psf = fftshift(ifft2(tf), dim=[-2,-1]).abs()
         psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
         return psf
+    
+    
+class TF_PACT(nn.Module):
+    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, device='cuda:0'):
+        super(TF_PACT, self).__init__() 
+        self.device = device
+        self.n_delays = n_delays
+        self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l, device=device)
+        self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        
+    def forward(self, delays, w):
+        tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) + torch.exp(1j*self.k2D*(delays - w(self.theta2D+np.pi)))) / 2
+        return ifftshift(tf, dim=[-2,-1])

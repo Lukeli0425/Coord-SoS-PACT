@@ -65,6 +65,6 @@ class ADMM_Batched(nn.Module):
     
     
 if __name__ == "__main__":
-    model = ADMM()
+    model = ADMM_Batched()
     total = sum([param.nelement() for param in model.parameters()])
     print("Number of parameter: %s" % total)
