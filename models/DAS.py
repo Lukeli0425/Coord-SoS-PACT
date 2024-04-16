@@ -4,7 +4,7 @@ from torch import nn
 
 class DAS(nn.Module):
     """Delay-And-Sum image reconstruction module for Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, mode='zero', clip=False, device='cuda:0'):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), mode='zero', clip=False, device='cuda:0'):
         """Initialize parameters of the Delay-And-Sum module.
 
         Args:
@@ -27,7 +27,8 @@ class DAS(nn.Module):
         self.mode = mode
         self.clip = clip
         
-        angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
+        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
+        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer, device=self.device) + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         self.x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         self.y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
         self.distance_to_transducer = torch.sqrt((self.x_transducer - self.x_vec)**2 + (self.y_transducer - self.y_vec)**2)
@@ -51,7 +52,7 @@ class DAS(nn.Module):
 
 class DAS_dual(nn.Module):
     """Delay-And-Sum image reconstruction module using a dual SoS distribution for Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, R_body=0.0, center=(0.0, 0.0), mode='zero', clip=False, device='cuda:0'):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), R_body=0.0, center=(0.0, 0.0), mode='zero', clip=False, device='cuda:0'):
         """Initialize parameters of the Dual SoS Delay-And-Sum module.
 
         Args:
@@ -76,7 +77,8 @@ class DAS_dual(nn.Module):
         self.mode = mode
         self.clip = clip
  
-        angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
+        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
+        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer, device=self.device) + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
         self.distance_to_transducer = torch.sqrt((x_transducer - x_vec)**2 + (y_transducer - y_vec)**2)

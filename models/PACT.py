@@ -47,30 +47,36 @@ class IFT2D(nn.Module):
     
     
 class PSF_PACT(nn.Module):
-    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, device='cuda:0'):
+    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi), device='cuda:0'):
         super(PSF_PACT, self).__init__() 
         self.device = device
         self.n_delays = n_delays
         self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l, device=device)
         self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        # angle_range = torch.tensor([angle_range[0] % (2*torch.pi), angle_range[1] % (2*torch.pi)])
+        self.mask0 = (self.theta2D >= angle_range[0]) * (self.theta2D <= angle_range[1]).float()
+        self.mask1 = ((self.theta2D + torch.pi) % (2*torch.pi) >= angle_range[0]) * ((self.theta2D + torch.pi) % (2*torch.pi) <= angle_range[1]).float()
         
     def forward(self, delays, w):
-        tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) + torch.exp(1j*self.k2D*(delays - w(self.theta2D+np.pi)))) / 2
+        tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) * self.mask0 + torch.exp(1j*self.k2D*(delays - w(self.theta2D+torch.pi))) * self.mask1) / 2
         psf = fftshift(ifft2(tf), dim=[-2,-1]).abs()
         psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
         return psf
     
     
 class TF_PACT(nn.Module):
-    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, device='cuda:0'):
+    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi), device='cuda:0'):
         super(TF_PACT, self).__init__() 
         self.device = device
         self.n_delays = n_delays
         self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l, device=device)
         self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        # angle_range = torch.tensor([angle_range[0] % (2*torch.pi), angle_range[1] % (2*torch.pi)])
+        self.mask0 = (self.theta2D >= angle_range[0]) * (self.theta2D <= angle_range[1]).float()
+        self.mask1 = ((self.theta2D + torch.pi) % (2*torch.pi) >= angle_range[0]) * ((self.theta2D + torch.pi) % (2*torch.pi) <= angle_range[1]).float()
         
     def forward(self, delays, w):
-        tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) + torch.exp(1j*self.k2D*(delays - w(self.theta2D+np.pi)))) / 2
+        tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) * self.mask0 + torch.exp(1j*self.k2D*(delays - w(self.theta2D+torch.pi))) * self.mask1) / 2
         return ifftshift(tf, dim=[-2,-1])

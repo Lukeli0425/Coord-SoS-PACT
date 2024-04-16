@@ -40,27 +40,26 @@ def crop(img):
 #         self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
 #         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
-        
     
 
-class Wiener_Batched(nn.Module):
-    def __init__(self, lam, device='cuda:0'):
-        super(Wiener_Batched, self).__init__()
-        self.device = device
-        self.lam = torch.tensor(lam, device=device)
-        self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
-        self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
+# class Wiener_Batched(nn.Module):
+#     def __init__(self, lam, device='cuda:0'):
+#         super(Wiener_Batched, self).__init__()
+#         self.device = device
+#         self.lam = torch.tensor(lam, device=device)
+#         self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
+#         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
-    def forward(self, y, h):
-        y, h = pad_double(y), pad_double(h)
-        H = fft2(ifftshift(h))
-        Ht, HtH = torch.conj(H), torch.abs(H) ** 2
+#     def forward(self, y, h):
+#         y, h = pad_double(y), pad_double(h)
+#         H = fft2(ifftshift(h))
+#         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
         
-        rhs = (Ht * fft2(ifftshift(y))).sum(axis=-3).unsqueeze(-3)
-        lhs = (HtH + self.lam * ((self.k.mean()/self.k))**1).sum(axis=-3).unsqueeze(-3) 
-        x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
+#         rhs = (Ht * fft2(ifftshift(y))).sum(axis=-3).unsqueeze(-3)
+#         lhs = (HtH + self.lam * ((self.k.mean()/self.k))**1).sum(axis=-3).unsqueeze(-3) 
+#         x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
         
-        return crop_half(x)
+#         return crop_half(x)
 
 
 class Wiener_Batched(nn.Module):

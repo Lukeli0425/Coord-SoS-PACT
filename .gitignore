@@ -18,6 +18,8 @@ TF_simulation/
 TF_phantom/
 TF_invivo/
 TF_kidney/
+TF_invivo_128/
+TF_invivo_half/
 results_old/
  
 # Private data
