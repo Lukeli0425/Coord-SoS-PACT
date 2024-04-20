@@ -115,18 +115,34 @@ def wavefront_real(R, r, phi, v0, v1):
         return lambda theta: (1-v0/v1) * 2 * torch.sqrt(torch.maximum(R**2 - (r*torch.sin(theta-phi))**2, torch.zeros_like(theta))) * (torch.cos(phi-theta) >= 0)
 
 
-def wavefront_SoS(SoS, x_vec, y_vec, v0, R, x, y, r, phi, N=512, N_int=256):
+def wavefront_double_circle(x, y, R1, R2, x2, y2, v0, v1, v2):
+    r1, phi1 = np.sqrt(x**2 + y**2), np.arctan2(x, y)
+    r2, phi2 = np.sqrt((x-x2)**2 + (y-y2)**2), np.arctan2(x-x2, y-y2)
+    if r2 < R2: # point inside small circle
+        l1 = lambda theta: torch.sqrt(R1**2 - (r1 * torch.sin(theta-phi1))**2) + r1 * torch.cos(theta-phi1)
+        l2 = lambda theta: torch.sqrt(R2**2 - (r2 * torch.sin(theta-phi2))**2) + r2 * torch.cos(theta-phi2)
+    elif r1 < R1: # point outside small circle & inside body
+        l1 = lambda theta: (torch.sqrt(R1**2 - (r1 * torch.sin(theta-phi1))**2) + r1 * torch.cos(theta-phi1))
+        l2 = lambda theta: 2 * torch.sqrt(torch.maximum(R2**2 - (r2*torch.sin(theta-phi2))**2, torch.zeros_like(theta))) * (torch.cos(phi2-theta) >= 0)
+    else: # point outside body
+        l1 = lambda theta: 2 * torch.sqrt(torch.maximum(R1**2 - (r1*torch.sin(theta-phi1))**2, torch.zeros_like(theta))) * (torch.cos(phi1-theta) >= 0)
+        l2 = lambda theta: 2 * torch.sqrt(torch.maximum(R2**2 - (r2*torch.sin(theta-phi2))**2, torch.zeros_like(theta))) * (torch.cos(phi2-theta) >= 0)
+        
+    return lambda theta: (1-v0/v1) * (l1(theta) -l2(theta)) + (1-v0/v2) * l2(theta)
+    
+    
+def wavefront_SoS(SoS, x_vec, y_vec, v0, R, x, y, r, phi, N=128, N_int=64):
     x_vec, y_vec = np.meshgrid(x_vec, y_vec)
     f_sos = CloughTocher2DInterpolator(list(zip(x_vec.reshape(-1), y_vec.reshape(-1))), SoS.reshape(-1))
-    thetas = np.arange(0, 2*np.pi, 2*np.pi/N)
+    thetas = np.arange(0, 2*np.pi+2*np.pi/N, 2*np.pi/N)
     wfs = []
     for theta in thetas:
-        l = (np.sqrt(R**2 - (r*np.sin(theta-phi))**2) + r*np.cos(theta-phi))
+        l = np.sqrt(R**2 - (r*np.sin(theta-phi))**2) + r*np.cos(theta-phi)
         ls = np.linspace(0, l, N_int)
         vs = np.array([f_sos(x-l*np.sin(theta), -y+l*np.cos(theta)) for l in ls]).reshape(-1)
         wfs.append(trapezoid(1-v0/vs, ls))
 
-    f_wf = interp1d(thetas, wfs, kind='cubic')    
+    f_wf = interp1d(thetas, wfs, kind='cubic')   
     return lambda theta: f_wf(np.mod(theta, 2*np.pi))
 
 
