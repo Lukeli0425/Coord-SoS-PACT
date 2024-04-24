@@ -66,6 +66,7 @@ class Wiener_Batched(nn.Module):
     def __init__(self, lam, order=1, device='cuda:0'):
         super(Wiener_Batched, self).__init__()
         self.device = device
+        
         self.lam = torch.tensor(lam, device=device)
         self.order = torch.tensor(order, device=device)
         self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)

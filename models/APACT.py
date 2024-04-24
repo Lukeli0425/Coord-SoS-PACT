@@ -127,19 +127,6 @@ class APACT(nn.Module):
                 best_x = fftshift(ifft2(X), dim=(-2,-1)).real
                 best_tf = H
                 best_params = self.params[idx]
-        
-        # H, Ht = self.TFs, self.TFs.conj()
-        # rhs = (Ht * Y).sum(axis=-3).unsqueeze(-3)
-        # lhs = (Ht * H).sum(axis=-3).unsqueeze(-3) + 0.002
-        # X = rhs / lhs
-        # Y_hat = H * X
-        
-        # # y_hat = ifftshift(ifft2(H * X), dim=[-2,-1]).real
-        # loss = self.loss(Y.abs().repeat(Y_hat.shape[0],1,1,1) * self.k, Y_hat.abs() * self.k)
-        # best_idx, best_loss = torch.argmin(loss), loss.min()   
-        # # best_x = ifftshift(ifft2(X[best_idx]), dim=[-2,-1]).real
-        # best_x = ifft2(X[best_idx]).real
-        # # best_x = x[best_idx]
                 
         return crop_half(best_x), best_tf, best_params, best_loss
     

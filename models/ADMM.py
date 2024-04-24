@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
+from utils.utils_torch import crop_half, get_fourier_coord, pad_double
+
 
 class ADMM(nn.Module):
     def __init__(self, n_iters=16, lam=0.1, rho=0.03):
@@ -34,26 +36,31 @@ class ADMM(nn.Module):
 
 
 class ADMM_Batched(nn.Module):
-    def __init__(self, n_iters=20, lam=0.1, rho=0.03):
+    def __init__(self, n_iters=20, lam=0.1, rho=0.03, device='cuda:0'):
         super(ADMM_Batched, self).__init__()
+        self.device = device
+        
         self.n_iters = n_iters
-        self.lam = nn.Parameter(torch.tensor(lam), requires_grad=True)
-        self.rho = nn.Parameter(torch.tensor(rho), requires_grad=True)
+        self.lam = torch.tensor(lam, device=device)
+        self.rho = torch.tensor(rho, device=device)
+        self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
+        self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
 
         
-    def forward(self, y, h):
-        H = fft2(h)
+    def forward(self, y, H):
+        y = pad_double(y)
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
+        
         B, C, H, W = y.shape    
         
-        z = torch.zeros([B, 1, H, W], device=y.device)
-        u = torch.zeros([B, 1, H, W], device=y.device)
+        z = torch.zeros([B, 1, H, W], device=self.device)
+        u = torch.zeros([B, 1, H, W], device=self.device)
         
         for _ in range(self.n_iters):
             # X-update
-            rhs = (Ht * fft2(y)).sum(axis=-3).unsqueeze(-3) + self.rho * fft2(z - u)
+            rhs = (Ht * fft2(ifftshift(y, dim=(-2,-1)))).sum(axis=-3).unsqueeze(-3) + self.rho * fft2(z - u)
             lhs = (HtH + self.rho).sum(axis=-3).unsqueeze(-3)
-            x = ifftshift(ifft2(rhs/lhs), dim=[-2,-1]).real
+            x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
             
             # Z-update
             z = torch.maximum(x + u - self.lam, torch.zeros_like(x)) + torch.minimum(x + u + self.lam, torch.zeros_like(x))
@@ -61,7 +68,7 @@ class ADMM_Batched(nn.Module):
             # Dual-update
             u = u + x - z            
 
-        return x
+        return crop_half(x)
     
     
 if __name__ == "__main__":
