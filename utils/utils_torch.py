@@ -1,13 +1,12 @@
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.fft import fftn, fftshift, ifftn, ifftshift
 
 
 def pad_double(img):
-    B, C, H, W = img.shape
-    img_pad = torch.zeros(B, C, H*2, W*2, device=img.device)
-    img_pad[:,:,H//2:3*H//2, W//2:3*W//2] = img
-    return img_pad
+    H, W = img.shape[-2], img.shape[-1]
+    return F.pad(img, (W//2, W//2, H//2, H//2))
 
 
 def crop_half(img):

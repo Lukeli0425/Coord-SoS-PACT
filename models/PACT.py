@@ -2,53 +2,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
-
 from tqdm import tqdm
-from utils.utils_torch import *
+
+from models.Regularizer import L1_Regularizer, L2_Regularizer, TV_Regularizer
+from models.SIREN import SIREN
 from models.Wiener import Wiener_Batched
 from utils.reconstruction import gaussian_kernel
+from utils.utils_torch import *
 
 
-# class FT2D(nn.Module):
-#     """2D Fourier Transform."""
-#     def __init__(self):
-#         super(FT2D, self).__init__()
-        
-#     def forward(self, x):
-#         return fftn(x, dim=[-2,-1]).abs()
-
-
-# class IFT2D(nn.Module):
-#     """2D Inverse Fourier Transform."""
-#     def __init__(self):
-#         super(IFT2D, self).__init__()
-        
-#     def forward(self, h):
-#         return ifftshift(ifftn(h, dim=[-2,-1]), dim=[-2,-1]).real
-
-
-# class PSF_PACT(nn.Module):
-#     def __init__(self, n_delays=8, delay_step=1e-4, n_points=80, l=3.2e-3, device='cpu'):
-#         super(PSF_PACT, self).__init__() 
-#         self.device = device
-#         self.n_points = n_points # Size of PSF image in pixels.
-#         self.l = l # Length [m] of the PSF image.
-#         self.n_delays = n_delays
-#         self.delays = torch.linspace(-(n_delays/2-1), n_delays/2, n_delays, requires_grad=False) * delay_step
-#         self.delays = self.delays.view(1,n_delays,1,1) # [1,8,1,1]
-        
-#     def forward(self, C0, C1, phi1, C2, phi2, offset):
-#         self.delays = self.delays.to(self.device)
-#         k, theta = get_fourier_coord(n_points=self.n_points, l=self.l, device=self.device)
-#         k, theta = k.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1), theta.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
-#         w = lambda theta: C0 + C1 * torch.cos(theta + phi1) + C2 * torch.cos(2 * theta + phi2) # Wavefront function.
-#         tf = (torch.exp(-1j*k*(self.delays + offset - w(theta))) + torch.exp(1j*k*(self.delays + offset - w(theta+np.pi)))) / 2
-#         psf = ifftshift(ifftn(tf, dim=[-2,-1]), dim=[-2,-1]).abs()
-#         psf /= psf.sum(axis=(-2,-1)).unsqueeze(-1).unsqueeze(-1) # Normalization.
-        
-#         return psf
-    
-    
 class PSF_PACT(nn.Module):
     def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi), device='cuda:0'):
         super(PSF_PACT, self).__init__() 
@@ -68,7 +30,7 @@ class PSF_PACT(nn.Module):
         return psf
     
     
-class TF_PACT(nn.Module):
+# class TF_PACT(nn.Module):
     def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi), device='cuda:0'):
         super(TF_PACT, self).__init__() 
         self.device = device
@@ -85,9 +47,9 @@ class TF_PACT(nn.Module):
 
 
 class Wavefront_SoS(nn.Module):
-    def __init__(self, SoS, R_body, v0, x_vec, y_vec, n_points=90, N_int=500, device='cuda:0'):
+    def __init__(self, R_body, v0, x_vec, y_vec, n_points=90, N_int=500, device='cuda:0'):
         super(Wavefront_SoS, self).__init__()
-        self.SoS = torch.tensor(SoS, dtype=torch.float64, device=device)
+        # self.SoS = torch.tensor(SoS, dtype=torch.float64, device=device)
         self.R_body = torch.tensor(R_body, dtype=torch.float64, device=device)
         self.v0 = torch.tensor(v0, dtype=torch.float64, device=device)
         self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64, device=device).view(-1,1)
@@ -165,17 +127,17 @@ class TV_Prior(nn.Module):
     def forward(self, x, mask):
         dx = (x[1:, :] - x[:-1, :]) * mask[1:, :]
         dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
-        return self.lam * (torch.sum(torch.abs(dx)) + torch.sum(torch.abs(dy)))
+        return self.lam * (torch.sum(torch.abs(dx)) + torch.sum(torch.abs(dy))).mean()
     
     
 class L1_Prior(nn.Module):
-    def __init__(self, lam=1e-3, mean=1540):
+    def __init__(self, lam=1e-3, mean=1550):
         super(L1_Prior, self).__init__()
         self.lam = lam
         self.mean = mean
         
     def forward(self, x, mask):
-        return self.lam * torch.sum((x-self.mean)**2 * mask)
+        return self.lam * torch.mean((x-self.mean).abs() * mask)
 
 
 class Joint_Recon(nn.Module):
@@ -191,23 +153,37 @@ class Joint_Recon(nn.Module):
         self.gaussian_window = torch.tensor(gaussian_kernel(sigma, n_points), device=device).unsqueeze(0)
         self.k, self.theta = get_fourier_coord(n_points=2*n_points, l=2*l, device=device)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
-        self.SoS = nn.Parameter(torch.tensor(SoS, dtype=torch.float64, device=device), requires_grad=True)
+        # self.SoS = nn.Parameter(torch.tensor(SoS, dtype=torch.float64, device=device), requires_grad=True)
+        self.SoS = torch.tensor(SoS, dtype=torch.float64, device=device)
         self.mask = torch.zeros_like(self.SoS)
         XX, YY = torch.meshgrid(torch.tensor(x_vec[:,0]), torch.tensor(y_vec[:,0]))
         self.mask[XX**2 + YY**2 <= R**2] = 1
-        self.wavefront_sos = Wavefront_SoS(SoS=self.SoS, R_body=R, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=240, N_int=250, device=device)
+        self.wavefront_sos = Wavefront_SoS(R_body=R, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=240, N_int=250, device=device)
         self.tf_pact = TF_PACT(n_points=2*n_points, l=2*l, n_delays=n_delays, angle_range=angle_range, device=device)
         self.loss = MSELoss()
         self.tv_prior = TV_Prior(lam=lam_tv)
         self.l2_prior = L1_Prior(lam=lam_l1)
         
+        self.siren = SIREN(in_features=2, out_features=1, hidden_features=128, num_hidden_layers=2, activation_fn='sin')
+        self.siren.cuda()
+        # self.siren.load_state_dict(torch.load('siren.pth'))
+        
+        self.mgrid = get_mgrid(self.mask.shape, range=(-1, 1)).to(device)
+        self.mgrid = self.mgrid[self.mask.view(-1)>0]
+        
+        
     def forward(self, x, y, y_img, delays):
+        output, _ = self.siren(self.mgrid)
+        SoS = (torch.ones_like(self.SoS, requires_grad=True) * 1499.363).view(-1,1)
+        SoS[self.mask.view(-1)>0] = output.double() * 170.0 + 1550
+        SoS = SoS.view(self.mask.shape)
+
         # self.SoS *= self.mask
-        thetas, wfs = self.wavefront_sos(torch.tensor(x), torch.tensor(y), self.SoS)
+        thetas, wfs = self.wavefront_sos(torch.tensor(x), torch.tensor(y), SoS)
         H = self.tf_pact(delays.view(1,-1,1,1), thetas, wfs)
         y_img = y_img * self.gaussian_window
-        # print(x.shape, y_img.shape)
-        # print(H.shape)
+
+        
         # Deconvolution
         Y = fft2(ifftshift(pad_double(y_img), dim=(-2,-1)))
         Ht, HtH = H.conj(), H.abs() ** 2
@@ -216,6 +192,26 @@ class Joint_Recon(nn.Module):
         X = rhs / lhs
         x = fftshift(ifft2(X), dim=(-2,-1)).real
 
-        loss = self.loss(Y.abs() * self.k, (H * X).abs() * self.k) + self.tv_prior(self.SoS, self.mask) + self.l2_prior(self.SoS, self.mask)
+        loss = self.loss(Y.abs() * self.k, (H * X).abs() * self.k) + self.tv_prior(SoS, self.mask) + self.l2_prior(SoS, self.mask)
             
-        return x, self.SoS, loss
+        return x, SoS, loss
+    
+
+def get_mgrid(shape:tuple, range:tuple=(-1, 1)):
+    """Generates a flattened grid of (x,y,...) coordinates in a range of `[-1, 1]`.
+    
+    Args:
+        shape (`tuple`): Shape of the datacude to be fitted.
+        range (`tuple`, optional): Range of the grid. Defaults to `(-1, 1)`.
+
+    Returns:
+        `torch.Tensor`: Generated flattened grid of coordinates.
+    """
+    tensors = [torch.linspace(range[0], range[1], steps=N) for N in shape]
+    mgrid = torch.stack(torch.meshgrid(*tensors), dim=-1)
+    mgrid = mgrid.reshape(-1, len(shape))
+    return mgrid
+
+
+if __name__ == "__main__":
+    jr = Joint_Recon(SoS=1540, x_vec=[-0.02, 0.02], y_vec=[-0.02, 0.02], R=0.01, v0=1540, n_points=80, l=3.2e-3, n_delays=32, angle_range=(0, 2*torch.pi), lam_tv=1e-3, lam_l1=1e-3, device='cuda:0')
