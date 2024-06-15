@@ -4,7 +4,7 @@ from torch import nn
 
 class DAS(nn.Module):
     """Delay-And-Sum image reconstruction module for Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), mode='zero', clip=False, device='cuda:0'):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), mode='zero', clip=False):
         """Initialize parameters of the Delay-And-Sum module.
 
         Args:
@@ -17,18 +17,17 @@ class DAS(nn.Module):
             clip (bool, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
         """
         super(DAS, self).__init__()
-        self.device = device
-        self.R_ring = torch.tensor(R_ring, device=self.device)
+        self.R_ring = torch.tensor(R_ring).cuda()
         self.N_transducer = N_transducer
-        self.T_sample = torch.tensor(T_sample, device=self.device)
+        self.T_sample = torch.tensor(T_sample).cuda()
         self.H, self.W = x_vec.shape[0], y_vec.shape[0]
-        self.x_vec = torch.tensor(x_vec, device=self.device).view(1, -1, 1)
-        self.y_vec = torch.tensor(y_vec, device=self.device).view(1, 1, -1)
+        self.x_vec = torch.tensor(x_vec).cuda().view(1, -1, 1)
+        self.y_vec = torch.tensor(y_vec).cuda().view(1, 1, -1)
         self.mode = mode
         self.clip = clip
-        
-        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
-        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer, device=self.device) + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
+
+        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer).cuda() + 1).view(-1, 1, 1)
+        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer).cuda() + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         self.x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         self.y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
         self.distance_to_transducer = torch.sqrt((self.x_transducer - self.x_vec)**2 + (self.y_transducer - self.y_vec)**2)
@@ -52,7 +51,7 @@ class DAS(nn.Module):
 
 class DAS_dual(nn.Module):
     """Delay-And-Sum image reconstruction module using a dual SoS distribution for Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), R_body=0.0, center=(0.0, 0.0), mode='zero', clip=False, device='cuda:0'):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), R_body=0.0, center=(0.0, 0.0), mode='zero', clip=False):
         """Initialize parameters of the Dual SoS Delay-And-Sum module.
 
         Args:
@@ -67,18 +66,17 @@ class DAS_dual(nn.Module):
             center (`tuple`, optional): Center coordinates [m] of the circular body. Defaults to `(0.0, 0.0)`.
         """
         super(DAS_dual, self).__init__()
-        self.device = device
-        self.R_ring = torch.tensor(R_ring, device=self.device)
+        self.R_ring = torch.tensor(R_ring).cuda()
         self.N_transducer = N_transducer
-        self.T_sample = torch.tensor(T_sample, device=self.device)
+        self.T_sample = torch.tensor(T_sample).cuda()
         self.H, self.W = x_vec.shape[0], y_vec.shape[0]
-        x_vec = torch.tensor(x_vec, device=self.device).view(1, -1, 1).repeat(1,1,self.W)
-        y_vec = torch.tensor(y_vec, device=self.device).view(1, 1, -1).repeat(1,self.H,1)
+        x_vec = torch.tensor(x_vec).cuda().view(1, -1, 1).repeat(1,1,self.W)
+        y_vec = torch.tensor(y_vec).cuda().view(1, 1, -1).repeat(1,self.H,1)
         self.mode = mode
         self.clip = clip
  
-        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer, device=self.device) + 1).view(-1, 1, 1)
-        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer, device=self.device) + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
+        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer).cuda() + 1).view(-1, 1, 1)
+        angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer).cuda() + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
         self.distance_to_transducer = torch.sqrt((x_transducer - x_vec)**2 + (y_transducer - y_vec)**2)

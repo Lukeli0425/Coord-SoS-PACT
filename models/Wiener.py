@@ -2,13 +2,13 @@ import torch
 import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 
-from models.ResUNet import ResUNet
+# from models.ResUNet import ResUNet
 from utils.utils_torch import crop_half, get_fourier_coord, pad_double
 
 
 class Wiener(nn.Module):
     def __init__(self, lam=0.1):
-        super(Wiener, self).__init__()
+        super().__init__()
         self.lam = nn.Parameter(torch.tensor(lam), requires_grad=True)
         
     def forward(self, y, h):
@@ -34,7 +34,7 @@ def crop(img):
 
 # class PACT_Deconv(nn.Module):
 #     def __init__(self, tf, lam, order=1, device='cuda:0'):
-#         super(PACT_Deconv, self).__init__()
+#         super().__init__()
 #         self.device = device
 #         self.lam = torch.tensor(lam, device=device)
 #         self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
@@ -44,7 +44,7 @@ def crop(img):
 
 # class Wiener_Batched(nn.Module):
 #     def __init__(self, lam, device='cuda:0'):
-#         super(Wiener_Batched, self).__init__()
+#         super().__init__()
 #         self.device = device
 #         self.lam = torch.tensor(lam, device=device)
 #         self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
@@ -64,12 +64,12 @@ def crop(img):
 
 class Wiener_Batched(nn.Module):
     def __init__(self, lam, order=1, device='cuda:0'):
-        super(Wiener_Batched, self).__init__()
+        super().__init__()
         self.device = device
         
         self.lam = torch.tensor(lam, device=device)
         self.order = torch.tensor(order, device=device)
-        self.k, self.theta = get_fourier_coord(n_points=160, l=6.4e-3, device=device)
+        self.k, _ = get_fourier_coord(n_points=160, l=6.4e-3)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, H):
@@ -85,7 +85,7 @@ class Wiener_Batched(nn.Module):
 
 class WienerNet(nn.Module):
     def __init__(self,  nc=[16, 32, 64, 128]):
-        super(WienerNet, self).__init__()
+        super().__init__()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         
         self.wiener = Wiener_Batched(lam=0.2)
