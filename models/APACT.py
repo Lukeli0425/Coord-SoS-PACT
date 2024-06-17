@@ -68,7 +68,6 @@ class APACT(nn.Module):
         
         # Forawrd models and dconvolution models
         self.tf = TF_APACT(delays=self.delays, n_points=160, l=6.4e-3, device=self.device)
-        # self.deconv = Deconv_APACT()
         self.loss = MSELoss()
         
         self.TFs, self.params = None, None

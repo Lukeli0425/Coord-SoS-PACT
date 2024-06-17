@@ -17,7 +17,10 @@ from utils.utils_torch import get_total_params
 
 DATA_DIR = 'data/'
 RESULT_DIR = 'results/'
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
+
+def das():
+    pass
 
 def deconv():
     pass
@@ -35,9 +38,8 @@ def joint_reconstruction(n_iters, lr, weight,
     if task_params['ring_error']:
         ring_error, _ = load_mat(os.path.join(DATA_DIR, 'RING_ERROR_NEW.mat'))
         ring_error = np.interp(np.arange(0, 512, 1), np.arange(0, 512, 2), ring_error[:,0]) # Upsample ring error.
-        # ring_error = torch.tensor(0.0)
     else:
-        ring_error = ring_error = torch.tensor(0.0)
+        ring_error = torch.tensor(0.0)
     
     # Preparations.
     Nx, Ny = basic_params['Nx'], basic_params['Ny']
