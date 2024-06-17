@@ -44,3 +44,31 @@ def get_fourier_coord(n_points=80, l=3.2e-3, device='cuda:0'):
 	k2D = torch.sqrt(fx2D**2 + fy2D**2) * n_points
 	theta2D = torch.arctan2(fy2D, fx2D) + np.pi/2 # Add `np.pi/2` to match the polar definition of the theta.
 	return k2D, theta2D % (2*torch.pi)
+
+
+def get_mgrid(shape:tuple, range:tuple=(-1, 1)):
+    """Generates a flattened grid of (x,y,...) coordinates in a range of `[-1, 1]`.
+    
+    Args:
+        shape (`tuple`): Shape of the datacude to be fitted.
+        range (`tuple`, optional): Range of the grid. Defaults to `(-1, 1)`.
+
+    Returns:
+        `torch.Tensor`: Generated flattened grid of coordinates.
+    """
+    tensors = [torch.linspace(range[0], range[1], steps=N) for N in shape]
+    mgrid = torch.stack(torch.meshgrid(*tensors, indexing='xy'), dim=-1)
+    mgrid = mgrid.reshape(-1, len(shape))
+    return mgrid
+
+
+def get_total_params(model: torch.nn.Module):
+    """Calculate the total number of parameters in a model.
+	
+	Args:
+		model (`torch.nn.Module`): PyTorch model.
+
+	Returns:
+		`int`: Total number of parameters in the model.
+	"""
+    return sum([param.nelement() if param.requires_grad else 0 for param in model.parameters()])

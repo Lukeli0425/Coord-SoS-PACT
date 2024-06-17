@@ -1,0 +1,41 @@
+basic_params:
+  Nx: 560
+  Ny: 560
+  dx: 4.e-5               # Resolution of X coordinates [m].
+  dy: 4.e-5               # Resolution of Y coordinates [m].
+  l: 3.2e-3               # Size of image patch [m].
+  fwhm: 1.5e-3            # FWHM of Gaussian window [m].
+
+numerical_phantom:
+  sinogram: "sinogram_simulation_easy.mat"
+  EIR: False
+  ring_error: False
+  SoS: "SoS_simulation_easy.mat"
+  shift: (0.0, 0.0)
+  R: 9.8e-3               # Radius of body [m].
+  T: 26.0                 # Water temperature [C].
+  v1: 1567.3              # Avergae SoS in tissue [m/s].
+
+  mean: 1550.0            # Mean of SoS in tissue [m/s].
+  std: 110.0               # Standard deviation of SoS in tissue [m/s].
+
+
+
+
+leaf_phantom:
+  sinogram: "LEAF_PHANTOM.mat"
+  EIR: "EIR_TUNGSTEN.mat"
+  ring_error: "RING_ERROR_NEW.mat"
+  SoS: False
+  shift: (0.0, 0.0)
+  R: 11.2e-3              # Radius of body [m].
+  T: 26.0                 # Water temperature [C].
+  v1: 1528.0              # Avergae SoS in tissue [m/s].
+
+  mean: 1520.0            # Mean of SoS in tissue [m/s].
+  std: 10.5               # Standard deviation of SoS in tissue [m/s].
+
+
+
+mouse_liver:
+  R:
