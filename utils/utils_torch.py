@@ -10,8 +10,8 @@ def pad_double(img):
 
 
 def crop_half(img):
-    B, C, H, W = img.shape
-    return img[:,:,H//4:3*H//4, W//4:3*W//4]
+    H, W = img[...,:,:].shape
+    return img[...,H//4:3*H//4, W//4:3*W//4]
     
     
 def conv_fft_batch(H, x):
