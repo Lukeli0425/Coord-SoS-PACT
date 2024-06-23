@@ -5,12 +5,12 @@ from torch.fft import fftn, fftshift, ifftn, ifftshift
 
 
 def pad_double(img):
-    H, W = img.shape[-2], img.shape[-1]
+    H, W = img.shape[-2:]
     return F.pad(img, (W//2, W//2, H//2, H//2))
 
 
 def crop_half(img):
-    H, W = img[...,:,:].shape
+    H, W = img.shape[-2:]
     return img[...,H//4:3*H//4, W//4:3*W//4]
     
     

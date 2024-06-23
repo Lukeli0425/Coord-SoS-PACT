@@ -21,9 +21,9 @@ class JR_Dataset(Dataset):
         return torch.tensor(x), torch.tensor(y), self.img_stack[:,20*i:20*i+80, 20*j:20*j+80]
     
     
-def get_jr_dataloader(img_stack, l=3.2e-3):
+def get_jr_dataloader(img_stack, l=3.2e-3,  batch_size=1):
     dataset = JR_Dataset(img_stack.clone(), l)
-    return DataLoader(dataset, batch_size=1, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 
 # class PACT_Dataset(Dataset):

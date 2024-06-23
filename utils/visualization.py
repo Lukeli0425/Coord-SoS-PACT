@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from torch.fft import fftshift, fft2, ifft2, ifftn, ifftshift
+from torch.fft import fft2, fftshift, ifft2, ifftn, ifftshift
+
 
 def standardize(img):
     """Standardize the image to have zero mean and unit standard deviation.
@@ -31,9 +32,11 @@ def PSF(theta, k, w, delay):
     psf /= psf.sum(axis=(-2,-1)) # Normalization.
     return psf
 
+
 def TF(theta, k, w, delay):
     tf = (torch.exp(-1j*k*(delay - w(theta))) + torch.exp(1j*k*(delay - w(theta+np.pi)))) / 2
     return tf
+
 
 def condition_number(psf):
     """Calculate the condition number of a PSF.
@@ -44,5 +47,6 @@ def condition_number(psf):
     Returns:
         `float`: Condition number.
     """
-    H = fft2(psf)
+    # H = fft2(psf)
+    H = psf
     return H.abs().max() / H.abs().min()    

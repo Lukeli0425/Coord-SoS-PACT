@@ -58,7 +58,7 @@ class Joint_Recon(nn.Module):
         X = rhs / lhs
         x = fftshift(ifft2(X), dim=(-2,-1)).real
 
-        loss = self.loss(Y.abs() * self.k, (H * X).abs() * self.k) + self.tv_regularizer(SoS, self.mask) #+ self.l1_regularizer(SoS, self.mask)
+        loss = self.loss(Y.abs(), (H * X).abs()) + self.tv_regularizer(SoS, self.mask) #+ self.l1_regularizer(SoS, self.mask)
             
         return x, SoS, loss
 
