@@ -33,6 +33,8 @@ results_old/
 # large data
 tutorials/data/
 
+results_new/
+
 # nohup files
 *.out
 out/

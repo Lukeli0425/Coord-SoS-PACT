@@ -126,27 +126,27 @@ def get_medium(kgrid, Nx=2552, Ny=2552,
                v0=1500.0, v1=1600.0, v2=1650.0, 
                R=0.01, R1=0.06, offset=0.0, rou=1000):
     """
-    Generate K-wave medium object with varying SoS distribution.
+    Generate K-wave medium object with varying SOS distribution.
 
     Args:
         Nx (int, optional): _description_. Defaults to `2552`.
         Ny (int, optional): _description_. Defaults to `2552`.
-        SoS_background (float, optional): SoS of the background medium. [m/s]. Defaults to `1500.0`.
-        R (float, optional): Radius of the large circle in SoS distribution. [m]. Defaults to `0.01`.
-        R1 (float, optional): Radius of the small circle in SoS distribution. [m]. Defaults to `0.06`.
-        offset (tuple, optional): Offset of circle in SoS distribution. [m]. Defaults to `(0.0, 0.0)`.
+        SOS_background (float, optional): SOS of the background medium. [m/s]. Defaults to `1500.0`.
+        R (float, optional): Radius of the large circle in SOS distribution. [m]. Defaults to `0.01`.
+        R1 (float, optional): Radius of the small circle in SOS distribution. [m]. Defaults to `0.06`.
+        offset (tuple, optional): Offset of circle in SOS distribution. [m]. Defaults to `(0.0, 0.0)`.
         rou (int, optional): Density. [g/cm^3] Defaults to `1000`.
 
     Returns:
-        `kWaveMedium`: The medium object with varying SoS distribution.
+        `kWaveMedium`: The medium object with varying SOS distribution.
     """
 
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
-    SoS = np.ones((Ny, Nx)) * v0
-    SoS[XX**2 + YY**2 < R**2] = v1
-    SoS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = v2
+    SOS = np.ones((Ny, Nx)) * v0
+    SOS[XX**2 + YY**2 < R**2] = v1
+    SOS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = v2
 
-    medium = kWaveMedium(sound_speed=SoS, sound_speed_ref=v0, density=rou)
+    medium = kWaveMedium(sound_speed=SOS, sound_speed_ref=v0, density=rou)
     
     return medium
 
@@ -263,13 +263,13 @@ def get_delays(R, v0, v1, n_delays, mode='linear'):
     else:
         raise NotImplementedError
     
-def get_water_SoS(t):
+def get_water_SOS(t):
     """Calculate the speed of sound of water at temperature `t` in Celsius."""
     a = [1.402385e3, 5.038815, -5.799156e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
-    SoS = 0
+    SOS = 0
     for i in range(len(a)):
-        SoS += a[i] * t**i
-    return SoS
+        SOS += a[i] * t**i
+    return SOS
 
 
 if __name__ == "__main__":

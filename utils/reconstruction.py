@@ -131,15 +131,15 @@ def wavefront_double_circle(x, y, R1, R2, x2, y2, v0, v1, v2):
     return lambda theta: (1-v0/v1) * (l1(theta) -l2(theta)) + (1-v0/v2) * l2(theta)
     
     
-def wavefront_SoS(SoS, x_vec, y_vec, v0, R, x, y, r, phi, N=128, N_int=64):
+def wavefront_SOS(SOS, x_vec, y_vec, v0, R, x, y, r, phi, N=128, N_int=64):
     x_vec, y_vec = np.meshgrid(x_vec, y_vec)
-    f_sos = CloughTocher2DInterpolator(list(zip(x_vec.reshape(-1), y_vec.reshape(-1))), SoS.reshape(-1))
+    f_SOS = CloughTocher2DInterpolator(list(zip(x_vec.reshape(-1), y_vec.reshape(-1))), SOS.reshape(-1))
     thetas = np.arange(0, 2*np.pi+2*np.pi/N, 2*np.pi/N)
     wfs = []
     for theta in thetas:
         l = np.sqrt(R**2 - (r*np.sin(theta-phi))**2) + r*np.cos(theta-phi)
         ls = np.linspace(0, l, N_int)
-        vs = np.array([f_sos(x-l*np.sin(theta), -y+l*np.cos(theta)) for l in ls]).reshape(-1)
+        vs = np.array([f_SOS(x-l*np.sin(theta), -y+l*np.cos(theta)) for l in ls]).reshape(-1)
         wfs.append(trapezoid(1-v0/vs, ls))
 
     f_wf = interp1d(thetas, wfs, kind='cubic')   

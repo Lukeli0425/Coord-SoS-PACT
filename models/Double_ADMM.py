@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torch.fft import fftn, fftshift, ifftn, ifftshift
 
-from models.PACT import PSF_PACT
+from models.pact import PSF_PACT
 from models.ResUNet import ResUNet
 from utils.utils_torch import conv_fft_batch, get_fourier_coord, psf_to_otf
 

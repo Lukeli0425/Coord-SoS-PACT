@@ -7,22 +7,22 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 
 class JR_Dataset(Dataset):
-    def __init__(self, img_stack, l):
-        self.img_stack = img_stack
-        self.l = l
-        self.n = (img_stack.shape[-2]-80)//20 + 1
+    def __init__(self, IP_stack, l_patch, N_patch, stride):
+        self.IP_stack = IP_stack
+        self.l_patch = l_patch
+        self.n = (IP_stack.shape[-2]-N_patch) // stride + 1
 
     def __len__(self):
         return self.n ** 2
     
     def __getitem__(self, idx):
         i, j = idx // self.n, idx % self.n
-        x, y = (j-self.n//2)*self.l / 4, (self.n//2-i)*self.l / 4
-        return torch.tensor(x), torch.tensor(y), self.img_stack[:,20*i:20*i+80, 20*j:20*j+80]
+        x, y = (j-self.n//2)*self.l_patch / 4, (self.n//2-i)*self.l_patch / 4
+        return i, j, torch.tensor(x), torch.tensor(y), self.IP_stack[:,20*i:20*i+80, 20*j:20*j+80]
     
     
-def get_jr_dataloader(img_stack, l=3.2e-3,  batch_size=1):
-    dataset = JR_Dataset(img_stack.clone(), l)
+def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_size=1):
+    dataset = JR_Dataset(IP_stack.clone(), l_patch, N_patch, stride)
     return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 

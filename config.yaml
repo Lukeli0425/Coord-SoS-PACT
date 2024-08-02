@@ -1,41 +1,70 @@
 basic_params:
-  Nx: 560
-  Ny: 560
+  R_ring: 0.05            # Radius of ring array [m].
+  N_transducer: 512       # Number of transducers.
+  T_sample: 2.5e-8        # Sampling period [s].
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
   dx: 4.e-5               # Resolution of X coordinates [m].
   dy: 4.e-5               # Resolution of Y coordinates [m].
-  l: 3.2e-3               # Size of image patch [m].
+  N_patch: 80             # Size of isoplanatic patch in pixels.
+  l_patch: 3.2e-3         # Size of image patch [m].
   fwhm: 1.5e-3            # FWHM of Gaussian window [m].
 
-numerical_phantom:
+
+numerical:
+  task: "numerical"
+  description: "numerical phantom"
   sinogram: "sinogram_simulation_easy.mat"
-  EIR: False
-  ring_error: False
-  SoS: "SoS_simulation_easy.mat"
-  shift: (0.0, 0.0)
-  R: 9.8e-3               # Radius of body [m].
+  EIR: null
+  ring_error: null
+  SOS: "SoS_simulation_easy.mat"
+
+  t0: 0
+  x_c: 0.0
+  y_c: 0.0
   T: 26.0                 # Water temperature [C].
-  v1: 1567.3              # Avergae SoS in tissue [m/s].
+  R_body: 9.8e-3               # Radius of body [m].
+  v1: 1567.3              # SOS in single-body [m/s].
 
-  mean: 1550.0            # Mean of SoS in tissue [m/s].
-  std: 110.0               # Standard deviation of SoS in tissue [m/s].
+  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  std: 110.0              # Standard deviation of SOS in tissue [m/s].
 
 
 
-
-leaf_phantom:
+phantom:
+  task: "phantom"
+  description: "leaf phantom"
   sinogram: "LEAF_PHANTOM.mat"
   EIR: "EIR_TUNGSTEN.mat"
   ring_error: "RING_ERROR_NEW.mat"
-  SoS: False
-  shift: (0.0, 0.0)
-  R: 11.2e-3              # Radius of body [m].
+  SOS: null
+
+  t0: 46
+  x_c: 0.0
+  y_c: 0.0
+  R_body: 11.2e-3              # Radius of body [m].
   T: 26.0                 # Water temperature [C].
-  v1: 1528.0              # Avergae SoS in tissue [m/s].
+  v1: 1528.0              # Avergae SOS in tissue [m/s].
 
-  mean: 1520.0            # Mean of SoS in tissue [m/s].
-  std: 10.5               # Standard deviation of SoS in tissue [m/s].
+  mean: 1520.0            # Mean of SOS in tissue [m/s].
+  std: 10.5               # Standard deviation of SOS in tissue [m/s].
 
 
 
-mouse_liver:
-  R:
+in_vivo:
+  task: "in_vivo"
+  description: "in vivo mouse liver"
+  sinogram: ""
+  EIR: "EIR_TUNGSTEN.mat"
+  ring_error: "RING_ERROR_NEW.mat"
+  SOS: null
+
+  t0: 46
+  x_c: 
+  y_c: 
+  T:                  # Water temperature [C].
+  R_body:                # Radius of body [m].
+  v1:               # SOS in single-body [m/s].
+
+  mean:            # Mean of SOS in tissue [m/s].
+  std:               # Standard deviation of SOS in tissue [m/s].

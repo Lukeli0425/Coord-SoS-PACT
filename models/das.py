@@ -16,7 +16,7 @@ class DAS(nn.Module):
             mode (str, optional): _description_. Defaults to `zero`.
             clip (bool, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
         """
-        super(DAS, self).__init__()
+        super().__init__()
         self.R_ring = torch.tensor(R_ring).cuda()
         self.N_transducer = N_transducer
         self.T_sample = torch.tensor(T_sample).cuda()
@@ -26,7 +26,6 @@ class DAS(nn.Module):
         self.mode = mode
         self.clip = clip
 
-        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer).cuda() + 1).view(-1, 1, 1)
         angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer).cuda() + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         self.x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         self.y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)
@@ -49,9 +48,9 @@ class DAS(nn.Module):
     
     
 
-class DAS_dual(nn.Module):
+class Dual_SOS_DAS(nn.Module):
     """Delay-And-Sum image reconstruction module using a dual SoS distribution for Photoacoustic Computed Tomography with ring array ."""
-    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), R_body=0.0, center=(0.0, 0.0), mode='zero', clip=False):
+    def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, R_body, angle_range=(0, 2*torch.pi), center=(0.0, 0.0), mode='zero', clip=False):
         """Initialize parameters of the Dual SoS Delay-And-Sum module.
 
         Args:
@@ -60,12 +59,12 @@ class DAS_dual(nn.Module):
             T_sample (`float`): Sample time interval [s].
             x_vec (`numpy.ndarray`): X coordinates of the image grid.
             y_vec (`numpy.ndarray`): Y coordinates of the image grid.
+            R_body (`float`): Radius of the circular body.
             mode (`str`, optional): _description_. Defaults to `zero`.
             clip (`bool`, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
-            R_body (`float`, optional): Radius of the circular body. Defaults to `0.0`.
             center (`tuple`, optional): Center coordinates [m] of the circular body. Defaults to `(0.0, 0.0)`.
         """
-        super(DAS_dual, self).__init__()
+        super().__init__()
         self.R_ring = torch.tensor(R_ring).cuda()
         self.N_transducer = N_transducer
         self.T_sample = torch.tensor(T_sample).cuda()
@@ -75,7 +74,6 @@ class DAS_dual(nn.Module):
         self.mode = mode
         self.clip = clip
  
-        # angle_transducer = 2 * torch.pi / self.N_transducer * (torch.arange(self.N_transducer).cuda() + 1).view(-1, 1, 1)
         angle_transducer = (torch.linspace(angle_range[0], angle_range[1], self.N_transducer).cuda() + (angle_range[1] - angle_range[0])/self.N_transducer).view(-1, 1, 1)
         x_transducer = self.R_ring * torch.cos(angle_transducer - torch.pi)
         y_transducer = self.R_ring * torch.sin(angle_transducer - torch.pi)

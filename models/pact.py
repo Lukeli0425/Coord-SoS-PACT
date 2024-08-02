@@ -39,7 +39,7 @@ from utils.utils_torch import *
 #         return ifftshift(tf, dim=[-2,-1])
 
 
-class Wavefront_SoS(nn.Module):
+class Wavefront_SOS(nn.Module):
     def __init__(self, R_body, v0, x_vec, y_vec, n_points=90, N_int=500):
         super().__init__()
         # self.R_body = torch.tensor(R_body, dtype=torch.float64).to('cuda:0')
@@ -51,7 +51,7 @@ class Wavefront_SoS(nn.Module):
         self.dx, self.dy = torch.tensor(x_vec[1] - x_vec[0], dtype=torch.float64).to('cuda:0'), torch.tensor(y_vec[1] - y_vec[0], dtype=torch.float64).to('cuda:0')
         self.N_int = N_int
         
-    def forward(self, x, y, SoS):
+    def forward(self, x, y, SOS):
         r, phi = torch.sqrt(x**2 + y**2), torch.atan2(x, y)
         
         if r < self.R_body:
@@ -69,7 +69,7 @@ class Wavefront_SoS(nn.Module):
         # print(x, y)
         # print(l.min(), l.max(), self.thetas[l.argmax()]/2/torch.pi*360)
         # print(i_index.min(), i_index.max(), j_index.min(), j_index.max())
-        wf = torch.trapezoid(1-self.v0/SoS[i_index, j_index], l*steps, dim=1)
+        wf = torch.trapezoid(1-self.v0/SOS[i_index, j_index], l*steps, dim=1)
         return self.thetas.view(-1), wf
 
 
