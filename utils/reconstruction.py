@@ -77,10 +77,11 @@ def delay_and_sum(R_ring, T_sample, v0, sinogram, x_vec, y_vec, d_delay=0, ring_
     return Image
 
 
-def gaussian_kernel(sigma, size):
+def get_gaussian_window(sigma, size):
     function = lambda x, y: np.exp(-((x-(size-1)/2)**2 + (y-(size-1)/2)**2) / (2*(sigma**2)))
     kernel = np.fromfunction(function, (size, size), dtype=float)
-    return kernel / np.sum(kernel)
+    return kernel / np.mean(kernel)
+
 
 
 def get_coordinates(i, j, l):

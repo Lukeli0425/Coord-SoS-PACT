@@ -27,10 +27,10 @@ class Wiener_Batched(nn.Module):
 
 
 class MultiChannel_Deconv(nn.Module):
-    def __init__(self, n_pixels=80, l_patch=3.2e-3):
+    def __init__(self, N_patch=80, l_patch=3.2e-3):
         super().__init__()
         
-        self.k, _ = get_fourier_coord(n_points=2*n_pixels, l=2*l_patch)
+        self.k, _ = get_fourier_coord(N=2*N_patch, l=2*l_patch)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, H):

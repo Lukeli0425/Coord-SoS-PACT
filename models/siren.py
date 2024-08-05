@@ -33,10 +33,8 @@ class PosEncodingNeRF(nn.Module):
         for i in range(self.N_freq):
             for j in range(self.in_features):
                 c = coords[..., j]
-
                 sin = torch.unsqueeze(torch.sin((2 ** i) * np.pi * c), -1)
                 cos = torch.unsqueeze(torch.cos((2 ** i) * np.pi * c), -1)
-
                 coords_pos_enc = torch.cat((coords_pos_enc, sin, cos), axis=-1)
 
         return coords_pos_enc.reshape(coords.shape[0], self.out_dim)
@@ -68,7 +66,7 @@ class Sine(nn.Module):
     
        
 class SIREN(nn.Module):
-    def __init__(self, num_hidden_layers, activation_fn, in_features, hidden_features, out_features, pos_encoding=False, N_freq=None):
+    def __init__(self, n_hidden_layers, activation_fn, in_features, hidden_features, out_features, pos_encoding=False, N_freq=None):
         super().__init__()
         
         if activation_fn == 'sin':
@@ -84,9 +82,11 @@ class SIREN(nn.Module):
         if pos_encoding:
             self.pos_encoding = PosEncodingNeRF(in_features, N_freq=N_freq)
             in_features = self.pos_encoding.out_dim
+        else:
+            self.pos_encoding = False
         self.mlp = nn.Sequential(
             nn.Sequential(nn.Linear(in_features, hidden_features), self.activation_fn),
-            *[nn.Sequential(nn.Linear(hidden_features, hidden_features), self.activation_fn) for _ in range(num_hidden_layers)],
+            *[nn.Sequential(nn.Linear(hidden_features, hidden_features), self.activation_fn) for _ in range(n_hidden_layers)],
             nn.Linear(hidden_features, out_features)
         )
 
@@ -99,7 +99,7 @@ class SIREN(nn.Module):
 
 
 if __name__ == '__main__':
-    model = SIREN(num_hidden_layers=1, activation_fn='sin', in_features=2, hidden_features=128, out_features=1, pos_encoding=False, N_freq=4)
+    model = SIREN(n_hidden_layers=1, activation_fn='sin', in_features=2, hidden_features=128, out_features=1, pos_encoding=False, N_freq=4)
     total = sum([param.nelement() for param in model.parameters()])
     print("Number of parameter: %s" % (total))
     print(model.mlp[0][0].weight.shape)

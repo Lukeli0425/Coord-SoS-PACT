@@ -7,7 +7,7 @@ from utils.utils_torch import get_mgrid
 
 class SOS(nn.Module):
     """SOS parameterization module."""
-    def __init__(self, mode, mask, v0, mean, std):
+    def __init__(self, mode, mask, v0, mean, std, hidden_layers=None, hidden_features=None, pos_encoding=None, N_freq=None):
         super().__init__()
         self.mode = mode
         self.mask = mask
@@ -20,7 +20,7 @@ class SOS(nn.Module):
         elif mode == 'SIREN':
             self.mgrid = get_mgrid(self.mask.shape, range=(-1, 1)).cuda()
             self.mgrid = self.mgrid[self.mask.view(-1)>0]
-            self.siren = SIREN(in_features=2, out_features=1, hidden_features=96, num_hidden_layers=1, activation_fn='sin', pos_encoding=True, N_freq=4)
+            self.siren = SIREN(in_features=2, out_features=1, hidden_features=hidden_features, n_hidden_layers=hidden_layers, activation_fn='sin', pos_encoding=pos_encoding, N_freq=N_freq)
             self.siren.cuda()
         else:
             raise ValueError('Invalid mode. Choose from [None, SIREN]')

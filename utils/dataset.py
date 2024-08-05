@@ -10,15 +10,18 @@ class JR_Dataset(Dataset):
     def __init__(self, IP_stack, l_patch, N_patch, stride):
         self.IP_stack = IP_stack
         self.l_patch = l_patch
-        self.n = (IP_stack.shape[-2]-N_patch) // stride + 1
+        self.N_patch = N_patch
+        self.stride = stride
+        self.nx = (self.IP_stack.shape[-2]-self.N_patch) // self.stride + 1
+        self.ny = (self.IP_stack.shape[-1]-self.N_patch) // self.stride + 1
 
     def __len__(self):
-        return self.n ** 2
+        return self.nx * self.ny
     
     def __getitem__(self, idx):
-        i, j = idx // self.n, idx % self.n
-        x, y = (j-self.n//2)*self.l_patch / 4, (self.n//2-i)*self.l_patch / 4
-        return i, j, torch.tensor(x), torch.tensor(y), self.IP_stack[:,20*i:20*i+80, 20*j:20*j+80]
+        i, j = idx // self.nx, idx % self.ny
+        x, y = (j-self.ny//2)*self.l_patch / 4, (self.nx//2-i)*self.l_patch / 4
+        return i, j, torch.tensor(x), torch.tensor(y), self.IP_stack[:,self.stride*i:self.stride*i+self.N_patch, self.stride*j:self.stride*j+self.N_patch]
     
     
 def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_size=1):

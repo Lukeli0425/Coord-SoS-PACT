@@ -96,10 +96,10 @@ class Interp1D(nn.Module):
             
 
 class TF_PACT(nn.Module):
-    def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi)):
+    def __init__(self, N, l, n_delays, angle_range=(0, 2*torch.pi)):
         super().__init__() 
         self.n_delays = n_delays
-        self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l)
+        self.k2D, self.theta2D = get_fourier_coord(N=N, l=l)
         self.k2D = self.k2D.to('cuda:0').unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         self.theta2D = self.theta2D.to('cuda:0').unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         self.mask0 = (self.theta2D >= angle_range[0]) * (self.theta2D <= angle_range[1]).float()
