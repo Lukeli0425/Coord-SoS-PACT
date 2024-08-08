@@ -6,6 +6,8 @@ import hdf5storage
 import numpy as np
 import yaml
 
+from utils.reconstruction import deconvolve_sinogram
+
 
 def load_config(file):
     """Load config files in `.yaml` format.
@@ -60,4 +62,15 @@ def save_mat(file, data, key='data'):
         os.remove(file)
     hdf5storage.savemat(file, {key: data})
     logger.debug(' Successfully saved data to "%s".', file)
-    
+
+
+def prepare_data(data_dir, sinogram_file, EIR_file, ring_error_file):
+    sinogram = load_mat(os.path.join(data_dir, sinogram_file))
+    EIR = load_mat(os.path.join(data_dir, EIR_file)) if EIR_file else None
+    sinogram = deconvolve_sinogram(sinogram, EIR) if EIR is not None else sinogram # Deconvolve EIR.
+    if ring_error_file:
+        ring_error, _ = load_mat(os.path.join(data_dir, ring_error_file))
+        ring_error = np.interp(np.arange(0, 512, 1), np.arange(0, 512, 2), ring_error[:,0]) # Upsample ring error.
+    else:
+        ring_error = np.zeros(1)
+    return sinogram, EIR, ring_error.reshape(-1,1,1)

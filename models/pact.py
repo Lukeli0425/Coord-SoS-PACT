@@ -97,6 +97,14 @@ class Interp1D(nn.Module):
 
 class TF_PACT(nn.Module):
     def __init__(self, N, l, n_delays, angle_range=(0, 2*torch.pi)):
+        """_summary_
+
+        Args:
+            N (_type_): _description_
+            l (_type_): _description_
+            n_delays (_type_): _description_
+            angle_range (tuple, optional): _description_. Defaults to (0, 2*torch.pi).
+        """
         super().__init__() 
         self.n_delays = n_delays
         self.k2D, self.theta2D = get_fourier_coord(N=N, l=l)

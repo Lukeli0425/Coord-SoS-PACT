@@ -18,9 +18,9 @@ class Brenner(nn.Module):
         super().__init__()
         self.weight = weight
         
-    def forward(self, x, mask):
-        dx = (x[1:, :] - x[:-1, :]) * mask[1:, :]
-        dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
+    def forward(self, x):
+        dx = (x[1:, :] - x[:-1, :])
+        dy = (x[:, 1:] - x[:, :-1])
         return ((dx**2).sum() + (dx**2).sum()).mean() * self.weight 
     
 class L1_Norm(nn.Module):

@@ -2,8 +2,6 @@ basic_params:
   R_ring: 0.05            # Radius of ring array [m].
   N_transducer: 512       # Number of transducers.
   T_sample: 2.5e-8        # Sampling period [s].
-  Nx: 560                 # Image size in X direction.
-  Ny: 560                 # Image size in Y direction.
   dx: 4.e-5               # Resolution of X coordinates [m].
   dy: 4.e-5               # Resolution of Y coordinates [m].
   N_patch: 80             # Size of isoplanatic patch in pixels.
@@ -20,11 +18,12 @@ numerical:
   SOS: "SoS_simulation_easy.mat"
 
   t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
   x_c: 0.0
   y_c: 0.0
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
-  v1: 1567.3              # SOS in single-body [m/s].
 
   mean: 1550.0            # Mean of SOS in tissue [m/s].
   std: 110.0              # Standard deviation of SOS in tissue [m/s].
@@ -40,11 +39,12 @@ phantom:
   SOS: null
 
   t0: 46
-  x_c: 0.0
-  y_c: 0.0
-  R_body: 11.2e-3              # Radius of body [m].
+  Nx: 640                 # Image size in X direction.
+  Ny: 640                 # Image size in Y direction.
+  x_c: 20
+  y_c: -45
+  R_body: 12.5e-3              # Radius of body [m].
   T: 26.0                 # Water temperature [C].
-  v1: 1528.0              # Avergae SOS in tissue [m/s].
 
   mean: 1520.0            # Mean of SOS in tissue [m/s].
   std: 10.5               # Standard deviation of SOS in tissue [m/s].
@@ -54,17 +54,18 @@ phantom:
 in_vivo:
   task: "in_vivo"
   description: "in vivo mouse liver"
-  sinogram: ""
+  sinogram: "ANIMAL_LAYER.mat"
   EIR: "EIR_TUNGSTEN.mat"
   ring_error: "RING_ERROR_NEW.mat"
   SOS: null
 
   t0: 46
-  x_c: 
-  y_c: 
-  T:                  # Water temperature [C].
-  R_body:                # Radius of body [m].
-  v1:               # SOS in single-body [m/s].
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: -26
+  y_c: 15
+  T: 31.0                 # Water temperature [C].
+  R_body: 10.8e-3               # Radius of body [m].
 
-  mean:            # Mean of SOS in tissue [m/s].
-  std:               # Standard deviation of SOS in tissue [m/s].
+  mean: 1534.0           # Mean of SOS in tissue [m/s].
+  std: 28.0              # Standard deviation of SOS in tissue [m/s].

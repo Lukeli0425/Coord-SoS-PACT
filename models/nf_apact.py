@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.pact import TF_PACT, Wavefront_SOS
-from models.regularizer import L1_Norm, Total_Variation
+from models.regularizer import L1_Norm, Total_Variation, Brenner
 from models.sos import SOS
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -19,7 +19,7 @@ class MSELoss(nn.Module):
 
 
 class NF_APACT(nn.Module):
-    def __init__(self, mode, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, lam_l1,
+    def __init__(self, mode, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, lam_ip,
                  x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, angle_range=(0, 2*torch.pi)):
         super().__init__()
         self.mode = mode
@@ -39,7 +39,7 @@ class NF_APACT(nn.Module):
         self.tf_pact = TF_PACT(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
         self.loss = MSELoss()
         self.tv_regularizer = Total_Variation(weight=lam_tv)
-        self.l1_regularizer = L1_Norm(weight=lam_l1, mean=0.0)
+        self.regularizer_IP = Brenner(weight=lam_ip)
         
         
     def forward(self, x, y, y_img, delays):
@@ -58,11 +58,11 @@ class NF_APACT(nn.Module):
         X = rhs / lhs
         x = fftshift(ifft2(X), dim=(-2,-1)).real
 
-        loss = self.loss(Y.abs(), (H * X).abs()) + self.tv_regularizer(SoS, self.mask) + self.l1_regularizer(x)
+        loss = self.loss(Y.abs(), (H * X).abs()) + self.tv_regularizer(SoS, self.mask) + self.regularizer_IP(x)
         # loss = ((Y - H * X).abs() ** 2).mean() + self.tv_regularizer(SoS, self.mask)
             
         return x, SoS, loss
 
 
 if __name__ == "__main__":
-    jr = NF_APACT(SOS=1540, x_vec=[-0.02, 0.02], y_vec=[-0.02, 0.02], R=0.01, v0=1540, n_points=80, l=3.2e-3, n_delays=32, angle_range=(0, 2*torch.pi), lam_tv=1e-3, lam_l1=1e-3, device='cuda:0')
+    jr = NF_APACT(SOS=1540, x_vec=[-0.02, 0.02], y_vec=[-0.02, 0.02], R=0.01, v0=1540, n_points=80, l=3.2e-3, n_delays=32, angle_range=(0, 2*torch.pi), lam_tv=1e-3, lam_ip=1e-3, device='cuda:0')
