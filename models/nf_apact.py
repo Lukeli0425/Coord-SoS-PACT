@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.pact import TF_PACT, Wavefront_SOS
-from models.regularizer import L1_Norm, Total_Variation, Brenner
+from models.regularizer import Brenner, L1_Norm, Total_Variation
 from models.sos import SOS
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -56,7 +56,7 @@ class NF_APACT(nn.Module):
         rhs = (Y * Ht).sum(axis=-3).unsqueeze(-3)
         lhs = HtH.sum(axis=-3).unsqueeze(-3)
         X = rhs / lhs
-        x = fftshift(ifft2(X), dim=(-2,-1)).real
+        x = crop_half(fftshift(ifft2(X), dim=(-2,-1)).real)
 
         loss = self.loss(Y.abs(), (H * X).abs()) + self.tv_regularizer(SoS, self.mask) + self.regularizer_IP(x)
         # loss = ((Y - H * X).abs() ** 2).mean() + self.tv_regularizer(SoS, self.mask)

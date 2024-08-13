@@ -1,6 +1,14 @@
+import os
+
+import ffmpeg
 import numpy as np
 import torch
+from matplotlib import pyplot as plt
+from matplotlib.colors import Normalize
+from matplotlib.gridspec import GridSpec
 from torch.fft import fft2, fftshift, ifft2, ifftn, ifftshift
+
+from utils.data import load_mat
 
 
 def standardize(img):
@@ -50,3 +58,50 @@ def condition_number(psf):
     # H = fft2(psf)
     H = psf
     return H.abs().max() / H.abs().min()    
+
+
+def make_video(results_dir, loss_list, task_params, frame_rate=3):
+    video_dir = os.path.join(results_dir, 'video')
+    os.makedirs(video_dir, exist_ok=True)
+    for idx, loss in enumerate(loss_list):
+        IP = load_mat(os.path.join(video_dir, f'IP_rec_{idx}.mat'))
+        SOS = load_mat(os.path.join(video_dir, f'SOS_rec_{idx}.mat'))
+        
+        # Visualization
+        fig = plt.figure(figsize=(12.8, 6.4))
+        # gs = GridSpec(6, 14)
+        ax = plt.subplot(1,2,1)
+        norm_IP = Normalize(vmax=task_params['IP_max'], vmin=task_params['IP_min'])
+        plt.imshow(standardize(IP), cmap='gray', norm=norm_IP)
+        # plt.title("Reconstructed Initial Pressure", fontsize=16)
+        plt.axis('off')
+        # cax = fig.add_axes([ax.get_position().x1+0.012, ax.get_position().y0, 0.02, ax.get_position().height])
+        # cb = plt.colorbar(cax=cax, norm=norm_IP)
+        # cb.set_ticks([task_params['IP_max'], task_params['IP_min']])
+        # cb.set_ticklabels(['Max', 'Min'], fontsize=13)
+        
+        
+        ax = plt.subplot(1,2,2)
+        norm_SOS  = Normalize(vmax=task_params['SOS_max'], vmin=task_params['SOS_min'])
+        plt.imshow(SOS, cmap='magma', norm=norm_SOS)
+        # plt.title("Reconstructed Speed of Sound", fontsize=16)
+        plt.axis('off')
+        # cax = fig.add_axes([ax.get_position().x1+0.012, ax.get_position().y0, 0.02, ax.get_position().height])
+        # cb = plt.colorbar(cax=cax, norm=norm_SOS)
+        # # cb.ax.set_yticks([1500, 1520, 1540, 1560, 1580, 1600])
+        # cb.ax.tick_params(labelsize=12)
+        # cb.set_label("$m \cdot s^{-1}$", fontsize=12)
+        
+        # plt.suptitle("  Iteration: {}          loss={:.4e}".format(idx, loss), fontsize=24, horizontalalignment='center')
+        plt.tight_layout()
+        plt.savefig(os.path.join(video_dir, f'frame{str(idx).zfill(2)}.jpg'), bbox_inches='tight', dpi=256, transparent=True)
+        plt.close()
+        
+    # Assemble video from frames.
+    (
+        ffmpeg
+        .input(os.path.join(video_dir, 'frame*.jpg'), pattern_type='glob', framerate=frame_rate)
+        .output(os.path.join(video_dir, 'video.mp4'), vcodec='h264')
+        .run()
+    )
+    

@@ -12,15 +12,14 @@ class Total_Variation(nn.Module):
         dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
         return (dx.abs().sum() + dy.abs().sum()).mean() * self.weight 
 
-
 class Brenner(nn.Module):
     def __init__(self, weight):
         super().__init__()
         self.weight = weight
         
     def forward(self, x):
-        dx = (x[1:, :] - x[:-1, :])
-        dy = (x[:, 1:] - x[:, :-1])
+        dx = (x[2:, :] - x[:-2, :])
+        dy = (x[:, 2:] - x[:, :-2])
         return ((dx**2).sum() + (dx**2).sum()).mean() * self.weight 
     
 class L1_Norm(nn.Module):

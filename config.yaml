@@ -27,6 +27,10 @@ numerical:
 
   mean: 1550.0            # Mean of SOS in tissue [m/s].
   std: 110.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1490
+  SOS_max: 1610
+  IP_min: -1
+  IP_max: 5
 
 
 
@@ -48,7 +52,10 @@ phantom:
 
   mean: 1520.0            # Mean of SOS in tissue [m/s].
   std: 10.5               # Standard deviation of SOS in tissue [m/s].
-
+  SOS_min: 1495
+  SOS_max: 1535
+  IP_min: -4
+  IP_max: 6
 
 
 in_vivo:
@@ -67,5 +74,9 @@ in_vivo:
   T: 31.0                 # Water temperature [C].
   R_body: 10.8e-3               # Radius of body [m].
 
-  mean: 1534.0           # Mean of SOS in tissue [m/s].
-  std: 28.0              # Standard deviation of SOS in tissue [m/s].
+  mean: 1520.0           # Mean of SOS in tissue [m/s].
+  std: 28.0              # Standard deviation of SOS in tissue [m/s].  
+  SOS_min: 1495
+  SOS_max: 1575
+  IP_min: -3
+  IP_max: 8
