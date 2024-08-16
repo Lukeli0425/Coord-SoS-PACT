@@ -66,7 +66,7 @@ class Sine(nn.Module):
     
        
 class SIREN(nn.Module):
-    def __init__(self, n_hidden_layers, activation_fn, in_features, hidden_features, out_features, pos_encoding=False, N_freq=None):
+    def __init__(self, n_hidden_layers, activation_fn, in_features, hidden_features, out_features, pos_encoding=False, N_freq=0):
         super().__init__()
         
         if activation_fn == 'sin':
@@ -78,7 +78,8 @@ class SIREN(nn.Module):
         elif activation_fn == 'softplus':
             self.activation_fn = nn.Softplus()
         else:
-            raise ValueError('Activation function not supported.')
+            raise NotImplementedError('Activation function not supported.')
+        
         if pos_encoding:
             self.pos_encoding = PosEncodingNeRF(in_features, N_freq=N_freq)
             in_features = self.pos_encoding.out_dim

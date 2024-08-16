@@ -16,7 +16,7 @@ from kwave.ksource import kSource
 from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
 from kwave.ktransducer import *
 from kwave.utils import *
-from utils.data import load_mat, save_mat
+from utils.dataio import load_mat, save_mat
 from utils.simulations import *
 
 

@@ -27,8 +27,8 @@ numerical:
 
   mean: 1550.0            # Mean of SOS in tissue [m/s].
   std: 110.0              # Standard deviation of SOS in tissue [m/s].
-  SOS_min: 1490
-  SOS_max: 1610
+  SOS_min: 1495
+  SOS_max: 1605
   IP_min: -1
   IP_max: 5
 
@@ -76,7 +76,7 @@ in_vivo:
 
   mean: 1520.0           # Mean of SOS in tissue [m/s].
   std: 28.0              # Standard deviation of SOS in tissue [m/s].  
-  SOS_min: 1495
-  SOS_max: 1575
+  SOS_min: 1500
+  SOS_max: 1580
   IP_min: -3
   IP_max: 8

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -74,3 +75,19 @@ def prepare_data(data_dir, sinogram_file, EIR_file, ring_error_file):
     else:
         ring_error = np.zeros(1)
     return sinogram, EIR, ring_error.reshape(-1,1,1)
+
+
+def save_log(results_path, log):
+    logger = logging.getLogger('DataIO')
+    log_file = os.path.join(results_path, 'log.json')
+    with open(log_file, 'w') as f:
+        json.dump(log, f)
+    logger.debug(' Successfully saved log to "%s".', log_file)
+    
+    
+def load_log(log_file):
+    logger = logging.getLogger('DataIO')
+    with open(log_file, 'r') as f:
+        log = json.load(f)
+    logger.debug(' Successfully loaded log file from "%s".', log_file)
+    return log
