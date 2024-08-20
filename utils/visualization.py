@@ -7,6 +7,7 @@ from matplotlib import gridspec
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.gridspec import GridSpec
+from matplotlib.ticker import FormatStrFormatter
 from torch.fft import fft2, fftshift, ifft2, ifftn, ifftshift
 
 from utils.dataio import load_mat
@@ -61,10 +62,38 @@ def condition_number(psf):
     return H.abs().max() / H.abs().min()    
 
 
+def visualize_apact(results_dir, IP_rec, SOS_rec, time, IP_max, IP_min, SOS_max, SOS_min, params):
+    fig = plt.figure(figsize=(13,6))
+    ax = plt.subplot(1,2,1)
+    norm_IP = Normalize(vmax=IP_max, vmin=IP_min)
+    plt.imshow(standardize(IP_rec), cmap='gray', norm=norm_IP)
+    plt.title("Reconstructed Initial Pressure", fontsize=16)
+    plt.text(430, 25, "t = {:.4f} s".format(time), color='white', fontsize=15)
+    plt.axis('off')
+    cax = fig.add_axes([ax.get_position().x1+0.01, ax.get_position().y0, 0.02, ax.get_position().height])
+    cb = plt.colorbar(cax=cax, norm=norm_IP)
+    cb.set_ticks([IP_max, IP_min])
+    cb.set_ticklabels(['Max', 'Min'], fontsize=13)
+    
+    ax = plt.subplot(1,2,2)
+    norm_SOS  = Normalize(vmax=SOS_max, vmin=SOS_min)
+    plt.imshow(SOS_rec, cmap='magma', norm=norm_SOS)
+    plt.title("Reconstructed Speed of Sound", fontsize=16)
+    plt.axis('off')
+    cax = fig.add_axes([ax.get_position().x1+0.01, ax.get_position().y0, 0.02, ax.get_position().height])
+    cb = plt.colorbar(cax=cax, norm=norm_SOS)
+    cb.ax.tick_params(labelsize=12)
+    cb.set_label("$m \cdot s^{-1}$", fontsize=12)
+    plt.suptitle(f'APACT ({params})', fontsize=17)
+    plt.savefig(os.path.join(results_dir, 'visualization.png'), bbox_inches='tight')
+    plt.close()
+
+
 def visualize_nf_apact(results_dir, IP_rec, SOS_rec, loss_list, time, IP_max, IP_min, SOS_max, SOS_min, params):
     fig = plt.figure(figsize=(13,10.2))
     gs = gridspec.GridSpec(2, 2)
     ax = plt.subplot(gs[0:1,:])
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1e'))
     plt.plot(range(len(loss_list)), loss_list, '-o', markersize=4.5, linewidth=2, label='loss')
     plt.title("Loss Curve", fontsize=16)
     plt.title("t = {:.2f} s".format(time), loc='right', x=0.94, y=0.91, color='black', fontsize=15)

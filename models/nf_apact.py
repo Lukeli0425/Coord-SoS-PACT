@@ -10,24 +10,25 @@ from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
 
 
-# class MSELoss(nn.Module):
-#     def __init__(self):
-#         super().__init__()
+class Data_Fitting_Loss(nn.Module):
+    def __init__(self):
+        super().__init__()
         
-#     def forward(self, x, y):
-#         return torch.mean((x-y) ** 2, axis=(-3,-2,-1))
+    def forward(self, Y, X, k):
+        return torch.mean(k * (Y-X) ** 2, axis=(-3,-2,-1))
 
 
 class NF_APACT(nn.Module):
-    def __init__(self, mode, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, reg, lam,
+    def __init__(self, mode, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, reg, lam,
                  x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, fwhm = 1.5e-3, angle_range=(0, 2*torch.pi)):
         super().__init__()
         self.mode = mode
 
         sigma = fwhm / 4e-5 / np.sqrt(2*np.log(2))
         self.gaussian_window = torch.tensor(get_gaussian_window(sigma, N_patch)).unsqueeze(0).cuda()
-        # self.k, _ = get_fourier_coord(N=2*N_patch, l=2*l_patch)
-        # self.k = ifftshift(self.k.cuda(), dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
+        self.k, _ = get_fourier_coord(N=2*N_patch, l=2*l_patch)
+        self.k = ifftshift(self.k.cuda(), dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
+        self.k /= self.k.mean()
         
         XX, YY = torch.meshgrid(torch.tensor(x_vec[:,0]), torch.tensor(y_vec[:,0]), indexing='xy')
         self.SOS_mask = torch.zeros_like(XX).cuda()
@@ -37,8 +38,8 @@ class NF_APACT(nn.Module):
         self.SOS = SOS_Rep(mode=self.mode, mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
         self.wavefront_SOS = Wavefront_SOS(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=180, N_int=250)
         self.tf_pact = TF_PACT(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
-        self.data_fitting = torch.nn.MSELoss(reduction='mean')
-        # self.tv_regularizer = Total_Variation(weight=lam_tv)
+        self.data_fitting = Data_Fitting_Loss()
+        self.tv_regularizer = Total_Variation(weight=lam_tv)
         self.sharpness_regularizer = Sharpness(function=reg, weight=lam)
     
     def save_SOS(self):
@@ -65,7 +66,7 @@ class NF_APACT(nn.Module):
         x = crop_half(fftshift(ifft2(X), dim=(-2,-1)).real)
 
         # Compute loss.
-        loss = self.data_fitting(Y.abs(), (H * X).abs()) - self.sharpness_regularizer(x)
+        loss = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.SOS_mask) #- self.sharpness_regularizer(x)
             
         return x, SOS, loss
 

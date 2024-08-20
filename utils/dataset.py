@@ -24,9 +24,9 @@ class JR_Dataset(Dataset):
         return i, j, torch.tensor(x), torch.tensor(y), self.IP_stack[:,self.stride*i:self.stride*i+self.N_patch, self.stride*j:self.stride*j+self.N_patch]
     
     
-def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_size=1):
+def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_size=1, shuffle=True):
     dataset = JR_Dataset(IP_stack.clone(), l_patch, N_patch, stride)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 
 # class PACT_Dataset(Dataset):

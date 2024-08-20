@@ -9,7 +9,7 @@ from utils.utils_torch import *
 #         super().__init__() 
 #         self.device = device
 #         self.n_delays = n_delays
-#         self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l).to('cuda:0')
+#         self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l).cuda()
 #         self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
 #         self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
 #         # angle_range = torch.tensor([angle_range[0] % (2*torch.pi), angle_range[1] % (2*torch.pi)])
@@ -23,32 +23,39 @@ from utils.utils_torch import *
 #         return psf
     
     
-# class TF_PACT(nn.Module):
-#     def __init__(self, n_points=80, l=3.2e-3, n_delays=16, angle_range=(0, 2*torch.pi), device='cuda:0'):
-#         super().__init__() 
-#         self.device = device
-#         self.n_delays = n_delays
-#         self.k2D, self.theta2D = get_fourier_coord(n_points=n_points, l=l).to('cuda:0')
-#         self.k2D = self.k2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
-#         self.theta2D = self.theta2D.unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
-#         self.mask0 = (self.theta2D >= angle_range[0]) * (self.theta2D <= angle_range[1]).float()
-#         self.mask1 = ((self.theta2D + torch.pi) % (2*torch.pi) >= angle_range[0]) * ((self.theta2D + torch.pi) % (2*torch.pi) <= angle_range[1]).float()
+class Wavefront_Fourier(nn.Module):
+    def __init__(self, n_points=80):
+        super().__init__() 
+        self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64).cuda().view(-1,1)
         
-#     def forward(self, delays, w):
-#         tf = (torch.exp(-1j*self.k2D*(delays - w(self.theta2D))) * self.mask0 + torch.exp(1j*self.k2D*(delays - w(self.theta2D+torch.pi))) * self.mask1) / 2
-#         return ifftshift(tf, dim=[-2,-1])
-
+    def forward(self, dc, x2, y2):
+        wf = dc + x2 * torch.cos(2*self.thetas) + y2 * torch.sin(2*self.thetas)
+        return wf
+    
+class Fourier_Series(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, wf, thetas):
+        # print(wf.device, thetas.device)
+        dc = wf.mean().view(1)
+        x2 = 2 * (wf * torch.cos(2*thetas)).mean().view(1)
+        y2 = 2 * (wf * torch.sin(2*thetas)).mean().view(1)
+        # print(dc.device, x2.requires_grad, y2.requires_grad)
+        # x2 = torch.trapezoid(wf * torch.cos(2*thetas), thetas) / torch.pi
+        # y2 = torch.trapezoid(wf * torch.sin(2*thetas), thetas) / torch.pi
+        return torch.cat([dc, x2, y2], dim=0)
 
 class Wavefront_SOS(nn.Module):
     def __init__(self, R_body, v0, x_vec, y_vec, n_points=90, N_int=500):
         super().__init__()
-        # self.R_body = torch.tensor(R_body, dtype=torch.float64).to('cuda:0')
+        # self.R_body = torch.tensor(R_body, dtype=torch.float64).cuda()
         self.R_body = nn.Parameter(torch.tensor(R_body, dtype=torch.float64), requires_grad=False)
-        self.v0 = torch.tensor(v0, dtype=torch.float64).to('cuda:0')
-        self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64).to('cuda:0').view(-1,1)
-        self.x_vec = torch.tensor(x_vec, dtype=torch.float64).to('cuda:0')
-        self.y_vec = torch.tensor(y_vec, dtype=torch.float64).to('cuda:0')
-        self.dx, self.dy = torch.tensor(x_vec[1] - x_vec[0], dtype=torch.float64).to('cuda:0'), torch.tensor(y_vec[1] - y_vec[0], dtype=torch.float64).to('cuda:0')
+        self.v0 = torch.tensor(v0, dtype=torch.float64).cuda()
+        self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64).cuda().view(-1,1)
+        self.x_vec = torch.tensor(x_vec, dtype=torch.float64).cuda()
+        self.y_vec = torch.tensor(y_vec, dtype=torch.float64).cuda()
+        self.dx, self.dy = torch.tensor(x_vec[1] - x_vec[0], dtype=torch.float64).cuda(), torch.tensor(y_vec[1] - y_vec[0], dtype=torch.float64).cuda()
         self.N_int = N_int
         
     def forward(self, x, y, SOS):
@@ -60,7 +67,7 @@ class Wavefront_SOS(nn.Module):
             # l = 2 * torch.sqrt(torch.maximum(self.R_body**2 - (r*torch.sin(self.thetas-phi))**2, torch.zeros_like(self.thetas))) * (torch.cos(phi-self.thetas) >= 0)
             angle_mask = (torch.cos(phi-self.thetas) >= 0) * (self.R_body >= r*torch.sin(self.thetas-phi).abs())
             l = torch.sqrt((self.R_body**2 - (r*torch.sin(self.thetas-phi))**2) * angle_mask) + r * torch.cos(phi-self.thetas) * angle_mask
-        steps = torch.linspace(0, 1.0, self.N_int).to('cuda:0').view(1,-1)
+        steps = torch.linspace(0, 1.0, self.N_int).cuda().view(1,-1)
         j_index = ((x - l*steps*torch.sin(self.thetas) - self.x_vec[0]) / self.dx).round().int()
         # j_index = torch.clamp(j_index, -self.x_vec.shape[0], self.x_vec.shape[0]-1)
         # i_index = ((y - l*steps*torch.cos(self.thetas) - self.y_vec[0]) / self.dy).round().int()
@@ -87,7 +94,7 @@ class Interp1D(nn.Module):
         elif self.mode == 'linear':
             x_floor = ((x_new - x[0]) / dx).floor().int()
             x_ceil = ((x_new - x[0]) / dx).ceil().int()
-            y_new = torch.zeros_like(x_new, dtype=y.dtype).to('cuda:0')
+            y_new = torch.zeros_like(x_new, dtype=y.dtype).cuda()
             # print(x_ceil.max(), x_floor.min())
             # y_new[x_ceil!=x_floor] = (((y[x_ceil] - y[x_floor]) * x_new + y[x_floor]*x[x_ceil] - y[x_ceil]*x[x_floor]) / (x[x_ceil] - x[x_floor]))[x_ceil!=x_floor]
             y_new[x_ceil!=x_floor] = ((y[x_ceil] - y[x_floor]) * x_new + y[x_floor]*x[x_ceil] - y[x_ceil]*x[x_floor])[x_ceil!=x_floor] / (x[x_ceil] - x[x_floor])[x_ceil!=x_floor]
@@ -108,8 +115,8 @@ class TF_PACT(nn.Module):
         super().__init__() 
         self.n_delays = n_delays
         self.k2D, self.theta2D = get_fourier_coord(N=N, l=l)
-        self.k2D = self.k2D.to('cuda:0').unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
-        self.theta2D = self.theta2D.to('cuda:0').unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        self.k2D = self.k2D.cuda().unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
+        self.theta2D = self.theta2D.cuda().unsqueeze(0).unsqueeze(0).repeat(1,self.n_delays,1,1)
         self.mask0 = (self.theta2D >= angle_range[0]) * (self.theta2D <= angle_range[1]).float()
         self.mask1 = ((self.theta2D + torch.pi) % (2*torch.pi) >= angle_range[0]) * ((self.theta2D + torch.pi) % (2*torch.pi) <= angle_range[1]).float()
         self.interp1d = Interp1D(mode='linear')
