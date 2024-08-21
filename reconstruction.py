@@ -129,7 +129,7 @@ def deconv(n_delays, bps, tps):
     logger.info(' Results saved to "%s".', results_dir)
 
 
-def apact(n_delays, lam_tv, n_iters, lr, bps, tps):
+def apact(n_delays, n_thetas, lam_tsv, n_iters, lr, bps, tps):
     params = f'{n_delays}delays'
     logger = logging.getLogger('APACT')
     logger.info(" Reconstructing %s with APACT (%s).", tps['description'], params)
@@ -149,12 +149,13 @@ def apact(n_delays, lam_tv, n_iters, lr, bps, tps):
     das = DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    apact = APACT(delays=delays, lam_tv=lam_tv, R_body=tps['R_body'], v0=v0, Nx=tps['Nx'], Ny=tps['Ny'], dx=bps['dx'], dy=bps['dy'], x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, mean=tps['mean'], std=tps['std'], N_patch=N_patch, 
-                  generate_TF=False, dc_range=[-1e-4, 2.6e-4], amp=3.2e-4, step=4e-5, data_path=results_dir)
+    apact = APACT(delays=delays, lam_tsv=lam_tsv, R_body=tps['R_body'], v0=v0, Nx=tps['Nx'], Ny=tps['Ny'], dx=bps['dx'], dy=bps['dy'], x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, mean=tps['mean'], std=tps['std'], n_thetas=n_thetas, N_patch=N_patch, 
+                  generate_TF=True, dc_range=[-2.e-4, 4.e-4], amp=3.5e-4, step=5e-5, data_path=results_dir)
     apact.cuda()
     apact.eval()
+    apact.generate_TFs()
     
-    DAS_stack, patch_centers, wf_params_list = [], [], []
+    DAS_stack, patch_centers, wf_params_list, loss_list = [], [], [], []
     sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
     ring_error = torch.from_numpy(ring_error).cuda()
     IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
@@ -180,15 +181,16 @@ def apact(n_delays, lam_tv, n_iters, lr, bps, tps):
             wf_params_list.append(wf_coeff)
             patch_centers.append((x, y))
     IP_rec = IP_rec.detach().cpu().numpy()
-    # apact.save_wavefront_params()
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'img')
     wf_params_list = torch.stack(wf_params_list, dim=0).cuda()
     torch.save(wf_params_list, os.path.join(results_dir, 'wf_params.pth'))
     wf_params_list = torch.load(os.path.join(results_dir, 'wf_params.pth')).cuda()
-    
-    logger.info(' Reconstruting SOS.')
+    print(wf_params_list[:,0].shape)
+    print(wf_params_list[:,0].min().item(), wf_params_list[:,0].max().item())
+    print(wf_params_list[:,1].min().item(), wf_params_list[:,1].max().item())
+    print(wf_params_list[:,2].min().item(), wf_params_list[:,2].max().item())
+    logger.info(' Reconstructing SOS.')
     optimizer = Adam(apact.parameters(), lr=lr)
-    # apact.prepare_SOS_reconstruction(torch.tensor(patch_centers).cuda())
     apact.train()
     for idx in range(n_iters):
         train_loss = 0.0
@@ -198,6 +200,7 @@ def apact(n_delays, lam_tv, n_iters, lr, bps, tps):
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
+        loss_list.append(train_loss)
         logger.info(' SOS Reconstruction: [{}/{}] loss={:.7e}'.format(idx+1, n_iters, train_loss))
         
     t_end = time()
@@ -206,6 +209,12 @@ def apact(n_delays, lam_tv, n_iters, lr, bps, tps):
     SOS_rec = SOS_rec.detach().cpu().numpy()
     save_mat(os.path.join(results_dir, 'SOS_rec.mat'), SOS_rec.swapaxes(0,1), 'SOS')
     IP_rec = load_mat(os.path.join(results_dir, 'IP_rec.mat'))
+    
+    # Save log.
+    log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 'n_thetas':n_thetas,
+           'lam_tsv':lam_tsv,'n_iters':n_iters, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
+    save_log(results_dir, log)
+    
     # Visualization.
     visualize_apact(results_dir, IP_rec, SOS_rec, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
 
@@ -307,7 +316,7 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
            'hidden_layers':hidden_layers, 'hidden_features':hidden_features, 'pos_encoding':pos_encoding, 'N_freq':N_freq, 'n_params':get_total_params(nf_apact),
            'reg':reg, 'lam':lam,'n_iters':n_iters, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
-    
+
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, 
                        tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
@@ -327,9 +336,11 @@ if __name__ == "__main__":
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
     parser.add_argument('--n_delays', type=int, default=32, help='Number of delays used in NF-APACT.')
+    parser.add_argument('--lam_tsv', type=float, default=5e-15, help='Weight of total squared variation regularization for APACT.')
     parser.add_argument('--hidden_lyrs', type=int, default=1, help='Number of hidden layers in NF-APACT.')
     parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
     parser.add_argument('--n_freq', type=int, default=0, help='Number of frequencies used for positioanl encoding in NF-APACT.')
+    parser.add_argument('--n_thetas', type=int, default=500, help='Number of angles used in wavefront calculation.')
     parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
@@ -349,7 +360,7 @@ if __name__ == "__main__":
         nf_apact(n_delays=args.n_delays, hidden_layers=args.hidden_lyrs, hidden_features=args.hidden_fts, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
                  lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'APACT':
-        apact(n_delays=args.n_delays, lam_tv=args.lam_tv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
+        apact(n_delays=args.n_delays, n_thetas=args.n_thetas, lam_tsv=args.lam_tsv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'Deconv':
         deconv()
     elif args.method == 'Dual-SOS_DAS':
