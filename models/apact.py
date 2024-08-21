@@ -7,8 +7,8 @@ import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 from tqdm import tqdm
 
-from models.pact import Wavefront_Fourier, Wavefront_SOS, Fourier_Series
-from models.regularizer import Total_Variation
+from models.pact import Fourier_Series, Wavefront_Fourier, Wavefront_SOS
+from models.regularizer import Total_Squared_Variation, Total_Variation
 from models.sos import SOS_Rep
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -40,8 +40,8 @@ class TF_APACT(nn.Module):
  
     
 class APACT(nn.Module):
-    def __init__(self, delays, R_body, v0, Nx, Ny, dx, dy, x_vec, y_vec, lam_tv, mean, std, N_patch=80, fwhm=1.5e-3,
-                 generate_TF=True, dc_range=(2e-4, 6e-4), amp=3.2e-4, step=4e-5, 
+    def __init__(self, delays, R_body, v0, Nx, Ny, dx, dy, x_vec, y_vec, lam_tv, mean, std, dc_range, amp, step, N_patch=80, fwhm=1.5e-3,
+                 generate_TF=True, 
                  data_path='./TFs'):
         super(APACT, self).__init__() 
         self.logger = logging.getLogger('APACT')
@@ -77,10 +77,10 @@ class APACT(nn.Module):
         # self.XX, self.YY = XX[self.SOS_mask>0].view(1,-1), YY[self.SOS_mask>0].view(1,-1)
         # self.theta = nn.Parameter(0.001*torch.randn(size=(self.SOS_mask.sum().int(), 1), dtype=torch.float64).cuda(), requires_grad=True)
         # self.SOS = torch.ones_like(self.SOS_mask).cuda() * self.v0
-        self.tv_reg = Total_Variation(weight=lam_tv)
-        self.wf_SOS = Wavefront_SOS(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=180, N_int=500)
+        self.tv_reg = Total_Squared_Variation(weight=lam_tv)
+        self.wf_SOS = Wavefront_SOS(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=360, N_int=500)
         self.fourier_series = Fourier_Series()
-        self.SOS = SOS_Rep(mode='SIREN', mask=self.SOS_mask, v0=v0, mean=mean, std=std,
+        self.SOS = SOS_Rep(mode='None', mask=self.SOS_mask, v0=v0, mean=mean, std=std,
                            hidden_features=64, hidden_layers=1, pos_encoding=False)
         
         self.TFs, self.params, self.best_params = None, None, []
@@ -147,9 +147,10 @@ class APACT(nn.Module):
         torch.save(self.best_params, os.path.join(self.data_path, 'best_params.pth'))
         self.logger.info(' Wavefront params saved to "%s".', os.path.join(self.data_path, 'best_params.pth'))
     
-    def prepare_SOS_reconstruction(self, patch_centers):
+    def prepare_SOS_reconstruction(self, patch_centers, wf_params):
         self.A = torch.zeros(3*len(patch_centers), self.SOS_mask.sum().int()).cuda().double()
-        b = torch.load(os.path.join(self.data_path, 'best_params.pth')).view(-1,1).cuda()
+        # b = torch.load(os.path.join(self.data_path, 'best_params.pth')).view(-1,1).cuda()
+        b = wf_params.view(-1,1).cuda()
         b /= self.dx*self.dy
         
         self.x_p, self.y_p = patch_centers[:,0].view(-1,1), patch_centers[:,1].view(-1,1)
@@ -164,13 +165,13 @@ class APACT(nn.Module):
         self.C[0::3,0::3] = W
         self.C[1::3,1::3] = W
         self.C[2::3,2::3] = W
-        self.AC = self.A.T @ self.C
+        self.ATC = self.A.T @ self.C
         # print(W.shape, self.C.shape, W.sum())
         
     def reconstruct_SOS(self):
         SOS = torch.ones_like(self.SOS_mask, dtype=torch.float64).cuda() * self.v0
         SOS[self.SOS_mask > 0] = self.v0 / (1-self.theta.view(-1))
-        loss = self.loss_fn(self.AC @ (self.A@self.theta), self.ATb)  # + self.tv_reg(SOS, self.SOS_mask) 
+        loss = self.loss_fn(self.ATC @ (self.A@self.theta), self.ATb)  # + self.tv_reg(SOS, self.SOS_mask) 
         return loss, SOS, self.theta
     
     def optimize_SOS(self, x, y, fourier_params):
