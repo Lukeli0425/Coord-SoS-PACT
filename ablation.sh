@@ -34,7 +34,7 @@ for hidden_fts in {32,64,128,256}; do
   done
 done
 
-Learning rate.
+# Learning rate.
 for lr in {5e-4,2e-4,1e-4,5e-5,2e-5}; do
   python reconstruction.py --task numerical--lr $lr --n_iters 50 --gpu $gpu
 done

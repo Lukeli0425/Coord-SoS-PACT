@@ -68,7 +68,7 @@ def visualize_apact(results_dir, IP_rec, SOS_rec, time, IP_max, IP_min, SOS_max,
     norm_IP = Normalize(vmax=IP_max, vmin=IP_min)
     plt.imshow(standardize(IP_rec), cmap='gray', norm=norm_IP)
     plt.title("Reconstructed Initial Pressure", fontsize=16)
-    plt.text(430, 25, "t = {:.4f} s".format(time), color='white', fontsize=15)
+    plt.text(381, 25, "t = {:.1f} s".format(time), color='white', fontsize=15)
     plt.axis('off')
     cax = fig.add_axes([ax.get_position().x1+0.01, ax.get_position().y0, 0.02, ax.get_position().height])
     cb = plt.colorbar(cax=cax, norm=norm_IP)
