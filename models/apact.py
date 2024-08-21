@@ -40,7 +40,7 @@ class TF_APACT(nn.Module):
  
     
 class APACT(nn.Module):
-    def __init__(self, delays, R_body, v0, Nx, Ny, dx, dy, x_vec, y_vec, lam_tv, mean, std, dc_range, amp, step, n_thetas,
+    def __init__(self, delays, R_body, v0, Nx, Ny, dx, dy, x_vec, y_vec, lam_tsv, mean, std, dc_range, amp, step, n_thetas,
                  N_patch=80, fwhm=1.5e-3, generate_TF=True, data_path='./TFs'):
         super(APACT, self).__init__() 
         self.logger = logging.getLogger('APACT')
@@ -76,22 +76,22 @@ class APACT(nn.Module):
         # self.XX, self.YY = XX[self.SOS_mask>0].view(1,-1), YY[self.SOS_mask>0].view(1,-1)
         # self.theta = nn.Parameter(0.001*torch.randn(size=(self.SOS_mask.sum().int(), 1), dtype=torch.float64).cuda(), requires_grad=True)
         # self.SOS = torch.ones_like(self.SOS_mask).cuda() * self.v0
-        self.tv_reg = Total_Squared_Variation(weight=lam_tv)
+        self.tv_reg = Total_Squared_Variation(weight=lam_tsv)
         self.wf_SOS = Wavefront_SOS(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_points=n_thetas, N_int=500)
         self.fourier_series = Fourier_Series()
         self.SOS = SOS_Rep(mode='None', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_features=64, hidden_layers=1, pos_encoding=False)
         
         self.TFs, self.params, self.best_params = None, None, []
-        if generate_TF:
-            self.generate_TFs()
-            self.load_params()
-        else:
-            try:
-                self.load_params()
-            except:
-                self.logger.info(' Failed loading wavefront parameters.')
-                self.generate_TFs()
-                self.load_params()
+        # if generate_TF:
+        #     self.generate_TFs()
+        #     self.load_params()
+        # else:
+        #     try:
+        #         self.load_params()
+        #     except:
+        #         self.logger.info(' Failed loading wavefront parameters.')
+        #         self.generate_TFs()
+        #         self.load_params()
             
             
     def load_params(self):
@@ -106,6 +106,9 @@ class APACT(nn.Module):
         dcs = np.arange(self.dc_range[0], self.dc_range[1], self.step)
         xs = np.arange(-self.amp, self.amp, self.step)
         ys = np.arange(-self.amp, self.amp, self.step)
+        print(dcs)
+        print(xs)
+        print(ys)
         params = []
         idx = 0
         for dc in dcs:
@@ -115,6 +118,7 @@ class APACT(nn.Module):
                     torch.save(self.tf(dc, x, y), os.path.join(self.TF_dir, f'TF_{idx}.pth'))
                     idx += 1
         torch.save(torch.tensor(params), os.path.join(self.data_path, 'params.pth'))
+        self.load_params()
     
     def forward(self, patch_stack):
         best_loss, best_x = torch.inf, None
