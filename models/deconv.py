@@ -12,7 +12,7 @@ class Wiener_Batched(nn.Module):
         
         self.lam = torch.tensor(lam, device=device)
         self.order = torch.tensor(order, device=device)
-        self.k, _ = get_fourier_coord(n_points=160, l=6.4e-3)
+        self.k, _ = get_fourier_coord(N=160, l=6.4e-3)
         self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         
     def forward(self, y, H):
@@ -27,19 +27,17 @@ class Wiener_Batched(nn.Module):
 
 
 class MultiChannel_Deconv(nn.Module):
-    def __init__(self, N_patch=80, l_patch=3.2e-3):
+    """MultiChannel Deconvolution using Pseudo-inverse."""
+    def __init__(self):
         super().__init__()
         
-        self.k, _ = get_fourier_coord(N=2*N_patch, l=2*l_patch)
-        self.k = ifftshift(self.k, dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
-        
     def forward(self, y, H):
-        y = pad_double(y)
+        Y = fft2(ifftshift(pad_double(y), dim=(-2,-1)))
         Ht, HtH = torch.conj(H), torch.abs(H) ** 2
+        rhs = (Ht * Y).sum(axis=-3).unsqueeze(-3)
+        lhs = HtH.sum(axis=-3).unsqueeze(-3)
+        X = rhs / lhs
+        x = fftshift(ifft2(X), dim=(-2,-1)).real
         
-        rhs = (Ht * fft2(ifftshift(y, dim=(-2,-1)))).sum(axis=-3).unsqueeze(-3)
-        lhs = HtH.sum(axis=-3).unsqueeze(-3) 
-        x = fftshift(ifft2(rhs/lhs), dim=(-2,-1)).real
-        
-        return crop_half(x)
+        return crop_half(x), X, Y
     

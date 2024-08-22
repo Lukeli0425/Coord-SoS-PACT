@@ -1,19 +1,21 @@
-import logging
 import os
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, random_split
 
 
 class JR_Dataset(Dataset):
+    """PyTorch Dataset for Joint Reconstruction.
+    """
     def __init__(self, IP_stack, l_patch, N_patch, stride):
-        self.IP_stack = IP_stack
+        self.IP_stack = IP_stack#, (N_patch//2, N_patch//2, N_patch//2, N_patch//2), mode='constant', value=0)
         self.l_patch = l_patch
         self.N_patch = N_patch
         self.stride = stride
-        self.nx = (self.IP_stack.shape[-2]-self.N_patch) // self.stride + 1
-        self.ny = (self.IP_stack.shape[-1]-self.N_patch) // self.stride + 1
+        self.nx = (IP_stack.shape[-2]-self.N_patch) // self.stride + 1
+        self.ny = (IP_stack.shape[-1]-self.N_patch) // self.stride + 1
 
     def __len__(self):
         return self.nx * self.ny
@@ -25,7 +27,7 @@ class JR_Dataset(Dataset):
     
     
 def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_size=1, shuffle=True):
-    dataset = JR_Dataset(IP_stack.clone(), l_patch, N_patch, stride)
+    dataset = JR_Dataset(IP_stack, l_patch, N_patch, stride)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 
@@ -119,14 +121,3 @@ def get_jr_dataloader(IP_stack, l_patch=3.2e-3, N_patch=80, stride=20, batch_siz
 #         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 #         return test_loader
     
-    
-    
-if __name__ == '__main__':
-    train_loader, val_loader = get_dataloader(batch_size=1)
-    test_loader = get_dataloader(train=False)
-    pos, neg = 0, 0
-    for idx, (obs, psf, gt) in enumerate(train_loader):
-        pass
-            
-    # print(pos, neg)
-        

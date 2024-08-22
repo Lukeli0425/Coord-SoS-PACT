@@ -185,7 +185,6 @@ def apact(n_delays, n_thetas, lam_tsv, n_iters, lr, bps, tps):
     wf_params_list = torch.stack(wf_params_list, dim=0).cuda()
     torch.save(wf_params_list, os.path.join(results_dir, 'wf_params.pth'))
     wf_params_list = torch.load(os.path.join(results_dir, 'wf_params.pth')).cuda()
-    print(wf_params_list[:,0].shape)
     print(wf_params_list[:,0].min().item(), wf_params_list[:,0].max().item())
     print(wf_params_list[:,1].min().item(), wf_params_list[:,1].max().item())
     print(wf_params_list[:,2].min().item(), wf_params_list[:,2].max().item())
@@ -211,12 +210,13 @@ def apact(n_delays, n_thetas, lam_tsv, n_iters, lr, bps, tps):
     IP_rec = load_mat(os.path.join(results_dir, 'IP_rec.mat'))
     
     # Save log.
+    # log = load_log(os.path.join(results_dir, 'log.json'))
     log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 'n_thetas':n_thetas,
            'lam_tsv':lam_tsv,'n_iters':n_iters, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
     
     # Visualization.
-    visualize_apact(results_dir, IP_rec, SOS_rec, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
+    visualize_apact(results_dir, IP_rec, SOS_rec, log['time'], tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
 
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -242,7 +242,7 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
     das = DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    nf_apact = NF_APACT(mode='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
+    nf_apact = NF_APACT(n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -318,8 +318,7 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
     save_log(results_dir, log)
 
     # Visualization
-    visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, 
-                       tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
+    visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
     
     logger.info(' Results saved to "%s".', results_dir)

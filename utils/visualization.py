@@ -10,7 +10,7 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FormatStrFormatter
 from torch.fft import fft2, fftshift, ifft2, ifftn, ifftshift
 
-from utils.dataio import load_mat
+from utils.dataio import *
 
 
 def standardize(img):
@@ -63,12 +63,13 @@ def condition_number(psf):
 
 
 def visualize_apact(results_dir, IP_rec, SOS_rec, time, IP_max, IP_min, SOS_max, SOS_min, params):
+    """Visualize the reconstructed IP and SOS for APACT."""
     fig = plt.figure(figsize=(13,6))
     ax = plt.subplot(1,2,1)
     norm_IP = Normalize(vmax=IP_max, vmin=IP_min)
     plt.imshow(standardize(IP_rec), cmap='gray', norm=norm_IP)
     plt.title("Reconstructed Initial Pressure", fontsize=16)
-    plt.text(381, 25, "t = {:.1f} s".format(time), color='white', fontsize=15)
+    plt.text(381, 30, "t = {:.1f} s".format(time), color='white', fontsize=15)
     plt.axis('off')
     cax = fig.add_axes([ax.get_position().x1+0.01, ax.get_position().y0, 0.02, ax.get_position().height])
     cb = plt.colorbar(cax=cax, norm=norm_IP)
@@ -90,6 +91,7 @@ def visualize_apact(results_dir, IP_rec, SOS_rec, time, IP_max, IP_min, SOS_max,
 
 
 def visualize_nf_apact(results_dir, IP_rec, SOS_rec, loss_list, time, IP_max, IP_min, SOS_max, SOS_min, params):
+    """Visualize the reconstructed IP and SOS and the training process for NF-APACT."""
     fig = plt.figure(figsize=(13,10.2))
     gs = gridspec.GridSpec(2, 2)
     ax = plt.subplot(gs[0:1,:])
@@ -126,6 +128,7 @@ def visualize_nf_apact(results_dir, IP_rec, SOS_rec, loss_list, time, IP_max, IP
     
     
 def make_video(results_dir, loss_list, task_params, frame_rate=3):
+    """Create video to show the convergence of NF-APACT."""
     video_dir = os.path.join(results_dir, 'video')
     os.makedirs(video_dir, exist_ok=True)
     for idx, loss in enumerate(loss_list):

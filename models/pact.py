@@ -47,12 +47,12 @@ class Fourier_Series(nn.Module):
         return torch.cat([dc, x2, y2], dim=0)
 
 class Wavefront_SOS(nn.Module):
-    def __init__(self, R_body, v0, x_vec, y_vec, n_points=90, N_int=500):
+    def __init__(self, R_body, v0, x_vec, y_vec, n_thetas=180, N_int=500):
         super().__init__()
         # self.R_body = torch.tensor(R_body, dtype=torch.float64).cuda()
         self.R_body = nn.Parameter(torch.tensor(R_body, dtype=torch.float64), requires_grad=False)
         self.v0 = torch.tensor(v0, dtype=torch.float64).cuda()
-        self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64).cuda().view(-1,1)
+        self.thetas = torch.linspace(0, 2*torch.pi, n_thetas, dtype=torch.float64).cuda().view(-1,1)
         self.x_vec = torch.tensor(x_vec, dtype=torch.float64).cuda()
         self.y_vec = torch.tensor(y_vec, dtype=torch.float64).cuda()
         self.dx, self.dy = torch.tensor(x_vec[1] - x_vec[0], dtype=torch.float64).cuda(), torch.tensor(y_vec[1] - y_vec[0], dtype=torch.float64).cuda()
