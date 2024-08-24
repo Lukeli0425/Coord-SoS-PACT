@@ -5,7 +5,7 @@ from models.siren import SIREN
 from utils.utils_torch import get_mgrid
 
 
-class SOS_Rep(nn.Module):
+class SOSRep(nn.Module):
     """SOS parameterization module."""
     def __init__(self, mode, mask, v0, mean, std, hidden_layers=None, hidden_features=None, pos_encoding=None, N_freq=None):
         super().__init__()

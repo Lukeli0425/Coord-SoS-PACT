@@ -23,7 +23,7 @@ from utils.utils_torch import *
 #         return psf
     
     
-class Wavefront_Fourier(nn.Module):
+class Fourier2Wavefront(nn.Module):
     def __init__(self, n_points=80):
         super().__init__() 
         self.thetas = torch.linspace(0, 2*torch.pi, n_points, dtype=torch.float64).cuda().view(-1,1)
@@ -32,7 +32,7 @@ class Wavefront_Fourier(nn.Module):
         wf = dc + x2 * torch.cos(2*self.thetas) + y2 * torch.sin(2*self.thetas)
         return wf
     
-class Fourier_Series(nn.Module):
+class Wavefront2Fourier(nn.Module):
     def __init__(self):
         super().__init__()
         
@@ -46,7 +46,7 @@ class Fourier_Series(nn.Module):
         # y2 = torch.trapezoid(wf * torch.sin(2*thetas), thetas) / torch.pi
         return torch.cat([dc, x2, y2], dim=0)
 
-class Wavefront_SOS(nn.Module):
+class SOS2Wavefront(nn.Module):
     def __init__(self, R_body, v0, x_vec, y_vec, n_thetas=180, N_int=500):
         super().__init__()
         # self.R_body = torch.tensor(R_body, dtype=torch.float64).cuda()
@@ -102,7 +102,7 @@ class Interp1D(nn.Module):
             return y_new 
             
 
-class TF_PACT(nn.Module):
+class Wavefront2TF(nn.Module):
     def __init__(self, N, l, n_delays, angle_range=(0, 2*torch.pi)):
         """_summary_
 

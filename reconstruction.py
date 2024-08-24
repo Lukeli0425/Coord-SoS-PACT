@@ -5,25 +5,21 @@ from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from matplotlib import gridspec
-from matplotlib.colors import LogNorm, Normalize
 from torch.optim import Adam
 from tqdm import tqdm
 
 from kwave.ktransducer import kWaveGrid
 from models.apact import APACT
-from models.das import DAS, Dual_SOS_DAS
-from models.nf_apact import NF_APACT
+from models.das import DelayAndSum, DualSOSDelayAndSum
+from models.nf_apact import NFAPACT
 from utils.dataio import *
 from utils.dataset import get_jr_dataloader
 from utils.reconstruction import *
-from utils.simulations import get_water_SOS
+from utils.simulations import get_water_sos
 from utils.utils_torch import get_total_params
 from utils.visualization import *
 
 plt.set_loglevel("warning")
-
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 DATA_DIR = 'data/'
 RESULT_DIR = 'results_new/'
@@ -43,7 +39,7 @@ def das(v_das, bps, tps):
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
     x_vec, y_vec = kgrid.x_vec + tps['x_c']*bps['dx'], kgrid.y_vec + tps['y_c']*bps['dy']
     
-    das = DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
 
@@ -87,9 +83,9 @@ def dual_sos_das(v_body, bps, tps):
     x_c, y_c = tps['x_c'], tps['y_c']
     kgrid = kWaveGrid([Nx, Ny], [dx, dy])
     x_vec, y_vec = kgrid.x_vec+x_c*dx, kgrid.y_vec+y_c*dy
-    v0 = get_water_SOS(tps['T'])
+    v0 = get_water_sos(tps['T'])
     
-    das_dual = Dual_SOS_DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], 
+    das_dual = DualSOSDelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], 
                             x_vec=x_vec, y_vec=y_vec, R_body=tps['R_body'], center=(x_c*dx, y_c*dy), mode='zero')
     das_dual.cuda()
     das_dual.eval()
@@ -142,18 +138,18 @@ def apact(n_delays, n_thetas, lam_tsv, n_iters, lr, bps, tps):
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
     x_vec, y_vec = kgrid.x_vec+tps['x_c']*bps['dx'], kgrid.y_vec+tps['y_c']*bps['dy']
-    v0 = get_water_SOS(tps['T'])
+    v0 = get_water_sos(tps['T'])
     l_patch, N_patch = bps['l_patch'], bps['N_patch']
     delays = torch.linspace(-8e-4, 8e-4, n_delays).cuda().view(-1,1,1)
     
-    das = DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
     apact = APACT(delays=delays, lam_tsv=lam_tsv, R_body=tps['R_body'], v0=v0, Nx=tps['Nx'], Ny=tps['Ny'], dx=bps['dx'], dy=bps['dy'], x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, mean=tps['mean'], std=tps['std'], n_thetas=n_thetas, N_patch=N_patch, 
                   generate_TF=True, dc_range=[-2.e-4, 4.e-4], amp=3.5e-4, step=5e-5, data_path=results_dir)
     apact.cuda()
     apact.eval()
-    apact.generate_TFs()
+    apact.generate_tfs()
     
     DAS_stack, patch_centers, wf_params_list, loss_list = [], [], [], []
     sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
@@ -235,14 +231,14 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
     x_vec, y_vec = kgrid.x_vec+tps['x_c']*bps['dx'], kgrid.y_vec+tps['y_c']*bps['dy']
-    v0 = get_water_SOS(tps['T'])
+    v0 = get_water_sos(tps['T'])
     l_patch, N_patch = bps['l_patch'], bps['N_patch']
     delays = torch.linspace(-8e-4, 8e-4, n_delays).cuda().view(-1,1,1)
     
-    das = DAS(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    nf_apact = NF_APACT(n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
+    nf_apact = NFAPACT(n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -283,7 +279,7 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
         
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
-    nf_apact.save_SOS()
+    nf_apact.save_sos()
     nf_apact.eval()
     test_loss = 0.0
     IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
@@ -339,7 +335,7 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_lyrs', type=int, default=1, help='Number of hidden layers in NF-APACT.')
     parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
     parser.add_argument('--n_freq', type=int, default=0, help='Number of frequencies used for positioanl encoding in NF-APACT.')
-    parser.add_argument('--n_thetas', type=int, default=500, help='Number of angles used in wavefront calculation.')
+    parser.add_argument('--n_thetas', type=int, default=256, help='Number of angles used in wavefront calculation.')
     parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)

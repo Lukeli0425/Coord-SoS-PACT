@@ -142,11 +142,11 @@ def get_medium(kgrid, Nx=2552, Ny=2552,
     """
 
     XX, YY = np.meshgrid(kgrid.x_vec.copy(), kgrid.y_vec.copy())
-    SOS = np.ones((Ny, Nx)) * v0
-    SOS[XX**2 + YY**2 < R**2] = v1
-    SOS[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = v2
+    sos = np.ones((Ny, Nx)) * v0
+    sos[XX**2 + YY**2 < R**2] = v1
+    sos[(XX - offset[0])**2 + (YY - offset[1])**2 < R1**2] = v2
 
-    medium = kWaveMedium(sound_speed=SOS, sound_speed_ref=v0, density=rou)
+    medium = kWaveMedium(sound_speed=sos, sound_speed_ref=v0, density=rou)
     
     return medium
 
@@ -263,13 +263,13 @@ def get_delays(R, v0, v1, n_delays, mode='linear'):
     else:
         raise NotImplementedError
     
-def get_water_SOS(t):
+def get_water_sos(t):
     """Calculate the speed of sound of water at temperature `t` in Celsius."""
     a = [1.402385e3, 5.038815, -5.799156e-2, 3.287156e-4, -1.398845e-6, 2.787860e-9]
-    SOS = 0
+    sos = 0
     for i in range(len(a)):
-        SOS += a[i] * t**i
-    return SOS
+        sos += a[i] * t**i
+    return sos
 
 
 if __name__ == "__main__":

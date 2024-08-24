@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class DAS(nn.Module):
+class DelayAndSum(nn.Module):
     """Delay-And-Sum image reconstruction module for Photoacoustic Computed Tomography with ring array ."""
     def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, angle_range=(0, 2*torch.pi), mode='zero', clip=False):
         """Initialize parameters of the Delay-And-Sum module.
@@ -48,7 +48,7 @@ class DAS(nn.Module):
     
     
 
-class Dual_SOS_DAS(nn.Module):
+class DualSOSDelayAndSum(nn.Module):
     """Delay-And-Sum image reconstruction module using a dual SoS distribution for Photoacoustic Computed Tomography with ring array ."""
     def __init__(self, R_ring, N_transducer, T_sample, x_vec, y_vec, R_body, angle_range=(0, 2*torch.pi), center=(0.0, 0.0), mode='zero', clip=False):
         """Initialize parameters of the Dual SoS Delay-And-Sum module.

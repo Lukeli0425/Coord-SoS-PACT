@@ -3,15 +3,15 @@ import torch
 import torch.nn as nn
 from torch.fft import fft2, fftshift, ifft2, ifftshift
 
-from models.pact import TF_PACT, Wavefront_SOS
-from models.regularizer import Sharpness, Total_Variation
-from models.sos import SOS_Rep
+from models.deconv import MultiChannelDeconv
+from models.pact import SOS2Wavefront, Wavefront2TF
+from models.regularizer import Sharpness, TotalVariation
+from models.sos_rep import SOSRep
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
-from models.deconv import MultiChannel_Deconv
 
 
-class Data_Fitting_Loss(nn.Module):
+class DataFittingLoss(nn.Module):
     def __init__(self):
         super().__init__()
         
@@ -19,7 +19,7 @@ class Data_Fitting_Loss(nn.Module):
         return torch.mean(k * (Y-X) ** 2, axis=(-3,-2,-1))
 
 
-class NF_APACT(nn.Module):
+class NFAPACT(nn.Module):
     """Neural Fileds for Adaptive Photoacoustic Computed Tomography."""
     def __init__(self, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, reg, lam,
                  x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, fwhm = 1.5e-3, angle_range=(0, 2*torch.pi)):
@@ -36,15 +36,15 @@ class NF_APACT(nn.Module):
         self.SOS_mask[XX**2 + YY**2 <= R_body**2] = 1
         self.SOS_results = None
         
-        self.SOS = SOS_Rep(mode='SIREN', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
-        self.wavefront_SOS = Wavefront_SOS(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=180, N_int=250)
-        self.tf_pact = TF_PACT(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
-        self.deconv = MultiChannel_Deconv()
-        self.data_fitting = Data_Fitting_Loss()
-        self.tv_regularizer = Total_Variation(weight=lam_tv)
+        self.SOS = SOSRep(mode='SIREN', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
+        self.SOS2wavefront = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=256, N_int=256)
+        self.wavefront2tf = Wavefront2TF(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
+        self.deconv = MultiChannelDeconv()
+        self.data_fitting = DataFittingLoss()
+        self.tv_regularizer = TotalVariation(weight=lam_tv)
         self.sharpness_regularizer = Sharpness(function=reg, weight=lam)
     
-    def save_SOS(self):
+    def save_sos(self):
         """Save the SOS after optimization."""
         self.SOS_results = self.SOS()
     
@@ -53,8 +53,8 @@ class NF_APACT(nn.Module):
         SOS = self.SOS() if task =='train' else self.SOS_results # Use the saved SOS during deconvolution.
         
         # Compute TF stack.  
-        thetas, wfs = self.wavefront_SOS(x, y, SOS)
-        H = self.tf_pact(delays.view(1,-1,1,1), thetas, wfs)
+        thetas, wfs = self.SOS2wavefront(x, y, SOS)
+        H = self.wavefront2tf(delays.view(1,-1,1,1), thetas, wfs)
         
         # Apply Gaussian window to image patch.
         patch_stack = patch_stack * self.gaussian_window

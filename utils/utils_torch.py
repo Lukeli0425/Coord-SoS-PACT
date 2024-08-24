@@ -4,12 +4,12 @@ import torch.nn.functional as F
 from torch.fft import fftn, fftshift, ifftn, ifftshift
 
 
-def pad_double(img):
+def pad_double(img:torch.Tensor) -> torch.Tensor:
     H, W = img.shape[-2:]
     return F.pad(img, (W//2, W//2, H//2, H//2))
 
 
-def crop_half(img):
+def crop_half(img:torch.Tensor) -> torch.Tensor:
     H, W = img.shape[-2:]
     return img[...,H//4:3*H//4, W//4:3*W//4]
     
@@ -37,7 +37,7 @@ def psf_to_otf(psf):
 	return psf, H, Ht, HtH
 
 
-def get_fourier_coord(N=80, l=3.2e-3, device='cuda:0'):
+def get_fourier_coord(N:int=80, l:float=3.2e-3, device:str='cuda:0') -> tuple:
 	fx1D = torch.linspace(-np.pi/l, np.pi/l, N, requires_grad=False, device=device)
 	fy1D = torch.linspace(-np.pi/l, np.pi/l, N, requires_grad=False, device=device)
 	[fx2D, fy2D] = torch.meshgrid(fx1D, fy1D, indexing='xy')
@@ -46,7 +46,7 @@ def get_fourier_coord(N=80, l=3.2e-3, device='cuda:0'):
 	return k2D, theta2D % (2*torch.pi)
 
 
-def get_mgrid(shape:tuple, range:tuple=(-1, 1)):
+def get_mgrid(shape:tuple, range:tuple=(-1, 1)) -> torch.Tensor:
     """Generates a flattened grid of (x,y,...) coordinates in a range of `[-1, 1]`.
     
     Args:
@@ -62,7 +62,7 @@ def get_mgrid(shape:tuple, range:tuple=(-1, 1)):
     return mgrid
 
 
-def get_total_params(model: torch.nn.Module):
+def get_total_params(model: torch.nn.Module) -> int:
     """Calculate the total number of parameters in a model.
 	
 	Args:

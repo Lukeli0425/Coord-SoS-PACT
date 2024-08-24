@@ -5,7 +5,7 @@ from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 from utils.utils_torch import crop_half, get_fourier_coord, pad_double
 
 
-class Wiener_Batched(nn.Module):
+class WienerBatched(nn.Module):
     def __init__(self, lam, order=1, device='cuda:0'):
         super().__init__()
         self.device = device
@@ -26,7 +26,7 @@ class Wiener_Batched(nn.Module):
         return crop_half(x)
 
 
-class MultiChannel_Deconv(nn.Module):
+class MultiChannelDeconv(nn.Module):
     """MultiChannel Deconvolution using Pseudo-inverse."""
     def __init__(self):
         super().__init__()

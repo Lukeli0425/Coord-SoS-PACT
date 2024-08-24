@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class Total_Variation(nn.Module):
+class TotalVariation(nn.Module):
     def __init__(self, weight):
         super().__init__()
         self.weight = weight
@@ -12,7 +12,7 @@ class Total_Variation(nn.Module):
         dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
         return (dx.abs().sum() + dy.abs().sum()).mean() * self.weight 
 
-class Total_Squared_Variation(nn.Module):
+class TotalSquaredVariation(nn.Module):
     def __init__(self, weight):
         super().__init__()
         self.weight = weight
@@ -71,7 +71,7 @@ class Sharpness(nn.Module):
             return 0.0
         return self.function(x)
 
-class L1_Norm(nn.Module):
+class L1Norm(nn.Module):
     def __init__(self, weight, mean=0.0):
         super().__init__()
         self.weight = weight
