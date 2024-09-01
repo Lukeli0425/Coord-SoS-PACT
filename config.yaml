@@ -15,7 +15,7 @@ numerical:
   sinogram: "sinogram_simulation_easy.mat"
   EIR: null
   ring_error: null
-  SOS: "SoS_simulation_easy.mat"
+  SOS: "SOS_easy.mat"
 
   t0: 0
   Nx: 560                 # Image size in X direction.
@@ -50,8 +50,8 @@ phantom:
   R_body: 12.5e-3              # Radius of body [m].
   T: 26.0                 # Water temperature [C].
 
-  mean: 1530.0            # Mean of SOS in tissue [m/s].
-  std: 10.5               # Standard deviation of SOS in tissue [m/s].
+  mean: 1512.0            # Mean of SOS in tissue [m/s].
+  std: 10.0               # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1535
   IP_min: -3
