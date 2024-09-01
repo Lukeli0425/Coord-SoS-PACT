@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 from time import time
 
@@ -11,7 +12,9 @@ from tqdm import tqdm
 from kwave.ktransducer import kWaveGrid
 from models.apact import APACT
 from models.das import DelayAndSum, DualSOSDelayAndSum
+from models.deconv import MultiChannelDeconv
 from models.nf_apact import NFAPACT
+from models.pact import SOS2Wavefront, Wavefront2TF
 from utils.dataio import *
 from utils.dataset import get_jr_dataloader
 from utils.reconstruction import *
@@ -67,6 +70,7 @@ def das(v_das, bps, tps):
     
     logger.info(' Results saved in "%s".', results_dir)
 
+
 def dual_sos_das(v_body, bps, tps):
     params = 'v_body={:.1f}m·s⁻¹'.format(v_body)
     logger = logging.getLogger('Dual-SOS DAS')
@@ -115,12 +119,78 @@ def dual_sos_das(v_body, bps, tps):
 
 
 def deconv(n_delays, bps, tps):
-    params = ''
+    params = f'{n_delays}delays'
     logger = logging.getLogger('Deconv')
+    logger.info(" Reconstructing %s with Multi-channel Deconvolution (%s).", tps['description'], params)
     results_dir = os.path.join(RESULT_DIR, tps['task'], 'Deconv', params)
     os.makedirs(results_dir, exist_ok=True)
     
     sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    SOS = load_mat(os.path.join(DATA_DIR, tps['SOS']))
+    
+    # Preparations.
+    kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
+    x_vec, y_vec = kgrid.x_vec+tps['x_c']*bps['dx'], kgrid.y_vec+tps['y_c']*bps['dy']
+    v0 = get_water_sos(tps['T'])
+    l_patch, N_patch = bps['l_patch'], bps['N_patch']
+    delays = torch.linspace(-8e-4, 8e-4, n_delays).cuda().view(-1,1,1)
+    
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
+    das.cuda()
+    das.eval()
+    sos2wavefront = SOS2Wavefront(R_body=tps['R_body'], v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=256, N_int=256)
+    sos2wavefront.cuda()
+    sos2wavefront.eval()
+    wavefront2tf = Wavefront2TF(N=2*N_patch, l=2*l_patch, n_delays=n_delays)
+    wavefront2tf.cuda()
+    wavefront2tf.eval()
+    deconv = MultiChannelDeconv()
+    deconv.cuda()
+    deconv.eval()
+    
+    sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
+    ring_error = torch.from_numpy(ring_error).cuda()
+    SOS = torch.from_numpy(SOS).cuda()
+    sigma = bps['fwhm'] / 4e-5 / np.sqrt(2*np.log(2))
+    gaussian_window = torch.from_numpy(get_gaussian_window(sigma, N_patch)).unsqueeze(0).cuda()
+    DAS_stack = []
+    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    
+    t_start = time()
+    # DAS.
+    logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
+    with torch.no_grad():
+        for d_delay in tqdm(delays, desc='DAS'):
+            recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
+            DAS_stack.append(recon)
+    DAS_stack = torch.stack(DAS_stack, dim=0)
+    DAS_stack = (DAS_stack - DAS_stack.mean()) / DAS_stack.std()
+    data_loader = get_jr_dataloader(DAS_stack, l_patch, N_patch)
+    
+    # Deconvolution.
+    logger.info(" Reconstructing initial pressure via Deconvolution.")
+    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    with torch.no_grad():
+        for i, j, x, y, patch_stack in tqdm(data_loader, desc='Deconvolution'):
+            x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
+            thetas, wfs = sos2wavefront(x, y, SOS)
+            H = wavefront2tf(delays.view(1,-1,1,1), thetas, wfs)
+            patch_stack = patch_stack * gaussian_window
+            rec_patch, _, _ = deconv(patch_stack, H)
+            IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+    t_end = time()
+    IP_rec = IP_rec.detach().cpu().numpy()
+    SOS = SOS.detach().cpu().numpy()
+    
+    # Save results.
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'img')
+    
+    # Save log.
+    log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 'time':t_end-t_start}
+    save_log(results_dir, log)
+    
+    # Visualization
+    visualize_deconv(results_dir, IP_rec, SOS, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -190,7 +260,7 @@ def apact(n_delays, n_thetas, lam_tsv, n_iters, lr, bps, tps):
     for idx in range(n_iters):
         train_loss = 0.0
         for _, ((x, y), fourier_params) in enumerate(zip(patch_centers, wf_params_list)):
-            loss, SOS_rec = apact.optimize_SOS(x, y, fourier_params)
+            loss, SOS_rec = apact.optimize_sos(x, y, fourier_params)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -357,7 +427,7 @@ if __name__ == "__main__":
     elif args.method == 'APACT':
         apact(n_delays=args.n_delays, n_thetas=args.n_thetas, lam_tsv=args.lam_tsv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'Deconv':
-        deconv()
+        deconv(n_delays=args.n_delays, bps=bps, tps=tps)
     elif args.method == 'Dual-SOS_DAS':
         dual_sos_das(v_body=args.v_body, bps=bps, tps=tps)
     elif args.method == 'DAS':
