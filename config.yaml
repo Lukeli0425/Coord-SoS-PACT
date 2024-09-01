@@ -80,3 +80,27 @@ in_vivo:
   SOS_max: 1580
   IP_min: -3
   IP_max: 8
+
+
+kidney:
+  task: "kidney"
+  description: "in vivo mouse kidney"
+  sinogram: "mouse_wholebody_sample_liver_RF.mat"
+  EIR: "EIR_TUNGSTEN.mat"
+  ring_error: "RING_ERROR_NEW.mat"
+  SOS: null
+
+  t0: 196
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0
+  y_c: 0
+  T: 31.0                 # Water temperature [C].
+  R_body: 10.8e-3               # Radius of body [m].
+
+  mean: 1540.0           # Mean of SOS in tissue [m/s].
+  std: 50.0              # Standard deviation of SOS in tissue [m/s].  
+  SOS_min: 1500
+  SOS_max: 1580
+  IP_min: -3
+  IP_max: 8
