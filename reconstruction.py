@@ -386,6 +386,7 @@ def nf_apact(n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
+    make_video_icon(results_dir, loss_list, tps)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -396,7 +397,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, default='0', choices=['0', '1'])
-    parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo'], help='Task to be reconstructed.')
+    parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo', 'kidney'], help='Task to be reconstructed.')
     parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')

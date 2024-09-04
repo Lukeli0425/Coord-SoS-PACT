@@ -9,7 +9,7 @@ from models.ADMM import ADMM_Batched
 from models.Double_ADMM import Double_ADMM
 from models.ResUNet import FT_ResUNet, ResUNet
 from models.Unrolled_ADMM import Unrolled_ADMM
-from models.Wiener import Wiener, Wiener_Batched, WienerNet
+from models.deconv import Wiener, Wiener_Batched, WienerNet
 from utils.dataset import get_dataloader
 from utils.utils_plot import plot_loss
 from utils.utils_train import SSIM, MultiScaleLoss, get_model_name

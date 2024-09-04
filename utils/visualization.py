@@ -154,7 +154,7 @@ def visualize_nf_apact(results_dir, IP_rec, SOS_rec, loss_list, time, IP_max, IP
     plt.close()
     
     
-def make_video(results_dir, loss_list, task_params, frame_rate=3):
+def make_video(results_dir, loss_list, task_params, frame_rate=4):
     """Create video to show the convergence of NF-APACT."""
     video_dir = os.path.join(results_dir, 'video')
     os.makedirs(video_dir, exist_ok=True)
@@ -196,6 +196,39 @@ def make_video(results_dir, loss_list, task_params, frame_rate=3):
         ffmpeg
         .input(os.path.join(video_dir, 'frame*.jpg'), pattern_type='glob', framerate=frame_rate)
         .output(os.path.join(results_dir, 'video.mp4'), vcodec='h264', loglevel="quiet")
+        .overwrite_output()
+        .run()
+    )
+    
+
+def make_video_icon(results_dir, loss_list, task_params, frame_rate=4):
+    """Create video of NF-APACT convergence for the icon on website."""
+    video_dir = os.path.join(results_dir, 'video')
+    os.makedirs(video_dir, exist_ok=True)
+    for idx, loss in enumerate(loss_list):
+        IP = load_mat(os.path.join(video_dir, f'IP_rec_{idx}.mat'))
+        SOS = load_mat(os.path.join(video_dir, f'SOS_rec_{idx}.mat'))
+        
+        # Visualization
+        fig = plt.figure(figsize=(12.8, 6.4))
+        gs = GridSpec(6, 14)
+        ax = plt.subplot(1,2,1)
+        norm_IP = Normalize(vmax=task_params['IP_max'], vmin=task_params['IP_min'])
+        plt.imshow(standardize(IP), cmap='gray', norm=norm_IP)
+        plt.axis('off')
+        
+        ax = plt.subplot(1,2,2)
+        norm_SOS  = Normalize(vmax=task_params['SOS_max'], vmin=task_params['SOS_min'])
+        plt.imshow(SOS, cmap='magma', norm=norm_SOS)
+        plt.axis('off')
+        plt.savefig(os.path.join(video_dir, f'frame_icon{str(idx).zfill(2)}.jpg'), bbox_inches='tight', dpi=256, transparent=True)
+        plt.close()
+        
+    # Assemble video from frames.
+    (
+        ffmpeg
+        .input(os.path.join(video_dir, 'frame_icon*.jpg'), pattern_type='glob', framerate=frame_rate)
+        .output(os.path.join(results_dir, 'video_icon.mp4'), vcodec='h264', loglevel="quiet")
         .overwrite_output()
         .run()
     )

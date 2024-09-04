@@ -26,18 +26,18 @@ class NFAPACT(nn.Module):
         super().__init__()
 
         sigma = fwhm / 4e-5 / np.sqrt(2*np.log(2))
-        self.gaussian_window = torch.tensor(get_gaussian_window(sigma, N_patch)).unsqueeze(0).cuda()
+        self.gaussian_window = torch.from_numpy(get_gaussian_window(sigma, N_patch)).unsqueeze(0).cuda()
         self.k, _ = get_fourier_coord(N=2*N_patch, l=2*l_patch)
         self.k = ifftshift(self.k.cuda(), dim=(-2,-1)).unsqueeze(0).unsqueeze(0)
         self.k /= self.k.mean()
         
         XX, YY = torch.meshgrid(torch.tensor(x_vec[:,0]), torch.tensor(y_vec[:,0]), indexing='xy')
-        self.SOS_mask = torch.zeros_like(XX).cuda()
-        self.SOS_mask[XX**2 + YY**2 <= R_body**2] = 1
-        self.SOS_results = None
+        self.sos_mask = torch.zeros_like(XX).cuda()
+        self.sos_mask[XX**2 + YY**2 <= R_body**2] = 1
+        self.sos_deconv = None
         
-        self.SOS = SOSRep(mode='SIREN', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
-        self.SOS2wavefront = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=256, N_int=256)
+        self.SOS = SOSRep(mode='SIREN', mask=self.sos_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
+        self.sos2wavefront = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=256, N_int=256)
         self.wavefront2tf = Wavefront2TF(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
         self.deconv = MultiChannelDeconv()
         self.data_fitting = DataFittingLoss()
@@ -46,14 +46,18 @@ class NFAPACT(nn.Module):
     
     def save_sos(self):
         """Save the SOS after optimization."""
-        self.SOS_results = self.SOS()
-    
+        self.sos_deconv = self.SOS()
+        
+    def load_sos(self, SOS):
+        """Load the SOS for deconvolution."""
+        self.sos_deconv = SOS
+        
     def forward(self, x, y, patch_stack, delays, task='train'):
         # Compute SOS. 
-        SOS = self.SOS() if task =='train' else self.SOS_results # Use the saved SOS during deconvolution.
+        SOS = self.SOS() if task =='train' else self.sos_deconv # Use the saved SOS during deconvolution.
         
         # Compute TF stack.  
-        thetas, wfs = self.SOS2wavefront(x, y, SOS)
+        thetas, wfs = self.sos2wavefront(x, y, SOS)
         H = self.wavefront2tf(delays.view(1,-1,1,1), thetas, wfs)
         
         # Apply Gaussian window to image patch.
@@ -63,7 +67,7 @@ class NFAPACT(nn.Module):
         x, X, Y = self.deconv(patch_stack, H)
 
         # Compute loss.
-        loss = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.SOS_mask) #- self.sharpness_regularizer(x)
+        loss = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.sos_mask) #- self.sharpness_regularizer(x)
             
         return x, SOS, loss
 
