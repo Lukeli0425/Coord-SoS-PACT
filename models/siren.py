@@ -13,16 +13,6 @@ class PosEncodingNeRF(nn.Module):
         super().__init__()
 
         self.in_features = in_features
-
-        # if self.in_features == 3:
-        #     self.N_freq = 10
-        # elif self.in_features <= 2:
-        #     assert sidelength is not None
-        #     if isinstance(sidelength, int):
-        #         sidelength = (sidelength, sidelength)
-        #     self.N_freq = 4
-        #     if use_nyquist:
-        #         self.N_freq = get_N_freq_nyquist(min(sidelength[0], sidelength[1]))
         self.N_freq = N_freq
         self.out_dim = in_features + 2 * in_features * self.N_freq
 
@@ -66,7 +56,7 @@ class Sine(nn.Module):
     
        
 class SIREN(nn.Module):
-    def __init__(self, n_hidden_layers, activation_fn, in_features, hidden_features, out_features, pos_encoding=False, N_freq=0):
+    def __init__(self, hidden_layers, in_features, hidden_features, out_features, activation_fn='sin', pos_encoding=False, N_freq=0):
         super().__init__()
         
         if activation_fn == 'sin':
@@ -87,7 +77,7 @@ class SIREN(nn.Module):
             self.pos_encoding = False
         self.mlp = nn.Sequential(
             nn.Sequential(nn.Linear(in_features, hidden_features), self.activation_fn),
-            *[nn.Sequential(nn.Linear(hidden_features, hidden_features), self.activation_fn) for _ in range(n_hidden_layers)],
+            *[nn.Sequential(nn.Linear(hidden_features, hidden_features), self.activation_fn) for _ in range(hidden_layers)],
             nn.Linear(hidden_features, out_features)
         )
 
@@ -98,10 +88,3 @@ class SIREN(nn.Module):
         coords = self.pos_encoding(x) if self.pos_encoding else x
         return self.mlp(coords), x
 
-
-if __name__ == '__main__':
-    model = SIREN(n_hidden_layers=1, activation_fn='sin', in_features=2, hidden_features=128, out_features=1, pos_encoding=False, N_freq=4)
-    total = sum([param.nelement() for param in model.parameters()])
-    print("Number of parameter: %s" % (total))
-    print(model.mlp[0][0].weight.shape)
-    # print(model)

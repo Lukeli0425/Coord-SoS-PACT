@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from models.pact import Fourier2Wavefront, SOS2Wavefront, Wavefront2Fourier
 from models.regularizer import TotalSquaredVariation, TotalVariation
-from models.sos_rep import SOSRep
+from models.nf_apact import SOSRep
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
 
@@ -79,20 +79,10 @@ class APACT(nn.Module):
         self.tv_reg = TotalSquaredVariation(weight=lam_tsv)
         self.sos2wf = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=n_thetas, N_int=512)
         self.wf2fourier = Wavefront2Fourier()
-        self.SOS = SOSRep(mode='None', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_features=64, hidden_layers=1, pos_encoding=False)
+        self.SOS = SOSRep(rep='None', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_features=64, hidden_layers=1, pos_encoding=False)
         
         self.fourier2tfs, self.params, self.best_params = None, None, []
-        # if generate_TF:
-        #     self.generate_TFs()
-        #     self.load_params()
-        # else:
-        #     try:
-        #         self.load_params()
-        #     except:
-        #         self.logger.info(' Failed loading wavefront parameters.')
-        #         self.generate_TFs()
-        #         self.load_params()
-            
+
             
     def load_params(self):
         """Load the precalculated wavefront parameters from `self.data_path`."""
@@ -106,9 +96,6 @@ class APACT(nn.Module):
         dcs = np.arange(self.dc_range[0], self.dc_range[1], self.step)
         xs = np.arange(-self.amp, self.amp, self.step)
         ys = np.arange(-self.amp, self.amp, self.step)
-        print(dcs)
-        print(xs)
-        print(ys)
         params = []
         idx = 0
         for dc in dcs:
@@ -182,13 +169,3 @@ class APACT(nn.Module):
         fourier_params1 = self.wf2fourier(wf, thetas)
         loss = self.loss_fn(fourier_params, fourier_params1) + self.tv_reg(SOS, self.SOS_mask)
         return loss, SOS
-
-if __name__ == '__main__':
-    delays = np.arange(-8e-4, 8e-4, 1e-5)
-    apact = APACT(delays)
-    # apact.generate_TFs()
-    apact.load_TFs()
-    print(apact.TFs.shape)
-    print(apact.params.shape)
-    print(apact.TFs[0].shape)
-    

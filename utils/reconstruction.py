@@ -18,8 +18,11 @@ def deconvolve_sinogram(sinogram, EIR):
     Returns:
         `numpy.array`: The corrected sinogrm.
     """
+    # EIR_pad = np.zeros((512, 2000))
+    # EIR_pad[:, :300] = EIR
+    # EIR = EIR_pad
     delta = np.zeros_like(EIR)
-    delta[0, np.argmax(EIR)] = 1
+    delta[0, np.argmax(EIR, axis=1)] = 1
     delta_ft = fft(delta, axis=1)
     EIR_ft = fft(EIR, axis=1)
     Sinogram_ft = fft(sinogram, axis=1)

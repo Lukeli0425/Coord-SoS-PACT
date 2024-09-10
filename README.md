@@ -1,10 +1,10 @@
-# Neural Fields Enabled Joint Reconstruction of Sound Speed Distribution and Initial Pressure in Photoacoustic Computed Tomography
+# Neural Fields for Adaptive Photoacoustic Computed Tomography
 
 <b>[Tianao Li](https://lukeli0425.github.io)</b><sup>1</sup>, <b>Manxiu Cui</b><sup>2</sup>, <b>[Cheng Ma](https://rachmaninov-ma.wixsite.com/mysite)</b><sup>3</sup>, <b>[Emma Alexander](https://www.alexander.vision/emma)</b><sup>1</sup><br>
 <sup>1</sup>Northwestern University, <sup>2</sup>Caltech, <sup>3</sup>Tsinghua University<br>
 __In Submission__
 
-Official code for [_Neural Fields Enabled Joint Reconstruction of Sound Speed Distribution and Initial Pressure in Photoacoustic Computed Tomography_]().
+Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography_]().
 
 
 ## Running the Project

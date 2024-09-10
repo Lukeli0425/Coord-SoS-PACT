@@ -75,7 +75,7 @@ in_vivo:
   R_body: 10.8e-3               # Radius of body [m].
 
   mean: 1545.0           # Mean of SOS in tissue [m/s].
-  std: 50.0              # Standard deviation of SOS in tissue [m/s].  
+  std: 40.0              # Standard deviation of SOS in tissue [m/s].  
   SOS_min: 1500
   SOS_max: 1580
   IP_min: -3

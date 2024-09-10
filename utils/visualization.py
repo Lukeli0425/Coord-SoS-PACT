@@ -205,7 +205,8 @@ def make_video_icon(results_dir, loss_list, task_params, frame_rate=4):
     """Create video of NF-APACT convergence for the icon on website."""
     video_dir = os.path.join(results_dir, 'video')
     os.makedirs(video_dir, exist_ok=True)
-    for idx, loss in enumerate(loss_list):
+    log = load_log(os.path.join(results_dir, 'log.json'))
+    for idx, loss in enumerate(log['loss']):
         IP = load_mat(os.path.join(video_dir, f'IP_rec_{idx}.mat'))
         SOS = load_mat(os.path.join(video_dir, f'SOS_rec_{idx}.mat'))
         

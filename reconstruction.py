@@ -434,7 +434,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
-    # make_video_icon(results_dir, loss_list, tps)
+    # make_video_icon(results_dir, None, tps)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -450,7 +450,7 @@ if __name__ == "__main__":
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
     parser.add_argument('--n_delays', type=int, default=32, help='Number of delays used in NF-APACT.')
-    parser.add_argument('--n_iters', type=int, default=20, help='Number of iterations for SOS reconstruction in APACT.')
+    parser.add_argument('--n_iters', type=int, default=10, help='Number of iterations for SOS reconstruction in APACT.')
     parser.add_argument('--lam_tsv', type=float, default=5e-15, help='Weight of total squared variation regularization for APACT.')
     parser.add_argument('--hidden_lyrs', type=int, default=1, help='Number of hidden layers in NF-APACT.')
     parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
@@ -459,9 +459,9 @@ if __name__ == "__main__":
     parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
-    parser.add_argument('--n_epochs', type=int, default=30, help='Number of training epochs for NF-APACT.')
+    parser.add_argument('--n_epochs', type=int, default=15, help='Number of training epochs for NF-APACT.')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for NF-APACT.')
-    parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate for NF-APACT.')
+    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate for NF-APACT.')
     args = parser.parse_args()
     
     # Select GPU.
