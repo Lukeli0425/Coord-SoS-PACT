@@ -26,7 +26,7 @@ numerical:
   R_body: 9.8e-3               # Radius of body [m].
 
   mean: 1550.0            # Mean of SOS in tissue [m/s].
-  std: 110.0              # Standard deviation of SOS in tissue [m/s].
+  std: 100.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
@@ -51,7 +51,7 @@ phantom:
   T: 26.0                 # Water temperature [C].
 
   mean: 1512.0            # Mean of SOS in tissue [m/s].
-  std: 10.0               # Standard deviation of SOS in tissue [m/s].
+  std: 15.0               # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1535
   IP_min: -3
@@ -74,8 +74,8 @@ in_vivo:
   T: 31.0                 # Water temperature [C].
   R_body: 10.8e-3               # Radius of body [m].
 
-  mean: 1530.0           # Mean of SOS in tissue [m/s].
-  std: 28.0              # Standard deviation of SOS in tissue [m/s].  
+  mean: 1545.0           # Mean of SOS in tissue [m/s].
+  std: 50.0              # Standard deviation of SOS in tissue [m/s].  
   SOS_min: 1500
   SOS_max: 1580
   IP_min: -3
@@ -86,21 +86,21 @@ kidney:
   task: "kidney"
   description: "in vivo mouse kidney"
   sinogram: "mouse_wholebody_sample_liver_RF.mat"
-  EIR: "EIR_TUNGSTEN.mat"
-  ring_error: "RING_ERROR_NEW.mat"
+  EIR: null
+  ring_error: null # "RING_ERROR_NEW.mat"
   SOS: null
 
-  t0: 196
-  Nx: 560                 # Image size in X direction.
-  Ny: 560                 # Image size in Y direction.
-  x_c: 0
-  y_c: 0
-  T: 31.0                 # Water temperature [C].
-  R_body: 10.8e-3               # Radius of body [m].
+  t0: 200
+  Nx: 520                 # Image size in X direction.
+  Ny: 520                 # Image size in Y direction.
+  x_c: -12
+  y_c: 10
+  T: 29.0                 # Water temperature [C].
+  R_body: 9.4e-3               # Radius of body [m].
 
-  mean: 1540.0           # Mean of SOS in tissue [m/s].
-  std: 50.0              # Standard deviation of SOS in tissue [m/s].  
+  mean: 1560.0           # Mean of SOS in tissue [m/s].
+  std: 70.0              # Standard deviation of SOS in tissue [m/s].  
   SOS_min: 1500
-  SOS_max: 1580
+  SOS_max: 1610
   IP_min: -3
   IP_max: 8
