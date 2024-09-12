@@ -6,16 +6,15 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, Dataset, random_split
 
 
-class JR_Dataset(Dataset):
-    """PyTorch Dataset for Joint Reconstruction.
-    """
-    def __init__(self, IP_stack, l_patch, N_patch, stride):
-        self.IP_stack = IP_stack#, (N_patch//2, N_patch//2, N_patch//2, N_patch//2), mode='constant', value=0)
+class DASStackDataset(Dataset):
+    """PyTorch Dataset for DAS Stack."""
+    def __init__(self, das_stack, l_patch, N_patch, stride):
+        self.das_stack = das_stack
         self.l_patch = l_patch
         self.N_patch = N_patch
         self.stride = stride
-        self.nx = (IP_stack.shape[-2]-self.N_patch) // self.stride + 1
-        self.ny = (IP_stack.shape[-1]-self.N_patch) // self.stride + 1
+        self.nx = (das_stack.shape[-2]-self.N_patch) // self.stride + 1
+        self.ny = (das_stack.shape[-1]-self.N_patch) // self.stride + 1
 
     def __len__(self):
         return self.nx * self.ny
@@ -23,11 +22,11 @@ class JR_Dataset(Dataset):
     def __getitem__(self, idx):
         i, j = idx // self.nx, idx % self.ny
         x, y = (j-self.ny//2)*self.l_patch / 4, (self.nx//2-i)*self.l_patch / 4
-        return i, j, torch.tensor(x), torch.tensor(y), self.IP_stack[:,self.stride*i:self.stride*i+self.N_patch, self.stride*j:self.stride*j+self.N_patch]
+        return i, j, torch.tensor(x), torch.tensor(y), self.das_stack[:,self.stride*i:self.stride*i+self.N_patch, self.stride*j:self.stride*j+self.N_patch]
     
     
-def get_jr_dataloader(IP_stack, batch_size, l_patch=3.2e-3, N_patch=80, stride=20, shuffle=True):
-    dataset = JR_Dataset(IP_stack, l_patch, N_patch, stride)
+def get_data_loader(das_stack, batch_size, l_patch=3.2e-3, N_patch=80, stride=20, shuffle=True):
+    dataset = DASStackDataset(das_stack, l_patch, N_patch, stride)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 

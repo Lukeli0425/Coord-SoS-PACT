@@ -16,7 +16,7 @@ from models.deconv import MultiChannelDeconv
 from models.nf_apact import NFAPACT
 from models.pact import SOS2Wavefront, Wavefront2TF
 from utils.dataio import *
-from utils.dataset import get_jr_dataloader
+from utils.dataset import get_data_loader
 from utils.reconstruction import *
 from utils.simulations import get_water_sos
 from utils.utils_torch import get_total_params
@@ -25,7 +25,7 @@ from utils.visualization import *
 plt.set_loglevel("warning")
 
 DATA_DIR = 'data/'
-RESULT_DIR = 'results_new1/'
+RESULT_DIR = 'results_new/'
 
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
@@ -187,7 +187,7 @@ def deconv(n_delays:int, batch_size:int, bps:dict, tps:dict) -> None:
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_jr_dataloader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=False)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=False)
     
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
@@ -271,7 +271,7 @@ def apact(n_delays:int, n_thetas:int, lam_tsv:float, n_iters:int, lr:float, bps:
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_jr_dataloader(das_stack=das_stack, batch_size=1, l_patch=l_patch, N_patch=N_patch, shuffle=False)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=1, l_patch=l_patch, N_patch=N_patch, shuffle=False)
     
     # Wavefront search.
     logger.info(' Searching for optimal wavefront parameters.')
@@ -378,7 +378,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_jr_dataloader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=True)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=True)
     
     # Joint Reconstruction.
     for epoch in range(1, n_epochs+1):
@@ -438,7 +438,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
-    # make_video_icon(results_dir, None, tps)
+    make_video_icon(results_dir, None, tps)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -460,7 +460,7 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
     parser.add_argument('--n_freq', type=int, default=0, help='Number of frequencies used for positioanl encoding in NF-APACT.')
     parser.add_argument('--n_thetas', type=int, default=256, help='Number of angles used in wavefront calculation.')
-    parser.add_argument('--lam_tv', type=float, default=0.0)
+    parser.add_argument('--lam_tv', type=float, default=5e-5)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
     parser.add_argument('--n_epochs', type=int, default=15, help='Number of training epochs for NF-APACT.')
