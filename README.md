@@ -6,8 +6,7 @@ __In Submission__
 
 Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography_]().
 
-<!-- ![Overview](figures/overview.png) -->
-<img src="figures/overview.png" style="background-color:white;" />
+![Overview](figures/overview.png)
 
 ## Get Started
 

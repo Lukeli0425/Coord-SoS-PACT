@@ -7,7 +7,7 @@ import hdf5storage
 import numpy as np
 import yaml
 
-from utils.reconstruction import deconvolve_sinogram
+from utils.reconstruction import deconv_pa_signal
 
 
 def load_config(file:str) -> dict:
@@ -65,7 +65,7 @@ def save_mat(file:str, data:np.ndarray, key:str='data') -> None:
     logger.debug(' Successfully saved data to "%s".', file)
 
 
-def prepare_data(data_dir, pa_signal_file, EIR_file, ring_error_file) -> None:
+def prepare_data(data_dir:str, pa_signal_file:str, EIR_file:str, ring_error_file:str) -> tuple:
     """Prepare PA signals, EIR, and ring error for reconstruction.
 
     Args:
@@ -79,7 +79,7 @@ def prepare_data(data_dir, pa_signal_file, EIR_file, ring_error_file) -> None:
     """
     pa_signal = load_mat(os.path.join(data_dir, pa_signal_file))
     EIR = load_mat(os.path.join(data_dir, EIR_file)) if EIR_file else None
-    pa_signal = deconvolve_sinogram(pa_signal, EIR) if EIR is not None else pa_signal.astype(np.float32) # Deconvolve EIR.
+    pa_signal = deconv_pa_signal(pa_signal, EIR) if EIR is not None else pa_signal.astype(np.float32) # Deconvolve EIR.
     if ring_error_file:
         ring_error, _ = load_mat(os.path.join(data_dir, ring_error_file))
         ring_error = np.interp(np.arange(0, 512, 1), np.arange(0, 512, 2), ring_error[:,0]) # Upsample ring error.
