@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Any
 
 import h5py
 import hdf5storage
@@ -26,14 +27,14 @@ def load_config(file:str) -> dict:
     return config
     
 
-def load_mat(file:str) -> np.ndarray:
+def load_mat(file:str) -> Any:
     """Load data in `.mat` files.
 
     Args:
         file (str): Path to file.
 
     Returns:
-        tuple: Tuple of data cubes converted to numpy arrays.
+        tuple/np.ndarray: Data cube(s) converted to `np.ndarray`.
     """
     logger = logging.getLogger('DataIO')
     
