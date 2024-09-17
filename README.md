@@ -4,7 +4,10 @@
 <sup>1</sup>Northwestern University, <sup>2</sup>Caltech, <sup>3</sup>Tsinghua University<br>
 __In Submission__
 
-Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography_]().
+[![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/NF-APACT)&nbsp;
+[![arXiv](https://img.shields.io/badge/arXiv-2211.01567-b31b1b.svg)](https://arxiv.org/abs/2211.01567)&nbsp;
+
+Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography_](https://lukeli0425.github.io/NF-APACT).
 
 ![Overview](figures/overview.png)
 
