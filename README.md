@@ -61,7 +61,15 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 ### Citation
 
 ```bibtex
-Coming soon.
+@misc{li2024neuralfieldsadaptivephotoacoustic,
+    title={Neural Fields for Adaptive Photoacoustic Computed Tomography}, 
+    author={Tianao Li and Manxiu Cui and Cheng Ma and Emma Alexander},
+    year={2024},
+    eprint={2409.10876},
+    archivePrefix={arXiv},
+    primaryClass={eess.IV},
+    url={https://arxiv.org/abs/2409.10876}, 
+}
 ```
 
 ### Acknowledgment
