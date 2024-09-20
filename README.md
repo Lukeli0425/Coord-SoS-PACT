@@ -61,14 +61,11 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 ### Citation
 
 ```bibtex
-@misc{li2024neuralfieldsadaptivephotoacoustic,
-    title={Neural Fields for Adaptive Photoacoustic Computed Tomography}, 
-    author={Tianao Li and Manxiu Cui and Cheng Ma and Emma Alexander},
-    year={2024},
-    eprint={2409.10876},
-    archivePrefix={arXiv},
-    primaryClass={eess.IV},
-    url={https://arxiv.org/abs/2409.10876}, 
+@article{li2024neural,
+  title={Neural Fields for Adaptive Photoacoustic Computed Tomography},
+  author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
+  journal={arXiv preprint arXiv:2409.10876},
+  year={2024}
 }
 ```
 
