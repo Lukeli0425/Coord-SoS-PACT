@@ -8,14 +8,24 @@ basic_params:
   l_patch: 3.2e-3         # Size of image patch [m].
   fwhm: 1.5e-3            # FWHM of Gaussian window [m].
 
+simulation:
+  Nx_pad: 2544
+  Ny_pad: 2544
+  rou: 1000.0                                  # Density [kg/m^3].
+  PML_size: 8                                # Size of the PML in grid points.
+  center_pos: [0, 0]
+  arc_angle: 2.0
+  upsample_factor: 8 
+    
 
-numerical:
-  task: "numerical"
-  description: "numerical phantom"
-  sinogram: "sinogram_simulation_easy.mat"
+numerical 0:
+  task: "numerical_full"
+  description: "numerical phantom 0 (full) "
+  IP: "IP.mat"
+  sinogram: "sinogram_full.mat"
   EIR: null
   ring_error: null
-  SOS: "SOS_easy.mat"
+  SOS: "SOS_full.mat"
 
   t0: 0
   Nx: 560                 # Image size in X direction.
@@ -32,6 +42,105 @@ numerical:
   IP_min: -1
   IP_max: 5
 
+
+numerical 1:
+  task: "numerical_body_liver"
+  description: "numerical phantom 1 (body + liver) "
+  IP: "IP.mat"
+  sinogram: "sinogram_body_liver.mat"
+  EIR: null
+  ring_error: null
+  SOS: "SOS_body_liver.mat"
+
+  t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0.0
+  y_c: 0.0
+  T: 26.0                 # Water temperature [C].
+  R_body: 9.8e-3               # Radius of body [m].
+
+  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1495
+  SOS_max: 1605
+  IP_min: -1
+  IP_max: 5
+
+
+numerical 2:
+  task: "numerical_bones"
+  description: "numerical phantom 2 (body + bones) "
+  IP: "IP.mat"
+  sinogram: "sinogram_bones.mat"
+  EIR: null
+  ring_error: null
+  SOS: "SOS_bones.mat"
+
+  t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0.0
+  y_c: 0.0
+  T: 26.0                 # Water temperature [C].
+  R_body: 9.8e-3               # Radius of body [m].
+
+  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1495
+  SOS_max: 1605
+  IP_min: -1
+  IP_max: 5
+
+
+numerical 3:
+  task: "numerical_holes"
+  description: "numerical phantom 3 (body + holes) "
+  IP: "IP.mat"
+  sinogram: "sinogram_holes.mat"
+  EIR: null
+  ring_error: null
+  SOS: "SOS_holes.mat"
+
+  t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0.0
+  y_c: 0.0
+  T: 26.0                 # Water temperature [C].
+  R_body: 9.8e-3               # Radius of body [m].
+
+  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1495
+  SOS_max: 1605
+  IP_min: -1
+  IP_max: 5
+
+
+numerical 4:
+  task: "numerical_circles"
+  description: "numerical phantom 4 (body + circles) "
+  IP: "IP.mat"
+  sinogram: "sinogram_circles.mat"
+  EIR: null
+  ring_error: null
+  SOS: "SOS_circles.mat"
+
+  t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0.0
+  y_c: 0.0
+  T: 26.0                 # Water temperature [C].
+  R_body: 9.8e-3               # Radius of body [m].
+
+  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1495
+  SOS_max: 1605
+  IP_min: -1
+  IP_max: 5
 
 
 phantom:

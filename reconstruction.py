@@ -24,8 +24,8 @@ from utils.visualization import *
 
 plt.set_loglevel("warning")
 
-DATA_DIR = 'data/'
-RESULT_DIR = 'results_new/'
+DATA_PATH = 'data/'
+RESULTS_PATH = 'results_new/'
 
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
@@ -39,11 +39,11 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
     params = 'v_das={:.1f}m·s⁻¹'.format(v_das)
     logger = logging.getLogger('DAS')
     logger.info(" Reconstructing %s with Delay-and-Sum (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULT_DIR, tps['task'], 'DAS', params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'DAS', params)
     os.makedirs(results_dir, exist_ok=True)
     
     # Load data.
-    sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
     
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
@@ -89,11 +89,11 @@ def dual_sos_das(v_body:float, bps:dict, tps:dict) -> None:
     params = 'v_body={:.1f}m·s⁻¹'.format(v_body)
     logger = logging.getLogger('Dual-SOS DAS')
     logger.info(" Reconstructing %s with Dual-SOS DAS (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULT_DIR, tps['task'], 'Dual-SOS_DAS', params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'Dual-SOS_DAS', params)
     os.makedirs(results_dir, exist_ok=True)
     
     # Load data.
-    sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
     
     # Preparations.
     Nx, Ny = tps['Nx'], tps['Ny']
@@ -144,11 +144,11 @@ def deconv(n_delays:int, batch_size:int, bps:dict, tps:dict) -> None:
     params = f'{n_delays}delays_bs={batch_size}'
     logger = logging.getLogger('Deconv')
     logger.info(" Reconstructing %s with Multi-channel Deconvolution (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULT_DIR, tps['task'], 'Deconv', params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'Deconv', params)
     os.makedirs(results_dir, exist_ok=True)
     
-    sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
-    SOS = load_mat(os.path.join(DATA_DIR, tps['SOS']))
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    SOS = load_mat(os.path.join(DATA_PATH, tps['SOS']))
     
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
@@ -235,11 +235,11 @@ def apact(n_delays:int, n_thetas:int, lam_tsv:float, n_iters:int, lr:float, bps:
     params = f'{n_delays}delays'
     logger = logging.getLogger('APACT')
     logger.info(" Reconstructing %s with APACT (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULT_DIR, tps['task'], 'APACT', params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'APACT', params)
     os.makedirs(results_dir, exist_ok=True)
     
     # Load data.
-    sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
     
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
@@ -342,11 +342,11 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
              + ('_TV={:.1e}'.format(lam_tv) if lam_tv != 0 else '') + '_{}epochs_bs={}_lr={:.1e}'.format(n_epochs, batch_size, lr)
     logger = logging.getLogger('NF-APACT')
     logger.info(" Reconstructing %s with NF-APACT (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULT_DIR, tps['task'], 'NF-APACT', params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'NF-APACT', params)
     os.makedirs(results_dir, exist_ok=True)
     
     # Load data.
-    sinogram, EIR, ring_error = prepare_data(DATA_DIR, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
     
     # Preparations.
     kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
@@ -450,6 +450,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, default='0', choices=['0', '1'])
     parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo', 'kidney'], help='Task to be reconstructed.')
+    parser.add_argument('--sample_id', type=int, default=0, choices=[0,1,2,3,4], help='Index of numerical phantom.')
     parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
@@ -473,7 +474,8 @@ if __name__ == "__main__":
     
     # Load parameters.
     config = load_config('config.yaml')
-    bps, tps = config['basic_params'], config[args.task]
+    task = args.task + f" {args.sample_id}"if args.task == 'numerical' else args.task
+    bps, tps = config['basic_params'], config[task]
 
     # Run reconstruction.
     if args.method == 'NF-APACT':

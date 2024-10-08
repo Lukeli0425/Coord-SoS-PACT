@@ -24,8 +24,7 @@ class HQS(nn.Module):
             
             # Z-update
             z = torch.maximum(x - self.lam[idx], torch.zeros_like(x)) + torch.minimum(x + self.lam[idx], torch.zeros_like(x))
-                   
-
+            
         return x
 
 

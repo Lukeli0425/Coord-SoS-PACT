@@ -12,6 +12,7 @@ class TotalVariation(nn.Module):
         dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
         return (dx.abs().sum() + dy.abs().sum()).mean() * self.weight 
 
+
 class TotalSquaredVariation(nn.Module):
     def __init__(self, weight):
         super().__init__()
@@ -22,6 +23,7 @@ class TotalSquaredVariation(nn.Module):
         dy = (x[:, 1:] - x[:, :-1]) * mask[:, 1:]
         return ((dx**2).sum() + (dy**2).sum()).mean() * self.weight 
 
+
 class Brenner(nn.Module):
     def __init__(self, weight):
         super().__init__()
@@ -31,6 +33,7 @@ class Brenner(nn.Module):
         dx = (x[2:, :] - x[:-2, :])
         dy = (x[:, 2:] - x[:, :-2])
         return ((dx**2).sum() + (dy**2).sum()) * self.weight 
+
 
 class Tenenbaum(nn.Module):
     def __init__(self, weight):
@@ -44,6 +47,7 @@ class Tenenbaum(nn.Module):
 
     def forward(self, img):
         return (self.sobel(img) ** 2).sum() * self.weight
+
 
 class Variance(nn.Module):
     def __init__(self, weight):
