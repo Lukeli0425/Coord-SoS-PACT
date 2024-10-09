@@ -10,3 +10,4 @@ torchvision
 numba
 jupyter
 PyYAML
+tqdm

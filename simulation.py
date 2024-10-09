@@ -100,7 +100,7 @@ def k_wave_simulation(sample_id:int, params:dict):
     # Save results and log.
     save_mat(os.path.join(DATA_PATH, params['sinogram']), sinogram.swapaxes(0,1), 'sinogram')
     log = {'time':t_end-t_start, **params}
-    save_log(log, DATA_PATH)
+    save_log(DATA_PATH, log)
     logger.info(' Results saved to "%s".', DATA_PATH)
 
 
