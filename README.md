@@ -7,6 +7,8 @@ __In Submission__
 [![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/NF-APACT)&nbsp;
 [![arXiv](https://img.shields.io/badge/arXiv-2409.10876-b31b1b.svg)](https://arxiv.org/abs/2409.10876)&nbsp;
 
+[![LICENSE](https://img.shields.io/badge/MIT-Lisence-blue)](./LICENSE)&nbsp;
+
 Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography_](https://lukeli0425.github.io/NF-APACT).
 
 ![Overview](figures/overview.png)
