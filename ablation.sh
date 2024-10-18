@@ -1,9 +1,11 @@
 
-gpu=0
+gpu=1
 
 # # Number of delays.
-# for n_delays in {64,32,16,8,4}; do
-#   python reconstruction.py --task numerical --n_delays $n_delays --lam_tv 5e-5 --n_epochs 10 --gpu $gpu
+# for sample_id in {0,1,2,3,4}; do
+#   for n_delays in {64,32,16,8,4,2,1}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays --lam_tv 1e-4 --n_epochs 10 --gpu $gpu
+#   done
 # done
 
 # for n_delays in {64,32,16,8,4}; do
@@ -15,10 +17,12 @@ gpu=0
 # done
 
 
-# # Network structure.
-# for hidden_fts in {32,64,128,256}; do
-#   for hidden_lyrs in {1,2}; do
-#     python reconstruction.py --task numerical --hidden_fts $hidden_fts --hidden_lyrs $hidden_lyrs --lam_tv 5e-5 --n_epochs 10 --gpu $gpu
+# Network structure.
+# for sample_id in {0,1,2,3,4}; do
+#   for hidden_fts in {16,32,64,128,256}; do
+#     for hidden_lyrs in {1,2}; do
+#       python reconstruction.py --task numerical --sample_id $sample_id --hidden_fts $hidden_fts --hidden_lyrs $hidden_lyrs --lam_tv 5e-5 --n_epochs 10 --gpu $gpu
+#     done
 #   done
 # done
 
@@ -50,8 +54,10 @@ gpu=0
 
 
 # # TV Regularization.
-# for lam_tv in {0,1e-5,2e-5,5e-5,1e-4}; do
-#   python reconstruction.py --task numerical --lam_tv $lam_tv --n_epochs 15 --lr 1e-3 --gpu $gpu
+# for sample_id in {0,1,2,3,4}; do
+#   for lam_tv in {0,1e-5,2e-5,5e-5,1e-4,2e-4,5e-4,1e-3}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --lam_tv $lam_tv --n_epochs 10 --lr 1e-3 --gpu $gpu
+#   done
 # done
 
 # for lam_tv in {0,1e-5,2e-5,5e-5,1e-4}; do
@@ -63,7 +69,9 @@ gpu=0
 # done
 
 
-# Multi-channel Deconvolution.
-for n_delays in {64,32,16,8,4}; do
-  python reconstruction.py --task numerical --method Deconv --n_delays $n_delays --gpu $gpu
-done
+# # Multi-channel Deconvolution.
+# for sample_id in {0,1,2,3,4}; do
+#   for n_delays in {64,32,16,8,4}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --method Deconv --n_delays $n_delays --gpu $gpu
+#   done
+# done

@@ -60,8 +60,8 @@ numerical 1:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1550.0            # Mean of SOS in tissue [m/s].
-  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  mean: 1560.0            # Mean of SOS in tissue [m/s].
+  std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
@@ -85,7 +85,7 @@ numerical 2:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  mean: 1555.0            # Mean of SOS in tissue [m/s].
   std: 100.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
@@ -110,8 +110,8 @@ numerical 3:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1550.0            # Mean of SOS in tissue [m/s].
-  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  mean: 1540.0            # Mean of SOS in tissue [m/s].
+  std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
@@ -136,7 +136,7 @@ numerical 4:
   R_body: 9.8e-3               # Radius of body [m].
 
   mean: 1550.0            # Mean of SOS in tissue [m/s].
-  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
