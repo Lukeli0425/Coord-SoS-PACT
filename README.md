@@ -17,7 +17,7 @@ Official code for [_Neural Fields for Adaptive Photoacoustic Computed Tomography
 To clone this project, run:
 
 ```zsh
-git clone https://github.com/Lukeli0425/NF-PACT.git
+git clone https://github.com/Lukeli0425/NF-APACT.git
 ```
 
 Create a virtual environment and download the required packages:
