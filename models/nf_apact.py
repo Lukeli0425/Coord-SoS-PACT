@@ -23,7 +23,7 @@ class SOSRep(nn.Module):
         self.v0 = v0
         self.mean, self.std = mean, std
         
-        if rep == 'None':
+        if rep == 'Grid':
             self.SOS = torch.normal(0,1,[(self.mask>0.5).sum(), 1], requires_grad=True).cuda()# * v0
             self.SOS = nn.Parameter(self.SOS, requires_grad=True)
         elif rep == 'SIREN':
@@ -36,7 +36,7 @@ class SOSRep(nn.Module):
         
     def forward(self):
         SOS = (torch.ones_like(self.mask, requires_grad=True) * self.v0).view(-1,1)
-        if self.rep == 'None':
+        if self.rep == 'Grid':
             SOS[self.mask.view(-1)>0] = self.SOS.double() * self.std + self.mean
         elif self.rep == 'SIREN':
             output, _ = self.siren(self.mgrid)
@@ -54,7 +54,7 @@ class DataFittingLoss(nn.Module):
 
 class NFAPACT(nn.Module):
     """Neural Fields for Adaptive Photoacoustic Computed Tomography."""
-    def __init__(self, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, reg, lam,
+    def __init__(self, rep, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, reg, lam,
                  x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, fwhm = 1.5e-3, angle_range=(0, 2*torch.pi)):
         super().__init__()
 
@@ -69,7 +69,7 @@ class NFAPACT(nn.Module):
         self.sos_mask[XX**2 + YY**2 <= R_body**2] = 1
         self.sos_deconv = None
         
-        self.SOS = SOSRep(rep='SIREN', mask=self.sos_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
+        self.SOS = SOSRep(rep=rep, mask=self.sos_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)
         self.sos2wavefront = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=256, N_int=256)
         self.wavefront2tf = Wavefront2TF(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
         self.deconv = MultiChannelDeconv()

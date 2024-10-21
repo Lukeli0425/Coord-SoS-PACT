@@ -358,7 +358,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    nf_apact = NFAPACT(n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
+    nf_apact = NFAPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -443,6 +443,122 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     logger.info(' Results saved to "%s".', results_dir)
 
 
+def gop_apact(n_delays:int, lam_tv:float, reg, lam, 
+              n_epochs:int, batch_size:int, lr:float, bps:dict, tps:dict) -> None:
+    """Run Grid-of-pixels for Adaptive Photoacoustic Computed Tomography (NF-APACT) reconstruction.
+
+    Args:
+        n_delays (int): Number of extra delay distances for DAS.
+        lam_tv (float): Weight of total-variation (TV) regularization on SOS.
+        n_epochs (int): Number of iterations for SOS reconstruction.
+        batch_size (int): Batch size for training.
+        lr (float): Learning rate.
+        bps (dict): Basic parameters.
+        tps (dict): Task parameters.
+    """
+    params = f'{n_delays}delays' + ('_TV={:.1e}'.format(lam_tv) if lam_tv != 0 else '') \
+             + '_{}epochs_bs={}_lr={:.1e}'.format(n_epochs, batch_size, lr)
+    logger = logging.getLogger('GOP')
+    logger.info(" Reconstructing %s with GOP (%s).", tps['description'], params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'GOP', params)
+    os.makedirs(results_dir, exist_ok=True)
+    
+    # Load data.
+    sinogram, EIR, ring_error = prepare_data(DATA_PATH, tps['sinogram'], tps['EIR'], tps['ring_error'])
+    
+    # Preparations.
+    kgrid = kWaveGrid([tps['Nx'], tps['Ny']], [bps['dx'], bps['dy']])
+    x_vec, y_vec = kgrid.x_vec+tps['x_c']*bps['dx'], kgrid.y_vec+tps['y_c']*bps['dy']
+    v0 = get_water_sos(tps['T'])
+    l_patch, N_patch = bps['l_patch'], bps['N_patch']
+    delays = torch.linspace(-8e-4, 8e-4, n_delays).cuda().view(-1,1,1)
+    
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
+    das.cuda()
+    das.eval()
+    nf_apact = NFAPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, reg=reg, lam=lam,
+                        x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
+    nf_apact.cuda()
+    nf_apact.train()
+    logger.info(" Number of learnable parameters: %s", get_total_params(nf_apact))
+
+    optimizer = Adam(params=nf_apact.parameters(), lr=lr)
+    das_stack, loss_list, SOS_list, IP_list = [], [], [], []
+    sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
+    ring_error = torch.from_numpy(ring_error).cuda()
+    
+    t_start = time()
+    # DAS.
+    logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
+    with torch.no_grad():
+        for d_delay in tqdm(delays, desc='DAS'):
+            recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
+            das_stack.append(recon)
+    das_stack = torch.stack(das_stack, dim=0)
+    das_stack = (das_stack - das_stack.mean()) / das_stack.std()
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=True)
+    
+    # Joint Reconstruction.
+    for epoch in range(1, n_epochs+1):
+        train_loss = 0.0
+        IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+        for idx, (i_list, j_list, x, y, patch_stack) in enumerate(data_loader):
+            x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
+            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays)
+            for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
+                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            train_loss += loss.item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        loss_list.append(train_loss)
+        SOS_list.append(SOS_rec.detach().cpu().numpy())
+        IP_list.append(IP_rec.detach().cpu().numpy())
+        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, train_loss))
+        
+    # Deconvolution.
+    logger.info(" Reconstructing initial pressure via Deconvolution.")
+    nf_apact.save_sos()
+    nf_apact.eval()
+    test_loss = 0.0
+    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    with torch.no_grad():
+        for i_list, j_list, x, y, patch_stack in tqdm(data_loader, desc='Deconvolution'):
+            x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
+            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays, task='test')
+            for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
+                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            test_loss += loss.item()
+    t_end = time()
+    
+    loss_list.append(test_loss)
+    SOS_list.append(SOS_rec.detach().cpu().numpy())
+    IP_list.append(IP_rec.detach().cpu().numpy())
+    
+    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    
+    # Save final results.
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_list[-1].swapaxes(0,1), 'img')
+    save_mat(os.path.join(results_dir, 'SOS_rec.mat'), SOS_list[-1].swapaxes(0,1), 'SOS')
+    
+    # Save SOS and IP after every iteration to make video.
+    os.makedirs(os.path.join(results_dir, 'video'), exist_ok=True)
+    for idx, (IP, SOS, loss) in enumerate(zip(IP_list, SOS_list, loss_list)):
+        save_mat(os.path.join(results_dir, 'video', f'IP_rec_{idx}.mat'), IP.swapaxes(0,1), 'img')
+        save_mat(os.path.join(results_dir, 'video', f'SOS_rec_{idx}.mat'), SOS.swapaxes(0,1), 'SOS')
+    
+    # Save log.
+    log = {'task':tps['task'], 'method':'GOP', 'n_delays':n_delays, 'n_params':get_total_params(nf_apact),
+           'reg':reg, 'lam':lam,'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
+    save_log(results_dir, log)
+
+    # Visualization
+    visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
+    make_video(results_dir, loss_list, tps)
+    # make_video_icon(results_dir, None, tps)
+    
+    logger.info(' Results saved to "%s".', results_dir)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -451,7 +567,7 @@ if __name__ == "__main__":
     parser.add_argument('--gpu', type=str, default='0', choices=['0', '1'])
     parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo', 'kidney'], help='Task to be reconstructed.')
     parser.add_argument('--sample_id', type=int, default=0, choices=[0,1,2,3,4], help='Index of numerical phantom.')
-    parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
+    parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'GOP', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
     parser.add_argument('--n_delays', type=int, default=32, help='Number of delays used in NF-APACT.')
@@ -461,7 +577,7 @@ if __name__ == "__main__":
     parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
     parser.add_argument('--n_freq', type=int, default=0, help='Number of frequencies used for positioanl encoding in NF-APACT.')
     parser.add_argument('--n_thetas', type=int, default=256, help='Number of angles used in wavefront calculation.')
-    parser.add_argument('--lam_tv', type=float, default=5e-5)
+    parser.add_argument('--lam_tv', type=float, default=1e-4)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
     parser.add_argument('--n_epochs', type=int, default=15, help='Number of training epochs for NF-APACT.')
@@ -481,6 +597,8 @@ if __name__ == "__main__":
     if args.method == 'NF-APACT':
         nf_apact(n_delays=args.n_delays, hidden_layers=args.hidden_lyrs, hidden_features=args.hidden_fts, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
                  lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
+    elif args.method == 'GOP':
+        gop_apact(n_delays=args.n_delays, lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'APACT':
         apact(n_delays=args.n_delays, n_thetas=args.n_thetas, lam_tsv=args.lam_tsv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'Deconv':

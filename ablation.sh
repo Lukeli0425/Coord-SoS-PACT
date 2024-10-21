@@ -39,10 +39,10 @@ gpu=1
 # done
 
 
-# Learning rate.
-for lr in {5e-3,2e-3,1e-3,5e-4,2e-4,1e-4}; do
-  python reconstruction.py --task numerical --sample_id 0 --lam_tv 1e-4 --n_epochs 30 --lr $lr --gpu $gpu
-done
+# # Learning rate.
+# for lr in {5e-3,2e-3,1e-3,5e-4,2e-4,1e-4}; do
+#   python reconstruction.py --task numerical --sample_id 0 --lam_tv 1e-4 --n_epochs 30 --lr $lr --gpu $gpu
+# done
 
 # for lr in {5e-3,2e-3,1e-3,5e-4,2e-4,1e-4}; do
 #   python reconstruction.py --task in_vivo --lam_tv 0e-5 --n_epochs 30 --lr $lr --gpu $gpu
@@ -67,6 +67,14 @@ done
 # for lam_tv in {0,1e-5,2e-5,5e-5,1e-4}; do
 #   python reconstruction.py --task phantom --lam_tv $lam_tv --n_epochs 15 --lr 1e-3 --gpu $gpu
 # done
+
+# GOP.
+# Learning rate.
+for lr in {1e-1,5e-2,2e-2,1e-2,5e-3,2e-3}; do
+  python reconstruction.py --task numerical --sample_id 0 --method GOP --lam_tv 1e-4 --n_epochs 30 --lr $lr --gpu $gpu
+done
+
+
 
 
 # # Multi-channel Deconvolution.
