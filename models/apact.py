@@ -8,7 +8,7 @@ from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 from tqdm import tqdm
 
 from models.pact import Fourier2Wavefront, SOS2Wavefront, Wavefront2Fourier
-from models.regularizer import TotalSquaredVariation, TotalVariation
+from models.regularizer import MaskedTotalSquaredVariation, MaskedTotalVariation
 from models.nf_apact import SOSRep
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -76,10 +76,10 @@ class APACT(nn.Module):
         # self.XX, self.YY = XX[self.SOS_mask>0].view(1,-1), YY[self.SOS_mask>0].view(1,-1)
         # self.theta = nn.Parameter(0.001*torch.randn(size=(self.SOS_mask.sum().int(), 1), dtype=torch.float64).cuda(), requires_grad=True)
         # self.SOS = torch.ones_like(self.SOS_mask).cuda() * self.v0
-        self.tv_reg = TotalSquaredVariation(weight=lam_tsv)
+        self.tv_reg = MaskedTotalSquaredVariation(weight=lam_tsv)
         self.sos2wf = SOS2Wavefront(R_body=R_body, v0=v0, x_vec=x_vec, y_vec=y_vec, n_thetas=n_thetas, N_int=512)
         self.wf2fourier = Wavefront2Fourier()
-        self.SOS = SOSRep(rep='None', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_features=64, hidden_layers=1, pos_encoding=False)
+        self.SOS = SOSRep(rep='Grid', mask=self.SOS_mask, v0=v0, mean=mean, std=std, hidden_features=64, hidden_layers=1, pos_encoding=False)
         
         self.fourier2tfs, self.params, self.best_params = None, None, []
 

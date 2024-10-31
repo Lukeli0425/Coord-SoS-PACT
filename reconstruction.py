@@ -57,19 +57,19 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
     ring_error = torch.from_numpy(ring_error).cuda()
     with torch.no_grad():
         t_start = time()
-        IP_rec = das(sinogram=sinogram, v0=v_das, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
+        ip_rec = das(sinogram=sinogram, v0=v_das, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
         t_end = time()
 
     logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
     
-    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'IP')
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'IP')
     
     log = {'task':tps['task'], 'method':'DAS', 'v_das':v_das, 'time':t_end-t_start}
     save_log(results_dir, log)
     
     # Visualization.
     plt.figure(figsize=(7,7))
-    plt.imshow(IP_rec, cmap='gray')
+    plt.imshow(ip_rec, cmap='gray')
     plt.title(f"Conventional DAS ({params})", fontsize=16)
     plt.text(430, 25, "t = {:.4f} s".format(t_end-t_start), color='white', fontsize=15)
     plt.tight_layout()
@@ -112,18 +112,18 @@ def dual_sos_das(v_body:float, bps:dict, tps:dict) -> None:
     ring_error = torch.from_numpy(ring_error).cuda()
     with torch.no_grad():
         t_start = time()
-        IP_rec = das_dual(sinogram=sinogram, v0=v0, v1=v_body, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
+        ip_rec = das_dual(sinogram=sinogram, v0=v0, v1=v_body, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
         t_end = time()
         
     logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
-    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'IP')
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'IP')
     
     log = {'task':tps['task'], 'method':'Dual-SOS DAS', 'v_body':v_body, 'time':t_end-t_start}
     save_log(results_dir, log)
     
     # Visualization.
     plt.figure(figsize=(7,7))
-    plt.imshow(IP_rec, cmap='gray')
+    plt.imshow(ip_rec, cmap='gray')
     plt.title(f"Dual-SOS DAS ({params})", fontsize=16)
     plt.text(430, 25, "t = {:.4f} s".format(t_end-t_start), color='white', fontsize=15)
     plt.tight_layout()
@@ -176,22 +176,23 @@ def deconv(n_delays:int, batch_size:int, bps:dict, tps:dict) -> None:
     sigma = bps['fwhm'] / 4e-5 / np.sqrt(2*np.log(2))
     gaussian_window = torch.from_numpy(get_gaussian_window(sigma, N_patch)).unsqueeze(0).cuda()
     das_stack = []
-    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
     
     t_start = time()
     # DAS.
     logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
     with torch.no_grad():
-        for d_delay in tqdm(delays, desc='DAS'):
+        for d_delay in tqdm(delays, desc='Delay-and-sum'):
             recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=False)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=False)
+    logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
-    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
     with torch.no_grad():
         for i_list, j_list, x, y, patch_stack in tqdm(data_loader, desc='Deconvolution'):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
@@ -200,22 +201,22 @@ def deconv(n_delays:int, batch_size:int, bps:dict, tps:dict) -> None:
             patch_stack = patch_stack * gaussian_window
             rec_patchs, _, _ = deconv(patch_stack, H)
             for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
-                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+                ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
     t_end = time()
-    IP_rec = IP_rec.detach().cpu().numpy()
+    ip_rec = ip_rec.detach().cpu().numpy()
     SOS = SOS.detach().cpu().numpy()
     
     logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
     
     # Save results.
-    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'img')
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'img')
     
     # Save log.
     log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 'batch_size': batch_size,'time':t_end-t_start}
     save_log(results_dir, log)
     
     # Visualization
-    visualize_deconv(results_dir, IP_rec, SOS, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
+    visualize_deconv(results_dir, ip_rec, SOS, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -248,75 +249,73 @@ def apact(n_delays:int, n_thetas:int, lam_tsv:float, n_iters:int, lr:float, bps:
     l_patch, N_patch = bps['l_patch'], bps['N_patch']
     delays = torch.linspace(-8e-4, 8e-4, n_delays).cuda().view(-1,1,1)
     
-    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
-    das.cuda()
+    das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero').cuda()
     das.eval()
     apact = APACT(delays=delays, lam_tsv=lam_tsv, R_body=tps['R_body'], v0=v0, Nx=tps['Nx'], Ny=tps['Ny'], dx=bps['dx'], dy=bps['dy'], x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, mean=tps['mean'], std=tps['std'], n_thetas=n_thetas, N_patch=N_patch, 
-                  generate_TF=True, dc_range=[-2.e-4, 4.e-4], amp=3.5e-4, step=5e-5, data_path=results_dir)
-    apact.cuda()
+                  generate_TF=True, dc_range=[-2.e-4, 4.e-4], amp=3.5e-4, step=5e-5, data_path=results_dir).cuda()
     apact.eval()
     apact.generate_tfs()
     
     das_stack, patch_centers, wf_params_list, loss_list = [], [], [], []
     sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
     ring_error = torch.from_numpy(ring_error).cuda()
-    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
     
     t_start = time()
     # DAS.
     logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
     with torch.no_grad():
-        for d_delay in tqdm(delays, desc='DAS'):
+        for d_delay in tqdm(delays, desc='Delay-and-sum'):
             recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_data_loader(das_stack=das_stack, batch_size=1, l_patch=l_patch, N_patch=N_patch, shuffle=False)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=1, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'], R_body=tps['R_body'], shuffle=False)
+    logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
     # Wavefront search.
-    logger.info(' Searching for optimal wavefront parameters.')
+    logger.info(' Searching for wavefront parameters.')
     with torch.no_grad():
         for i, j, x, y, patch_stack in tqdm(data_loader, desc='Wavefront Search'):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
             rec_patch, _, wf_coeff, _ = apact(patch_stack)
-            IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
             wf_params_list.append(wf_coeff)
             patch_centers.append((x, y))
-    IP_rec = IP_rec.detach().cpu().numpy()
-    save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_rec.swapaxes(0,1), 'img')
+    ip_rec = ip_rec.detach().cpu().numpy()
+    save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'img')
     wf_params_list = torch.stack(wf_params_list, dim=0).cuda()
     torch.save(wf_params_list, os.path.join(results_dir, 'wf_params.pth'))
     wf_params_list = torch.load(os.path.join(results_dir, 'wf_params.pth')).cuda()
-    lr = 50
+
     logger.info(' Reconstructing SOS.')
-    optimizer = Adam(apact.parameters(), lr=lr)
+    optimizer = Adam(apact.parameters(), lr=50)
     apact.train()
-    for idx in range(n_iters):
-        train_loss = 0.0
+    for idx in tqdm(range(n_iters), desc='SOS Reconstruction'):
+        train_loss = []
         for _, ((x, y), fourier_params) in enumerate(zip(patch_centers, wf_params_list)):
-            loss, SOS_rec = apact.optimize_sos(x, y, fourier_params)
+            loss, sos_rec = apact.optimize_sos(x, y, fourier_params)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            train_loss += loss.item()
-        loss_list.append(train_loss)
-        logger.info(' SOS Reconstruction: [{}/{}] loss={:.3e}'.format(idx+1, n_iters, train_loss))
+            train_loss.append(loss.item())
+        loss_list.append(np.mean(train_loss))
+        logger.info(' SOS Reconstruction: [{}/{}] loss={:.3e}'.format(idx+1, n_iters, np.mean(train_loss)))
         
     t_end = time()
     logger.info(" Reconstruction completed in {:.1f}s.".format(t_end-t_start))
     
-    SOS_rec = SOS_rec.detach().cpu().numpy()
-    save_mat(os.path.join(results_dir, 'SOS_rec.mat'), SOS_rec.swapaxes(0,1), 'SOS')
-    IP_rec = load_mat(os.path.join(results_dir, 'IP_rec.mat'))
+    sos_rec = sos_rec.detach().cpu().numpy()
+    save_mat(os.path.join(results_dir, 'SOS_rec.mat'), sos_rec.swapaxes(0,1), 'SOS')
+    ip_rec = load_mat(os.path.join(results_dir, 'IP_rec.mat'))
     
     # Save log.
-    # log = load_log(os.path.join(results_dir, 'log.json'))
     log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 'n_thetas':n_thetas,
            'lam_tsv':lam_tsv,'n_iters':n_iters, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
     
     # Visualization.
-    visualize_apact(results_dir, IP_rec, SOS_rec, log['time'], tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
+    visualize_apact(results_dir, ip_rec, sos_rec, log['time'], tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
 
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -373,49 +372,50 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     # DAS.
     logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
     with torch.no_grad():
-        for d_delay in tqdm(delays, desc='DAS'):
+        for d_delay in tqdm(delays, desc='Delay-and-sum'):
             recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=True)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
+    logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
     # Joint Reconstruction.
     for epoch in range(1, n_epochs+1):
-        train_loss = 0.0
-        IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+        train_loss = []
+        ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
         for idx, (i_list, j_list, x, y, patch_stack) in enumerate(data_loader):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
-            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays)
+            rec_patchs, sos_rec, loss = nf_apact(x, y, patch_stack, delays)
             for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
-                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
-            train_loss += loss.item()
+                ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            train_loss.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        loss_list.append(train_loss)
-        SOS_list.append(SOS_rec.detach().cpu().numpy())
-        IP_list.append(IP_rec.detach().cpu().numpy())
-        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, train_loss))
+        loss_list.append(np.mean(train_loss))
+        SOS_list.append(sos_rec.detach().cpu().numpy())
+        IP_list.append(ip_rec.detach().cpu().numpy())
+        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, np.mean(train_loss)))
         
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
     nf_apact.save_sos()
     nf_apact.eval()
-    test_loss = 0.0
-    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    test_loss = []
+    ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
     with torch.no_grad():
         for i_list, j_list, x, y, patch_stack in tqdm(data_loader, desc='Deconvolution'):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
-            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays, task='test')
+            rec_patchs, sos_rec, loss = nf_apact(x, y, patch_stack, delays, task='test')
             for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
-                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
-            test_loss += loss.item()
+                ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            test_loss.append(loss.item())
     t_end = time()
     
-    loss_list.append(test_loss)
-    SOS_list.append(SOS_rec.detach().cpu().numpy())
-    IP_list.append(IP_rec.detach().cpu().numpy())
+    loss_list.append(np.mean(test_loss))
+    SOS_list.append(sos_rec.detach().cpu().numpy())
+    IP_list.append(ip_rec.detach().cpu().numpy())
     
     logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
     
@@ -439,13 +439,13 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
     # make_video_icon(results_dir, None, tps)
-    
+    print(nf_apact.SOS().mean().item(), nf_apact.SOS().std().item())
     logger.info(' Results saved to "%s".', results_dir)
 
 
-def gop_apact(n_delays:int, lam_tv:float, reg, lam, 
+def pg_apact(n_delays:int, lam_tv:float, reg, lam, 
               n_epochs:int, batch_size:int, lr:float, bps:dict, tps:dict) -> None:
-    """Run Grid-of-pixels for Adaptive Photoacoustic Computed Tomography (NF-APACT) reconstruction.
+    """Run Pixel Grid (PG) reconstruction.
 
     Args:
         n_delays (int): Number of extra delay distances for DAS.
@@ -458,9 +458,9 @@ def gop_apact(n_delays:int, lam_tv:float, reg, lam,
     """
     params = f'{n_delays}delays' + ('_TV={:.1e}'.format(lam_tv) if lam_tv != 0 else '') \
              + '_{}epochs_bs={}_lr={:.1e}'.format(n_epochs, batch_size, lr)
-    logger = logging.getLogger('GOP')
-    logger.info(" Reconstructing %s with GOP (%s).", tps['description'], params)
-    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'GOP', params)
+    logger = logging.getLogger('PG')
+    logger.info(" Reconstructing %s with Pixel Grid (%s).", tps['description'], params)
+    results_dir = os.path.join(RESULTS_PATH, tps['task'], 'PG', params)
     os.makedirs(results_dir, exist_ok=True)
     
     # Load data.
@@ -491,49 +491,50 @@ def gop_apact(n_delays:int, lam_tv:float, reg, lam,
     # DAS.
     logger.info(" Running DAS (v_das=%.1fm·s⁻¹) with %s delays.", v0, n_delays)
     with torch.no_grad():
-        for d_delay in tqdm(delays, desc='DAS'):
+        for d_delay in tqdm(delays, desc='Delay-and-sum'):
             recon = das(sinogram=sinogram, v0=v0, d_delay=d_delay, ring_error=ring_error)
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, shuffle=True)
+    data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
+    logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
     # Joint Reconstruction.
     for epoch in range(1, n_epochs+1):
-        train_loss = 0.0
-        IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+        train_loss = []
+        ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
         for idx, (i_list, j_list, x, y, patch_stack) in enumerate(data_loader):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
-            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays)
+            rec_patchs, sos_rec, loss = nf_apact(x, y, patch_stack, delays)
             for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
-                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
-            train_loss += loss.item()
+                ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            train_loss.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        loss_list.append(train_loss)
-        SOS_list.append(SOS_rec.detach().cpu().numpy())
-        IP_list.append(IP_rec.detach().cpu().numpy())
-        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, train_loss))
+        loss_list.append(np.mean(train_loss))
+        SOS_list.append(sos_rec.detach().cpu().numpy())
+        IP_list.append(ip_rec.detach().cpu().numpy())
+        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, np.mean(train_loss)))
         
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
     nf_apact.save_sos()
     nf_apact.eval()
-    test_loss = 0.0
-    IP_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
+    test_loss = []
+    ip_rec = torch.zeros((tps['Nx'], tps['Ny'])).cuda()
     with torch.no_grad():
         for i_list, j_list, x, y, patch_stack in tqdm(data_loader, desc='Deconvolution'):
             x, y, patch_stack = x.cuda(), y.cuda(), patch_stack.cuda()
-            rec_patchs, SOS_rec, loss = nf_apact(x, y, patch_stack, delays, task='test')
+            rec_patchs, sos_rec, loss = nf_apact(x, y, patch_stack, delays, task='test')
             for i, j, rec_patch in zip(i_list, j_list, rec_patchs):
-                IP_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
-            test_loss += loss.item()
+                ip_rec[20*i:20*i+80, 20*j:20*j+80] += rec_patch.squeeze(0).squeeze(0)
+            test_loss.append(loss.item())
     t_end = time()
     
-    loss_list.append(test_loss)
-    SOS_list.append(SOS_rec.detach().cpu().numpy())
-    IP_list.append(IP_rec.detach().cpu().numpy())
+    loss_list.append(np.mean(test_loss))
+    SOS_list.append(sos_rec.detach().cpu().numpy())
+    IP_list.append(ip_rec.detach().cpu().numpy())
     
     logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
     
@@ -548,7 +549,7 @@ def gop_apact(n_delays:int, lam_tv:float, reg, lam,
         save_mat(os.path.join(results_dir, 'video', f'SOS_rec_{idx}.mat'), SOS.swapaxes(0,1), 'SOS')
     
     # Save log.
-    log = {'task':tps['task'], 'method':'GOP', 'n_delays':n_delays, 'n_params':get_total_params(nf_apact),
+    log = {'task':tps['task'], 'method':'PG', 'n_delays':n_delays, 'n_params':get_total_params(nf_apact),
            'reg':reg, 'lam':lam,'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
 
@@ -567,20 +568,20 @@ if __name__ == "__main__":
     parser.add_argument('--gpu', type=str, default='0', choices=['0', '1'])
     parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo', 'kidney'], help='Task to be reconstructed.')
     parser.add_argument('--sample_id', type=int, default=0, choices=[0,1,2,3,4], help='Index of numerical phantom.')
-    parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'GOP', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
+    parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'PG', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
-    parser.add_argument('--n_delays', type=int, default=32, help='Number of delays used in NF-APACT.')
+    parser.add_argument('--n_delays', type=int, default=16, help='Number of delays used in NF-APACT.')
     parser.add_argument('--n_iters', type=int, default=10, help='Number of iterations for SOS reconstruction in APACT.')
     parser.add_argument('--lam_tsv', type=float, default=5e-15, help='Weight of total squared variation regularization for APACT.')
-    parser.add_argument('--hidden_lyrs', type=int, default=1, help='Number of hidden layers in NF-APACT.')
-    parser.add_argument('--hidden_fts', type=int, default=64, help='Number of hidden features in NF-APACT.')
+    parser.add_argument('--hls', type=int, default=0, help='Number of hidden layers in NF-APACT.')
+    parser.add_argument('--hfs', type=int, default=128, help='Number of hidden features in NF-APACT.')
     parser.add_argument('--n_freq', type=int, default=0, help='Number of frequencies used for positioanl encoding in NF-APACT.')
     parser.add_argument('--n_thetas', type=int, default=256, help='Number of angles used in wavefront calculation.')
-    parser.add_argument('--lam_tv', type=float, default=1e-4)
+    parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
-    parser.add_argument('--n_epochs', type=int, default=15, help='Number of training epochs for NF-APACT.')
+    parser.add_argument('--n_epochs', type=int, default=10, help='Number of training epochs for NF-APACT.')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for NF-APACT.')
     parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate for NF-APACT.')
     args = parser.parse_args()
@@ -595,10 +596,10 @@ if __name__ == "__main__":
 
     # Run reconstruction.
     if args.method == 'NF-APACT':
-        nf_apact(n_delays=args.n_delays, hidden_layers=args.hidden_lyrs, hidden_features=args.hidden_fts, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
+        nf_apact(n_delays=args.n_delays, hidden_layers=args.hls, hidden_features=args.hfs, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
                  lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
-    elif args.method == 'GOP':
-        gop_apact(n_delays=args.n_delays, lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
+    elif args.method == 'PG':
+        pg_apact(n_delays=args.n_delays, lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'APACT':
         apact(n_delays=args.n_delays, n_thetas=args.n_thetas, lam_tsv=args.lam_tsv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'Deconv':

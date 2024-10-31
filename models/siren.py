@@ -86,5 +86,5 @@ class SIREN(nn.Module):
         
     def forward(self, x):
         coords = self.pos_encoding(x) if self.pos_encoding else x
-        return self.mlp(coords), x
+        return self.mlp(coords)
 

@@ -7,7 +7,7 @@ from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.deconv import MultiChannelDeconv
 from models.pact import SOS2Wavefront, Wavefront2TF
-from models.regularizer import Sharpness, TotalVariation
+from models.regularizer import Sharpness, MaskedTotalVariation
 from models.siren import SIREN
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -16,12 +16,12 @@ from utils.utils_torch import get_mgrid
 
 class SOSRep(nn.Module):
     """SOS parameterization module."""
-    def __init__(self, rep, mask, v0, mean, std, hidden_layers=None, hidden_features=None, pos_encoding=None, N_freq=None):
+    def __init__(self, rep, mask, v0, mean, std, shape=None, hidden_layers=None, hidden_features=None, pos_encoding=None, N_freq=None):
         super().__init__()
         self.rep = rep
         self.mask = mask
-        self.v0 = v0
-        self.mean, self.std = mean, std
+        self.v0 = v0 # nn.Parameter(torch.ones(1,)*v0, requires_grad=True)
+        self.mean, self.std = nn.Parameter(torch.ones(1,)*mean, requires_grad=True), nn.Parameter(torch.ones(1,)*std, requires_grad=True)
         
         if rep == 'Grid':
             self.SOS = torch.normal(0,1,[(self.mask>0.5).sum(), 1], requires_grad=True).cuda()# * v0
@@ -32,14 +32,14 @@ class SOSRep(nn.Module):
             self.siren = SIREN(in_features=2, out_features=1, hidden_features=hidden_features, hidden_layers=hidden_layers, activation_fn='sin', pos_encoding=pos_encoding, N_freq=N_freq)
             self.siren.cuda()
         else:
-            raise NotImplementedError("Invalid representation. Choose from ['None', 'SIREN']")
+            raise NotImplementedError("Invalid representation. Choose from ['Grid', 'SIREN']")
         
     def forward(self):
         SOS = (torch.ones_like(self.mask, requires_grad=True) * self.v0).view(-1,1)
         if self.rep == 'Grid':
             SOS[self.mask.view(-1)>0] = self.SOS.double() * self.std + self.mean
         elif self.rep == 'SIREN':
-            output, _ = self.siren(self.mgrid)
+            output = self.siren(self.mgrid)
             SOS[self.mask.view(-1)>0] = output.double() * self.std + self.mean
         return SOS.view(self.mask.shape)
         
@@ -74,7 +74,7 @@ class NFAPACT(nn.Module):
         self.wavefront2tf = Wavefront2TF(N=2*N_patch, l=2*l_patch, n_delays=n_delays, angle_range=angle_range)
         self.deconv = MultiChannelDeconv()
         self.data_fitting = DataFittingLoss()
-        self.tv_regularizer = TotalVariation(weight=lam_tv)
+        self.tv_regularizer = MaskedTotalVariation(weight=lam_tv)
         # self.sharpness_regularizer = Sharpness(function=reg, weight=lam)
     
     def save_sos(self):

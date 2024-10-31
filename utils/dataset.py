@@ -1,3 +1,4 @@
+import math
 import os
 
 import numpy as np
@@ -8,25 +9,33 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 class DASStackDataset(Dataset):
     """PyTorch Dataset for DAS Stack."""
-    def __init__(self, das_stack, l_patch, N_patch, stride):
+    def __init__(self, das_stack, l_patch, N_patch, stride, R_body):
         self.das_stack = das_stack
         self.l_patch = l_patch
         self.N_patch = N_patch
         self.stride = stride
         self.nx = (das_stack.shape[-2]-self.N_patch) // self.stride + 1
         self.ny = (das_stack.shape[-1]-self.N_patch) // self.stride + 1
+        self.sequence = []
+        for i in range(self.nx):
+            for j in range(self.ny):
+                x, y = (j-self.ny//2)*self.l_patch / 4, (self.nx//2-i)*self.l_patch / 4
+                if x**2 + y**2 <= (R_body + l_patch / math.sqrt(2)) **2:
+                    self.sequence.append((i, j))
 
     def __len__(self):
-        return self.nx * self.ny
+        # return self.nx * self.ny
+        return len(self.sequence)
     
     def __getitem__(self, idx):
-        i, j = idx // self.nx, idx % self.ny
+        i, j = self.sequence[idx]
+        # i, j = idx // self.nx, idx % self.ny
         x, y = (j-self.ny//2)*self.l_patch / 4, (self.nx//2-i)*self.l_patch / 4
         return i, j, torch.tensor(x), torch.tensor(y), self.das_stack[:,self.stride*i:self.stride*i+self.N_patch, self.stride*j:self.stride*j+self.N_patch]
     
     
-def get_data_loader(das_stack, batch_size, l_patch=3.2e-3, N_patch=80, stride=20, shuffle=True):
-    dataset = DASStackDataset(das_stack, l_patch, N_patch, stride)
+def get_data_loader(das_stack, batch_size, l_patch, N_patch, stride, R_body, shuffle=True):
+    dataset = DASStackDataset(das_stack, l_patch, N_patch, stride, R_body)
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 

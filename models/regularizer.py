@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class TotalVariation(nn.Module):
+class MaskedTotalVariation(nn.Module):
     def __init__(self, weight):
         super().__init__()
         self.weight = weight
@@ -13,7 +13,7 @@ class TotalVariation(nn.Module):
         return (dx.abs().sum() + dy.abs().sum()).mean() * self.weight 
 
 
-class TotalSquaredVariation(nn.Module):
+class MaskedTotalSquaredVariation(nn.Module):
     def __init__(self, weight):
         super().__init__()
         self.weight = weight

@@ -5,6 +5,7 @@ basic_params:
   dx: 4.e-5               # Resolution of X coordinates [m].
   dy: 4.e-5               # Resolution of Y coordinates [m].
   N_patch: 80             # Size of isoplanatic patch in pixels.
+  stride: 20
   l_patch: 3.2e-3         # Size of image patch [m].
   fwhm: 1.5e-3            # FWHM of Gaussian window [m].
 
@@ -33,9 +34,9 @@ numerical 0:
   x_c: 0.0
   y_c: 0.0
   T: 26.0                 # Water temperature [C].
-  R_body: 9.8e-3               # Radius of body [m].
+  R_body: 9.8e-3          # Radius of body [m].
 
-  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  mean: 1545.0            # Mean of SOS in tissue [m/s].
   std: 100.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
@@ -60,8 +61,8 @@ numerical 1:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1560.0            # Mean of SOS in tissue [m/s].
-  std: 60.0              # Standard deviation of SOS in tissue [m/s].
+  mean: 1550 # 1560.0            # Mean of SOS in tissue [m/s].
+  std: 60 # 30.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
@@ -85,8 +86,8 @@ numerical 2:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1555.0            # Mean of SOS in tissue [m/s].
-  std: 100.0              # Standard deviation of SOS in tissue [m/s].
+  mean: 1540.0            # Mean of SOS in tissue [m/s].
+  std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
   IP_min: -1
@@ -110,7 +111,7 @@ numerical 3:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1540.0            # Mean of SOS in tissue [m/s].
+  mean: 1530.0            # Mean of SOS in tissue [m/s].
   std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
@@ -135,7 +136,7 @@ numerical 4:
   T: 26.0                 # Water temperature [C].
   R_body: 9.8e-3               # Radius of body [m].
 
-  mean: 1550.0            # Mean of SOS in tissue [m/s].
+  mean: 1540.0            # Mean of SOS in tissue [m/s].
   std: 60.0              # Standard deviation of SOS in tissue [m/s].
   SOS_min: 1495
   SOS_max: 1605
