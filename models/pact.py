@@ -97,7 +97,7 @@ class SOS2Wavefront(nn.Module):
         steps = torch.linspace(0, 1.0, self.N_int).cuda().view(1,1,-1)
         j_index = ((x.view(-1,1,1) - l*steps*torch.sin(self.thetas) - self.x_vec[0]) / self.dx).round().int()
         i_index = -((y.view(-1,1,1) - l*steps*torch.cos(self.thetas) - self.y_vec[-1]) / self.dy).round().int()
-        wf = torch.trapezoid(1-self.v0/SOS[i_index, j_index], l*steps, dim=2)
+        wf = torch.trapezoid(1-self.v0/SOS[i_index, j_index], l*steps, dim=-1)
         return self.thetas.view(1,-1), wf
 
 class Interp1D(nn.Module):

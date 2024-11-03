@@ -143,18 +143,39 @@ lam_tv_df=1e-4
 
 ################### APACT ####################
 
-# Number of delays.
+# # Number of delays.
+# for sample_id in {0,1,2,3,4}; do
+#   for n_delays in {64,32,16,8,4,2,1}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
+#   done
+# done
+
+# for n_delays in {64,32,16,8,4,2,1}; do
+#   python reconstruction.py --task phantom --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
+# done
+
+
+# for n_delays in {64,32,16,8,4,2,1}; do
+#   python reconstruction.py --task in_vivo --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
+# done
+
+
+# ################### Delay-and-sum ####################
+# for sample_id in {0,1,2,3,4}; do
+#   for v_das in {1500..1520}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --method DAS --v_das $v_das --gpu $gpu
+#   done
+# done
+
+
+
+
+
+
+
+################### Dual-SOS DAS ####################
 for sample_id in {0,1,2,3,4}; do
-  for n_delays in {64,32,16,8,4,2}; do
-    python reconstruction.py --task numerical --sample_id $sample_id --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
+  for v_body in {1530..1550}; do
+    python reconstruction.py --task numerical --sample_id $sample_id --method Dual-SOS_DAS --v_body $v_body --gpu $gpu
   done
-done
-
-for n_delays in {64,32,16,8,4,2}; do
-  python reconstruction.py --task phantom --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
-done
-
-
-for n_delays in {64,32,16,8,4,2}; do
-  python reconstruction.py --task in_vivo --method APACT --n_delays $n_delays --lam_tsv 5e-15 --n_iters 10 --lr 50 --gpu $gpu
 done

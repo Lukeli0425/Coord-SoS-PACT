@@ -36,7 +36,7 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
         bps (dict): Basic parameters.
         tps (dict): Task parameters.
     """
-    params = 'v_das={:.1f}m·s⁻¹'.format(v_das)
+    params = f'v_das={v_das:.1f}m·s⁻¹'
     logger = logging.getLogger('DAS')
     logger.info(" Reconstructing %s with Delay-and-Sum (%s).", tps['description'], params)
     results_dir = os.path.join(RESULTS_PATH, tps['task'], 'DAS', params)
@@ -60,7 +60,7 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
         ip_rec = das(sinogram=sinogram, v0=v_das, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
         t_end = time()
 
-    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.3f}s.")
     
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'IP')
     
@@ -71,7 +71,7 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
     plt.figure(figsize=(7,7))
     plt.imshow(ip_rec, cmap='gray')
     plt.title(f"Conventional DAS ({params})", fontsize=16)
-    plt.text(430, 25, "t = {:.4f} s".format(t_end-t_start), color='white', fontsize=15)
+    plt.text(430, 25, f"t = {t_end-t_start:.4f} s", color='white', fontsize=15)
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, 'visualization.png'))
     
@@ -86,7 +86,7 @@ def dual_sos_das(v_body:float, bps:dict, tps:dict) -> None:
         bps (dict): Basic parameters.
         tps (dict): Task parameters.
     """
-    params = 'v_body={:.1f}m·s⁻¹'.format(v_body)
+    params = f'v_body={v_body:.1f}m·s⁻¹'
     logger = logging.getLogger('Dual-SOS DAS')
     logger.info(" Reconstructing %s with Dual-SOS DAS (%s).", tps['description'], params)
     results_dir = os.path.join(RESULTS_PATH, tps['task'], 'Dual-SOS_DAS', params)
@@ -115,7 +115,8 @@ def dual_sos_das(v_body:float, bps:dict, tps:dict) -> None:
         ip_rec = das_dual(sinogram=sinogram, v0=v0, v1=v_body, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
         t_end = time()
         
-    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.3f}s.")
+    
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'IP')
     
     log = {'task':tps['task'], 'method':'Dual-SOS DAS', 'v_body':v_body, 'time':t_end-t_start}
@@ -125,7 +126,7 @@ def dual_sos_das(v_body:float, bps:dict, tps:dict) -> None:
     plt.figure(figsize=(7,7))
     plt.imshow(ip_rec, cmap='gray')
     plt.title(f"Dual-SOS DAS ({params})", fontsize=16)
-    plt.text(430, 25, "t = {:.4f} s".format(t_end-t_start), color='white', fontsize=15)
+    plt.text(430, 25, f"t = {t_end-t_start:.4f} s", color='white', fontsize=15)
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, 'visualization.png'))
     
@@ -206,7 +207,7 @@ def deconv(n_delays:int, batch_size:int, bps:dict, tps:dict) -> None:
     ip_rec = ip_rec.detach().cpu().numpy()
     SOS = SOS.detach().cpu().numpy()
     
-    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.3f}s.")
     
     # Save results.
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), ip_rec.swapaxes(0,1), 'img')
@@ -300,10 +301,10 @@ def apact(n_delays:int, n_thetas:int, lam_tsv:float, n_iters:int, lr:float, bps:
             optimizer.step()
             train_loss.append(loss.item())
         loss_list.append(np.mean(train_loss))
-        logger.info(' SOS Reconstruction: [{}/{}] loss={:.3e}'.format(idx+1, n_iters, np.mean(train_loss)))
+        logger.info(f' SOS Reconstruction: [{idx+1}/{n_iters}] loss={np.mean(train_loss):.3e}')
         
     t_end = time()
-    logger.info(" Reconstruction completed in {:.1f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.1f}s.")
     
     sos_rec = sos_rec.detach().cpu().numpy()
     save_mat(os.path.join(results_dir, 'SOS_rec.mat'), sos_rec.swapaxes(0,1), 'SOS')
@@ -338,7 +339,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
         tps (dict): Task parameters.
     """
     params = f'{n_delays}delays_{hidden_layers}lyrs_{hidden_features}fts' + (f'_PE={N_freq}' if N_freq>0 else '') \
-             + ('_TV={:.1e}'.format(lam_tv) if lam_tv != 0 else '') + '_{}epochs_bs={}_lr={:.1e}'.format(n_epochs, batch_size, lr)
+             + (f'_TV={lam_tv:.1e}' if lam_tv != 0 else '') + f'_{n_epochs}epochs_bs={batch_size}_lr={lr:.1e}'
     logger = logging.getLogger('NF-APACT')
     logger.info(" Reconstructing %s with NF-APACT (%s).", tps['description'], params)
     results_dir = os.path.join(RESULTS_PATH, tps['task'], 'NF-APACT', params)
@@ -396,7 +397,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
         loss_list.append(np.mean(train_loss))
         SOS_list.append(sos_rec.detach().cpu().numpy())
         IP_list.append(ip_rec.detach().cpu().numpy())
-        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, np.mean(train_loss)))
+        logger.info(f"  [{epoch}/{n_epochs}]  loss={np.mean(train_loss):.3e} ")
         
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
@@ -417,7 +418,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     SOS_list.append(sos_rec.detach().cpu().numpy())
     IP_list.append(ip_rec.detach().cpu().numpy())
     
-    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.3f}s.")
     
     # Save final results.
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_list[-1].swapaxes(0,1), 'img')
@@ -456,8 +457,7 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
         bps (dict): Basic parameters.
         tps (dict): Task parameters.
     """
-    params = f'{n_delays}delays' + ('_TV={:.1e}'.format(lam_tv) if lam_tv != 0 else '') \
-             + '_{}epochs_bs={}_lr={:.1e}'.format(n_epochs, batch_size, lr)
+    params = f'{n_delays}delays' + (f'_TV={lam_tv:.1e}' if lam_tv != 0 else '') + f'_{n_epochs}epochs_bs={batch_size}_lr={lr:.1e}'
     logger = logging.getLogger('PG')
     logger.info(" Reconstructing %s with Pixel Grid (%s).", tps['description'], params)
     results_dir = os.path.join(RESULTS_PATH, tps['task'], 'PG', params)
@@ -515,7 +515,7 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
         loss_list.append(np.mean(train_loss))
         SOS_list.append(sos_rec.detach().cpu().numpy())
         IP_list.append(ip_rec.detach().cpu().numpy())
-        logger.info("  [{}/{}]  loss={:0.4g} ".format(epoch, n_epochs, np.mean(train_loss)))
+        logger.info(f"  [{epoch}/{n_epochs}]  loss={np.mean(train_loss):.3e} ")
         
     # Deconvolution.
     logger.info(" Reconstructing initial pressure via Deconvolution.")
@@ -536,7 +536,7 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
     SOS_list.append(sos_rec.detach().cpu().numpy())
     IP_list.append(ip_rec.detach().cpu().numpy())
     
-    logger.info(" Reconstruction completed in {:.4f}s.".format(t_end-t_start))
+    logger.info(f" Reconstruction completed in {t_end-t_start:.3f}s.")
     
     # Save final results.
     save_mat(os.path.join(results_dir, 'IP_rec.mat'), IP_list[-1].swapaxes(0,1), 'img')
