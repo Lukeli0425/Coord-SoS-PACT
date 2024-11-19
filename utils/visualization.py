@@ -201,7 +201,7 @@ def make_video(results_dir, loss_list, task_params, frame_rate=3):
     )
     
 
-def make_video_icon(results_dir, loss_list, task_params, frame_rate=4):
+def make_video_icon(results_dir, task_params, frame_rate=4):
     """Create video of NF-APACT convergence for the icon on website."""
     video_dir = os.path.join(results_dir, 'video')
     os.makedirs(video_dir, exist_ok=True)

@@ -435,12 +435,14 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
            'hidden_layers':hidden_layers, 'hidden_features':hidden_features, 'pos_encoding':pos_encoding, 'N_freq':N_freq, 'n_params':get_total_params(nf_apact),
            'reg':reg, 'lam':lam,'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
-
+    # log = load_log(os.path.join(results_dir, 'log.json'))
+    # loss_list = log['loss']
+    
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
-    # make_video_icon(results_dir, None, tps)
-    print(nf_apact.SOS().mean().item(), nf_apact.SOS().std().item())
+    make_video_icon(results_dir, tps)
+    # print(nf_apact.SOS().mean().item(), nf_apact.SOS().std().item())
     logger.info(' Results saved to "%s".', results_dir)
 
 
@@ -581,9 +583,9 @@ if __name__ == "__main__":
     parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
     parser.add_argument('--lam', type=float, default=0.0)
-    parser.add_argument('--n_epochs', type=int, default=10, help='Number of training epochs for NF-APACT.')
+    parser.add_argument('--n_epochs', type=int, default=10, help='Number of training epochs.')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for NF-APACT.')
-    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate for NF-APACT.')
+    parser.add_argument('--lr', type=float, default=5e-3, help='Learning rate.')
     args = parser.parse_args()
     
     # Select GPU.
