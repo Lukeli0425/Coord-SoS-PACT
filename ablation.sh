@@ -90,13 +90,13 @@ lam_tv_df=1e-4
 # for lr in {2e-1,1e-1,5e-2,2e-2,1e-2,5e-3}; do
 #   python reconstruction.py --task in_vivo --n_delays $n_delays_df --method PG --lam_tv $lam_tv_df --n_epochs 30 --lr $lr --batch_size $bs_df --gpu $gpu
 # done
-
-# # Number of delays.
-# for sample_id in {0,1,2,3,4}; do
-#   for n_delays in {64,32,16,8,4,2,1}; do
-#     python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
-#   done
-# done
+lam_tv_df=0
+# Number of delays.
+for sample_id in {0,1,2,3,4}; do
+  for n_delays in {64,32,16,8,4,2,1}; do
+    python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
+  done
+done
 
 # for n_delays in {64,32,16,8,4,2,1}; do
 #   python reconstruction.py --task phantom --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
@@ -169,13 +169,9 @@ lam_tv_df=1e-4
 
 
 
-
-
-
-
-################### Dual-SOS DAS ####################
-for sample_id in {0,1,2,3,4}; do
-  for v_body in {1530..1550}; do
-    python reconstruction.py --task numerical --sample_id $sample_id --method Dual-SOS_DAS --v_body $v_body --gpu $gpu
-  done
-done
+# ################### Dual-SOS DAS ####################
+# for sample_id in {0,1,2,3,4}; do
+#   for v_body in {1530..1550}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --method Dual-SOS_DAS --v_body $v_body --gpu $gpu
+#   done
+# done
