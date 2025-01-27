@@ -25,7 +25,7 @@ from utils.visualization import *
 plt.set_loglevel("warning")
 
 DATA_PATH = 'data/'
-RESULTS_PATH = 'results_new/'
+RESULTS_PATH = 'results_rebuttal/'
 
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
@@ -358,6 +358,9 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
+    #######
+    kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
+    ########
     nf_apact = NFAPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
@@ -378,6 +381,12 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
+    ###### Trying larger grid size ######
+    l_patch = bps['l_patch']/scale_factor
+    tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
+    das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
+    print(das_stack.shape)
+    ######
     data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
     logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
@@ -441,7 +450,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
     make_video(results_dir, loss_list, tps)
-    make_video_icon(results_dir, tps)
+    # make_video_icon(results_dir, tps)
     # print(nf_apact.SOS().mean().item(), nf_apact.SOS().std().item())
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -478,6 +487,9 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
     das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
+    #######
+    kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
+    ########
     nf_apact = NFAPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, reg=reg, lam=lam,
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
@@ -498,6 +510,12 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
+    ###### Trying larger grid size ######
+    l_patch = bps['l_patch']/scale_factor
+    tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
+    das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
+    print(das_stack.shape)
+    ######
     data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
     logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
@@ -595,7 +613,12 @@ if __name__ == "__main__":
     config = load_config('config.yaml')
     task = args.task + f" {args.sample_id}"if args.task == 'numerical' else args.task
     bps, tps = config['basic_params'], config[task]
-
+    
+    scale_factor = 5
+    # tps['Nx'], tps['Ny'] = int(tps['Nx'] * scale_factor), int(tps['Ny'] * scale_factor)
+    # bps['dx'], bps['dy'] = bps['dx'] / scale_factor, bps['dy'] / scale_factor
+    # bps['l_patch'] = bps['l_patch'] / scale_factor
+    
     # Run reconstruction.
     if args.method == 'NF-APACT':
         nf_apact(n_delays=args.n_delays, hidden_layers=args.hls, hidden_features=args.hfs, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
