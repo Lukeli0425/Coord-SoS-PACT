@@ -6,34 +6,25 @@ DUBLID-main
 SelfDeblur-master
 DeePGEM-main
 
-saved_models/
 saved_models_Brain/
-saved_models_Mice/
-saved_models_Mice_new/
 saved_models_Mice_new1/
-
+# results_old/
+ 
 
 old/
 
-TF_simulation/
-TF_phantom/
-TF_invivo/
-TF_kidney/
-TF_invivo_128/
-TF_invivo_half/
-results_old/
- 
-# Private data
-# data/EIR_TUNGSTEN.mat
-# data/RING_ERROR_NEW.mat
-# data/RING_ERROR_OLD.mat
-# data/LEAF_PHANTOM.mat
-# data/ANIMAL_LAYER.mat
+# Experimental data.
+EIR_KWAVE.mat
+data/EIR_TUNGSTEN.mat
+data/RING_ERROR_NEW.mat
+data/RING_ERROR_OLD.mat
+data/LEAF_PHANTOM.mat
+data/ANIMAL_LAYER.mat
 
-# large data
-tutorials/data/
-
+# Results.
+results/
 results_new/
+results_old/
 
 # nohup files
 *.out
