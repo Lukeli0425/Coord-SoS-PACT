@@ -20,6 +20,11 @@ data/RING_ERROR_NEW.mat
 data/RING_ERROR_OLD.mat
 data/LEAF_PHANTOM.mat
 data/ANIMAL_LAYER.mat
+data/P0_2.bmp
+data/P0_3.bmp
+data/IP_APACT_1.mat
+data/IP_APACT_2.mat
+
 
 # Results.
 results/

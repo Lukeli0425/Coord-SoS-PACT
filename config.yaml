@@ -144,6 +144,31 @@ numerical 4:
   IP_max: 5
 
 
+numerical 5:
+  task: "numerical_circles"
+  description: "numerical phantom 5 (APACT + full) "
+  IP: "IP_APACT_1.mat"
+  sinogram: "sinogram_full_apact.mat"
+  EIR: null
+  ring_error: null
+  SOS: "SOS_full.mat"
+
+  t0: 0
+  Nx: 560                 # Image size in X direction.
+  Ny: 560                 # Image size in Y direction.
+  x_c: 0.0
+  y_c: 0.0
+  T: 26.0                 # Water temperature [C].
+  R_body: 9.8e-3               # Radius of body [m].
+
+  mean: 1540.0            # Mean of SOS in tissue [m/s].
+  std: 60.0              # Standard deviation of SOS in tissue [m/s].
+  SOS_min: 1495
+  SOS_max: 1605
+  IP_min: -1
+  IP_max: 5
+
+
 phantom:
   task: "phantom"
   description: "leaf phantom"
