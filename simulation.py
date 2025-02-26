@@ -40,10 +40,11 @@ def k_wave_simulation(sample_id:int, params:dict):
     center_pos = params['center_pos']
     arc_angle = params['arc_angle'] * np.pi
     upsample_factor = params['upsample_factor']
+    pathname = os.path.join(gettempdir(), 'tianao')
     pathname = gettempdir()
     
     # Load and pad IP.
-    IP_img = load_mat(os.path.join(DATA_PATH, 'IP.mat'))
+    IP_img = load_mat(os.path.join(DATA_PATH, tps['IP']))
     IP_pad = np.zeros((Nx, Ny))
     pad_start, pad_end = (Nx-IP_img.shape[0]) // 2, (Ny+IP_img.shape[1]) // 2
     IP_pad[pad_start:pad_end, pad_start:pad_end] = IP_img

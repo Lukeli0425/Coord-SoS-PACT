@@ -145,7 +145,7 @@ numerical 4:
 
 
 numerical 5:
-  task: "numerical_circles"
+  task: "numerical_full_apact"
   description: "numerical phantom 5 (APACT + full) "
   IP: "IP_APACT_1.mat"
   sinogram: "sinogram_full_apact.mat"

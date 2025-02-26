@@ -381,13 +381,13 @@ def kspaceFirstOrder2D(kgrid, medium, source, sensor, **kwargs):
             return
 
         input_filename = k_sim.options.save_to_disk
-        output_filename = os.path.join(tempfile.gettempdir(), 'output.h5')
+        output_filename = os.path.join(os.path.dirname(input_filename), 'output.h5')
 
         executor = Executor(device='gpu')
         if kwargs['time_rev']:
             sensor_data = executor.run_simulation(input_filename, output_filename, options='--p_final')
         else:
-            sensor_data = executor.run_simulation(input_filename,output_filename,options='--p_raw')
+            sensor_data = executor.run_simulation(input_filename, output_filename, options='--p_raw')
         if kgrid.dim == 2:
             return sensor_data
         return k_sim.sensor.combine_sensor_data(sensor_data)
