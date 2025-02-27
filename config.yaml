@@ -170,7 +170,7 @@ numerical 5:
 
 
 numerical 6:
-  task: "numerical_body_liver"
+  task: "numerical_body_liver_apact"
   description: "numerical phantom 6 (APACT + body + liver) "
   IP: "IP_APACT_1.mat"
   sinogram: "sinogram_body_liver_apact.mat"
@@ -195,7 +195,7 @@ numerical 6:
 
 
 numerical 7:
-  task: "numerical_bones"
+  task: "numerical_bones_apact"
   description: "numerical phantom 7 (APACT + body + bones) "
   IP: "IP_APACT_1.mat"
   sinogram: "sinogram_bones_apact.mat"
@@ -220,7 +220,7 @@ numerical 7:
 
 
 numerical 8:
-  task: "numerical_holes"
+  task: "numerical_holes_apact"
   description: "numerical phantom 8 (APACT + body + holes) "
   IP: "IP_APACT_1.mat"
   sinogram: "sinogram_holes_apact.mat"
@@ -245,7 +245,7 @@ numerical 8:
 
 
 numerical 9:
-  task: "numerical_circles"
+  task: "numerical_circles_apact"
   description: "numerical phantom 9 (APACT + body + circles) "
   IP: "IP_APACT_1.mat"
   sinogram: "sinogram_circles_apact.mat"
