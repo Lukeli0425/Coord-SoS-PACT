@@ -7,7 +7,7 @@ from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.deconv import MultiChannelDeconv
 from models.pact import SOS2Wavefront, Wavefront2TF
-from models.regularizer import Sharpness, MaskedTotalVariation
+from models.regularizer import Sharpness, MaskedTotalVariation, MaskedTotalSquaredVariation
 from models.siren import SIREN
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -75,6 +75,7 @@ class NFAPACT(nn.Module):
         self.deconv = MultiChannelDeconv()
         self.data_fitting = DataFittingLoss()
         self.tv_regularizer = MaskedTotalVariation(weight=lam_tv)
+        # self.tv_regularizer = MaskedTotalSquaredVariation(weight=lam_tv)
         # self.sharpness_regularizer = Sharpness(function=reg, weight=lam)
     
     def save_sos(self):

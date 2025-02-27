@@ -25,7 +25,7 @@ from utils.visualization import *
 plt.set_loglevel("warning")
 
 DATA_PATH = 'data/'
-RESULTS_PATH = 'results_rebuttal/'
+RESULTS_PATH = 'results_ICCV/'
 
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
@@ -587,7 +587,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, default='0', choices=['0', '1'])
     parser.add_argument('--task', type=str, default='numerical', choices=['numerical', 'phantom', 'in_vivo', 'kidney'], help='Task to be reconstructed.')
-    parser.add_argument('--sample_id', type=int, default=0, choices=[0,1,2,3,4], help='Index of numerical phantom.')
+    parser.add_argument('--sample_id', type=int, default=0, choices=[0,1,2,3,4,5,6,7,8,9], help='Index of numerical phantom.')
     parser.add_argument('--method', type=str, default='NF-APACT', choices=['NF-APACT', 'PG', 'APACT', 'Deconv', 'Dual-SOS_DAS', 'DAS'], help='Method to be used for reconstruction.')
     parser.add_argument('--v_das', type=float, default=1510.0, help='Speed of sound for DAS.')
     parser.add_argument('--v_body', type=float, default=1560.0, help='Speed of sound in the tissue for Dual-SOS DAS.')
@@ -614,7 +614,7 @@ if __name__ == "__main__":
     task = args.task + f" {args.sample_id}"if args.task == 'numerical' else args.task
     bps, tps = config['basic_params'], config[task]
     
-    scale_factor = 5
+    scale_factor = 1
     # tps['Nx'], tps['Ny'] = int(tps['Nx'] * scale_factor), int(tps['Ny'] * scale_factor)
     # bps['dx'], bps['dy'] = bps['dx'] / scale_factor, bps['dy'] / scale_factor
     # bps['l_patch'] = bps['l_patch'] / scale_factor
