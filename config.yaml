@@ -151,7 +151,7 @@ numerical 5:
   sinogram: "sinogram_full_apact.mat"
   EIR: null
   ring_error: null
-  SOS: "SOS_full.mat"
+  SOS: "SOS_apact.mat"
 
   t0: 0
   Nx: 560                 # Image size in X direction.
