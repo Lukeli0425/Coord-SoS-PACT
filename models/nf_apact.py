@@ -54,7 +54,7 @@ class DataFittingLoss(nn.Module):
 
 class NFAPACT(nn.Module):
     """Neural Fields for Adaptive Photoacoustic Computed Tomography."""
-    def __init__(self, rep, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv, reg, lam,
+    def __init__(self, rep, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv,
                  x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, fwhm = 1.5e-3, angle_range=(0, 2*torch.pi)):
         super().__init__()
 
@@ -67,6 +67,7 @@ class NFAPACT(nn.Module):
         XX, YY = torch.meshgrid(torch.tensor(x_vec[:,0]), torch.tensor(y_vec[:,0]), indexing='xy')
         self.sos_mask = torch.zeros_like(XX).cuda()
         self.sos_mask[XX**2 + YY**2 <= R_body**2] = 1
+        # self.sos_mask = torch.ones_like(XX).cuda()
         self.sos_deconv = None
         
         self.SOS = SOSRep(rep=rep, mask=self.sos_mask, v0=v0, mean=mean, std=std, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq)

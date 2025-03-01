@@ -102,7 +102,7 @@ done
 
 ################### Pixel Grid ####################
 lr_pg_df=0.1
-lam_tv_df=0 # 1e-4
+lam_tv_df=1e-4
 # # Learning rate.
 # for lr in {2e-1,1e-1,5e-2,2e-2,1e-2,5e-3}; do
 #   python reconstruction.py --task numerical --sample_id 0 --n_delays $n_delays_df --method PG --lam_tv $lam_tv_df --n_epochs 30 --lr $lr --batch_size $bs_df --gpu $gpu

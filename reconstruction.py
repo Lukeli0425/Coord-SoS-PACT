@@ -321,7 +321,7 @@ def apact(n_delays:int, n_thetas:int, lam_tsv:float, n_iters:int, lr:float, bps:
     logger.info(' Results saved to "%s".', results_dir)
 
 
-def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:bool, N_freq:int, lam_tv:float, reg, lam, 
+def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:bool, N_freq:int, lam_tv:float, 
              n_epochs:int, batch_size:int, lr:float, bps:dict, tps:dict) -> None:
     """Run Neural Fields for Adaptive Photoacoustic Computed Tomography (NF-APACT) reconstruction.
 
@@ -358,10 +358,10 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    #######
-    kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
-    ########
-    nf_apact = NFAPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, reg=reg, lam=lam,
+    # #######
+    # kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
+    # ########
+    nf_apact = NFAPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, 
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -381,12 +381,12 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    ###### Trying larger grid size ######
-    l_patch = bps['l_patch']/scale_factor
-    tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
-    das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
-    print(das_stack.shape)
-    ######
+    # ###### Trying larger grid size ######
+    # l_patch = bps['l_patch']/scale_factor
+    # tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
+    # das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
+    # print(das_stack.shape)
+    # ######
     data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
     logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
@@ -442,7 +442,7 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     # Save log.
     log = {'task':tps['task'], 'method':'NF_APACT', 'n_delays':n_delays, 
            'hidden_layers':hidden_layers, 'hidden_features':hidden_features, 'pos_encoding':pos_encoding, 'N_freq':N_freq, 'n_params':get_total_params(nf_apact),
-           'reg':reg, 'lam':lam,'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
+           'reg':'TV', 'lam':lam_tv, 'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
     # log = load_log(os.path.join(results_dir, 'log.json'))
     # loss_list = log['loss']
@@ -455,8 +455,8 @@ def nf_apact(n_delays:int, hidden_layers:int, hidden_features:int, pos_encoding:
     logger.info(' Results saved to "%s".', results_dir)
 
 
-def pg_apact(n_delays:int, lam_tv:float, reg, lam, 
-              n_epochs:int, batch_size:int, lr:float, bps:dict, tps:dict) -> None:
+def pg_apact(n_delays:int, lam_tv:float, 
+             n_epochs:int, batch_size:int, lr:float, bps:dict, tps:dict) -> None:
     """Run Pixel Grid (PG) reconstruction.
 
     Args:
@@ -487,10 +487,10 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
     das = DelayAndSum(R_ring=bps['R_ring'], N_transducer=bps['N_transducer'], T_sample=bps['T_sample'], x_vec=x_vec, y_vec=y_vec, mode='zero')
     das.cuda()
     das.eval()
-    #######
-    kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
-    ########
-    nf_apact = NFAPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, reg=reg, lam=lam,
+    # #######
+    # kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
+    # ########
+    nf_apact = NFAPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, 
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -510,12 +510,12 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
             das_stack.append(recon)
     das_stack = torch.stack(das_stack, dim=0)
     das_stack = (das_stack - das_stack.mean()) / das_stack.std()
-    ###### Trying larger grid size ######
-    l_patch = bps['l_patch']/scale_factor
-    tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
-    das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
-    print(das_stack.shape)
-    ######
+    # ###### Trying larger grid size ######
+    # l_patch = bps['l_patch']/scale_factor
+    # tps['Nx'], tps['Ny'] = tps['Nx']*scale_factor, tps['Ny']*scale_factor
+    # das_stack = torch.nn.functional.interpolate(das_stack.unsqueeze(0), scale_factor=scale_factor, mode='bilinear', align_corners=False).squeeze(0)
+    # print(das_stack.shape)
+    # ######
     data_loader = get_data_loader(das_stack=das_stack, batch_size=batch_size, l_patch=l_patch, N_patch=N_patch, stride=bps['stride'],  R_body=tps['R_body'], shuffle=True)
     logger.info(" Total number of patches: %s", len(data_loader.dataset))
     
@@ -570,7 +570,7 @@ def pg_apact(n_delays:int, lam_tv:float, reg, lam,
     
     # Save log.
     log = {'task':tps['task'], 'method':'PG', 'n_delays':n_delays, 'n_params':get_total_params(nf_apact),
-           'reg':reg, 'lam':lam,'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
+           'reg':'TV', 'lam':lam_tv, 'n_epochs':n_epochs, 'lr':lr, 'loss':loss_list, 'time':t_end-t_start}
     save_log(results_dir, log)
 
     # Visualization
@@ -614,7 +614,7 @@ if __name__ == "__main__":
     task = args.task + f" {args.sample_id}"if args.task == 'numerical' else args.task
     bps, tps = config['basic_params'], config[task]
     
-    scale_factor = 1
+    # scale_factor = 1
     # tps['Nx'], tps['Ny'] = int(tps['Nx'] * scale_factor), int(tps['Ny'] * scale_factor)
     # bps['dx'], bps['dy'] = bps['dx'] / scale_factor, bps['dy'] / scale_factor
     # bps['l_patch'] = bps['l_patch'] / scale_factor
@@ -622,9 +622,9 @@ if __name__ == "__main__":
     # Run reconstruction.
     if args.method == 'NF-APACT':
         nf_apact(n_delays=args.n_delays, hidden_layers=args.hls, hidden_features=args.hfs, pos_encoding=args.n_freq>2, N_freq=args.n_freq, 
-                 lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
+                 lam_tv=args.lam_tv, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'PG':
-        pg_apact(n_delays=args.n_delays, lam_tv=args.lam_tv, reg=args.reg, lam=args.lam, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
+        pg_apact(n_delays=args.n_delays, lam_tv=args.lam_tv, n_epochs=args.n_epochs, batch_size=args.batch_size, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'APACT':
         apact(n_delays=args.n_delays, n_thetas=args.n_thetas, lam_tsv=args.lam_tsv, n_iters=args.n_iters, lr=args.lr, bps=bps, tps=tps)
     elif args.method == 'Deconv':
