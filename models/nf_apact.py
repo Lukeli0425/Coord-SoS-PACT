@@ -2,12 +2,14 @@ import math
 
 import torch
 import torch.nn as nn
+from numpy import ndarray
 from torch import nn
 from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.deconv import MultiChannelDeconv
 from models.pact import SOS2Wavefront, Wavefront2TF
-from models.regularizer import Sharpness, MaskedTotalVariation, MaskedTotalSquaredVariation
+from models.regularizer import (MaskedTotalSquaredVariation,
+                                MaskedTotalVariation, Sharpness)
 from models.siren import SIREN
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
@@ -54,8 +56,9 @@ class DataFittingLoss(nn.Module):
 
 class NFAPACT(nn.Module):
     """Neural Fields for Adaptive Photoacoustic Computed Tomography."""
-    def __init__(self, rep, n_delays, hidden_layers, hidden_features, pos_encoding, N_freq, lam_tv,
-                 x_vec, y_vec, R_body, v0, mean, std, N_patch=80, l_patch=3.2e-3, fwhm = 1.5e-3, angle_range=(0, 2*torch.pi)):
+    def __init__(self, rep:str, n_delays:int, lam_tv:float, x_vec:ndarray, y_vec:ndarray, R_body:float, v0:float, mean:float, std:float, 
+                 hidden_layers:int=None, hidden_features:int=None, pos_encoding:bool=False, N_freq:int=None,
+                 N_patch=80, l_patch=3.2e-3, fwhm=1.5e-3, angle_range=(0, 2*torch.pi)):
         super().__init__()
 
         sigma = fwhm / 4e-5 / math.sqrt(2*math.log(2))
@@ -102,7 +105,8 @@ class NFAPACT(nn.Module):
         x, X, Y = self.deconv(patch_stack, H)
 
         # Compute loss.
-        loss = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.sos_mask) #- self.sharpness_regularizer(x)
+        data_fitting = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.sos_mask)
+        regularization = self.tv_regularizer(SOS, self.sos_mask) # torch.zeros(1).cuda() #- self.sharpness_regularizer(x)
 
-        return x, SOS, loss.sum()
+        return x, SOS, data_fitting.mean(), regularization.mean()
 

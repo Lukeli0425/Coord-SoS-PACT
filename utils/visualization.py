@@ -128,6 +128,7 @@ def visualize_nf_apact(results_dir, IP_rec, SOS_rec, loss_list, time, IP_max, IP
     plt.title("t = {:.2f} s".format(time), loc='right', x=0.94, y=0.91, color='black', fontsize=15)
     plt.xlabel("Iteration", fontsize=15)
     plt.ylabel("Loss", fontsize=15)
+    plt.yscale('log')
     
     ax = plt.subplot(gs[1:2,0:1])
     norm_IP = Normalize(vmax=IP_max, vmin=IP_min)
