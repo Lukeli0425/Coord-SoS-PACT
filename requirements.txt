@@ -11,3 +11,4 @@ numba
 jupyter
 PyYAML
 tqdm
+brokenaxes
