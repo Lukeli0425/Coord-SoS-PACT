@@ -62,31 +62,31 @@ hls_df=0
 # done
 
 
-# # Network structure.
-# for sample_id in {5,6,7,8,9}; do
-#   for hfs in {16,32,64,128,256}; do
-#     for hls in {0,1}; do
-#       python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --batch_size $bs_df --lr $lr_df --gpu $gpu
-#     done
-#   done
-# done
+# Network structure.
+for sample_id in {5,6,7,8,9}; do
+  for hfs in {256,512}; do
+    for hls in {0,1}; do
+      python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --batch_size $bs_df --lr $lr_df --gpu $gpu
+    done
+  done
+done
 
-# for hfs in {16,32,64,128,256}; do
-#   for hls in {0,1}; do
-#     python reconstruction.py --task in_vivo --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --lr $lr_df --batch_size $bs_df --gpu $gpu
-#   done
-# done
+for hfs in {256,512}; do
+  for hls in {0,1}; do
+    python reconstruction.py --task in_vivo --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --lr $lr_df --batch_size $bs_df --gpu $gpu
+  done
+done
 
-# for hfs in {16,32,64,128,256}; do
-#   for hls in {0,1}; do
-#     python reconstruction.py --task phantom --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --lr $lr_df --batch_size $bs_df --gpu $gpu
-#   done
-# done
+for hfs in {256,512}; do
+  for hls in {0,1}; do
+    python reconstruction.py --task phantom --n_delays $n_delays_df --hfs $hfs --hls $hls --n_epochs $n_epochs_df --lr $lr_df --batch_size $bs_df --gpu $gpu
+  done
+done
 
 
 # # TV Regularization.
 # for sample_id in {5,6,7,8,9}; do
-#   for lam_tv in {1e-6,1e-5,1e-4,1e-3,1e-2}; do
+#   for lam_tv in {1e-4}; do
 #     python reconstruction.py --task numerical --sample_id $sample_id --lam_tv $lam_tv --n_epochs 20 --lr 1e-3 --gpu $gpu
 #   done
 # done
@@ -118,42 +118,42 @@ n_epochs_df=30
 #   python reconstruction.py --task in_vivo  --n_delays $n_delays_df --method PG --lam_tv $lam_tv_df --n_epochs 30 --lr $lr --batch_size $bs_df --gpu $gpu
 # done
 
-# Number of delays.
-for sample_id in {5,6,7,8,9}; do
-  for n_delays in {64,32,16,8,4,2,1}; do
-    python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
-  done
-done
+# # Number of delays.
+# for sample_id in {5,6,7,8,9}; do
+#   for n_delays in {64,32,16,8,4,2,1}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
+#   done
+# done
 
-# Number of delays (w/o TV).
-for sample_id in {5,6,7,8,9}; do
-  for n_delays in {64,32,16,8,4,2,1}; do
-    python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv 0 --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
-  done
-done
+# # Number of delays (w/o TV).
+# for sample_id in {5,6,7,8,9}; do
+#   for n_delays in {64,32,16,8,4,2,1}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv 0 --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
+#   done
+# done
 
-for n_delays in {64,32,16,8,4,2,1}; do
-  python reconstruction.py --task phantom --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
-done
+# for n_delays in {64,32,16,8,4,2,1}; do
+#   python reconstruction.py --task phantom --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
+# done
 
-for n_delays in {64,32,16,8,4,2,1}; do
-  python reconstruction.py --task in_vivo --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
-done
+# for n_delays in {64,32,16,8,4,2,1}; do
+#   python reconstruction.py --task in_vivo --n_delays $n_delays_df --method PG --n_delays $n_delays --lam_tv $lam_tv_df --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size 64 --gpu $gpu
+# done
 
-# TV Regularization.
-for sample_id in {5,6,7,8,9}; do
-  for lam_tv in {1e-6,1e-5,1e-4,1e-3,1e-2}; do
-    python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
-  done
-done
+# # TV Regularization.
+# for sample_id in {5,6,7,8,9}; do
+#   for lam_tv in {1e-4,}; do
+#     python reconstruction.py --task numerical --sample_id $sample_id --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
+#   done
+# done
 
-for lam_tv in {1e-6,1e-5,1e-4,1e-3,1e-2}; do
-  python reconstruction.py --task phantom --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
-done
+# for lam_tv in {1e-4,}; do
+#   python reconstruction.py --task phantom --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
+# done
 
-for lam_tv in {1e-6,1e-5,1e-4,1e-3,1e-2}; do
-  python reconstruction.py --task in_vivo --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
-done
+# for lam_tv in {1e-4,}; do
+#   python reconstruction.py --task in_vivo --n_delays $n_delays_df --method PG --lam_tv $lam_tv --n_epochs $n_epochs_df --lr $lr_pg_df --batch_size $bs_df --gpu $gpu
+# done
 
 
 

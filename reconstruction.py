@@ -457,9 +457,9 @@ def neural_field(n_delays:int, hidden_layers:int, hidden_features:int, pos_encod
     
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
-    # make_video(results_dir, loss_list, tps)
-    # make_video_icon(results_dir, tps)
-    # print(nf_apact.SOS().mean().item(), nf_apact.SOS().std().item())
+    make_video(results_dir, loss_list, tps)
+    make_video_icon(results_dir, tps)
+
     logger.info(' Results saved to "%s".', results_dir)
 
 
@@ -591,8 +591,8 @@ def pixel_grid(n_delays:int, lam_tv:float,
 
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
-    # make_video(results_dir, loss_list, tps)
-    # make_video_icon(results_dir, None, tps)
+    make_video(results_dir, loss_list, tps)
+    make_video_icon(results_dir, tps)
     
     logger.info(' Results saved to "%s".', results_dir)
 
