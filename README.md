@@ -11,7 +11,7 @@ __In Submission__
 Official code for [_Self-Supervised Speed of Sound Recovery for Aberration-Corrected
 Photoacoustic Computed Tomography_](https://lukeli0425.github.io/SS-APACT).
 
-![Overview](figures_ICCV/overview.png)
+![Overview](figures/overview.png)
 
 ## Get Started
 
@@ -62,7 +62,14 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 
 ### Citation
 
-Coming soon.
+```bibtex
+@article{li2024neural,
+  title={Neural Fields for Adaptive Photoacoustic Computed Tomography},
+  author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
+  journal={arXiv preprint arXiv:2409.10876},
+  year={2024}
+}
+```
 
 ### Acknowledgment
 
