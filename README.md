@@ -4,12 +4,12 @@
 <sup>1</sup>Northwestern University, <sup>2</sup>Caltech, <sup>3</sup>Tsinghua University<br>
 __In Submission__
 
-[![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/NF-APACT)&nbsp;
+[![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/SS-APACT)&nbsp;
 [![arXiv](https://img.shields.io/badge/arXiv-2409.10876-b31b1b.svg)](https://arxiv.org/abs/2409.10876)&nbsp;
 [![LICENSE](https://img.shields.io/badge/MIT-Lisence-blue)](./LICENSE)&nbsp;
 
 Official code for [_Self-Supervised Speed of Sound Recovery for Aberration-Corrected
-Photoacoustic Computed Tomography_](https://lukeli0425.github.io/NF-APACT).
+Photoacoustic Computed Tomography_](https://lukeli0425.github.io/SS-APACT).
 
 ![Overview](figures_ICCV/overview.png)
 
@@ -18,7 +18,7 @@ Photoacoustic Computed Tomography_](https://lukeli0425.github.io/NF-APACT).
 To clone this project, run:
 
 ```zsh
-git clone https://github.com/Lukeli0425/NF-APACT.git
+git clone https://github.com/Lukeli0425/SS-APACT.git
 ```
 
 Create a virtual environment and download the required packages:
@@ -62,14 +62,7 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 
 ### Citation
 
-```bibtex
-@article{li2024neural,
-  title={Neural Fields for Adaptive Photoacoustic Computed Tomography},
-  author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
-  journal={arXiv preprint arXiv:2409.10876},
-  year={2024}
-}
-```
+Coming soon.
 
 ### Acknowledgment
 

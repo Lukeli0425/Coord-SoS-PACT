@@ -12,6 +12,7 @@ saved_models_Mice_new1/
 pretrained_models/
 
 old/
+# figures_CVPR/
 
 # Experimental data.
 data/EIR_KWAVE.mat
