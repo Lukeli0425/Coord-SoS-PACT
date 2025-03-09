@@ -31,7 +31,7 @@ data/IP_APACT_2.mat
 results/
 results_old/
 results_CVPR/
-results_ICCV/
+results_new/
 
 # nohup files
 *.out
