@@ -25,7 +25,7 @@ from utils.visualization import *
 plt.set_loglevel("warning")
 
 DATA_PATH = 'data/'
-RESULTS_PATH = 'results_ICCV/'
+RESULTS_PATH = 'results_new/'
 
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
