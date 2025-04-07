@@ -63,15 +63,14 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 ### Citation
 
 ```bibtex
-@article{li2024neural,
-  title={Neural Fields for Adaptive Photoacoustic Computed Tomography},
+@article{li2025self,
+  title={Self-Supervised Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography},
   author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
   journal={arXiv preprint arXiv:2409.10876},
-  year={2024}
+  year={2025}
 }
 ```
 
 ### Acknowledgment
 
 We would like to thank Liujie Gu and Yan Luo for helping us with the numerical simulations.
-
