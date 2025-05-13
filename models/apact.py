@@ -7,9 +7,10 @@ import torch.nn as nn
 from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
 from tqdm import tqdm
 
+from models.e2e_apact import SOSRep
 from models.pact import Fourier2Wavefront, SOS2Wavefront, Wavefront2Fourier
-from models.regularizer import MaskedTotalSquaredVariation, MaskedTotalVariation
-from models.nf_apact import SOSRep
+from models.regularizer import (MaskedTotalSquaredVariation,
+                                MaskedTotalVariation)
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
 

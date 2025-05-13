@@ -13,7 +13,7 @@ from kwave.ktransducer import kWaveGrid
 from models.apact import APACT
 from models.das import DelayAndSum, DualSOSDelayAndSum
 from models.deconv import MultiChannelDeconv
-from models.nf_apact import NFAPACT
+from models.e2e_apact import NFAPACT
 from models.pact import SOS2Wavefront, Wavefront2TF
 from utils.dataio import *
 from utils.dataset import get_data_loader
@@ -25,8 +25,8 @@ from utils.visualization import *
 plt.set_loglevel("warning")
 
 DATA_PATH = 'data/'
-RESULTS_PATH = 'results_new/'
-
+# RESULTS_PATH = 'results_new/'
+RESULTS_PATH = 'results_rebuttals/'
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
     """Run delay-and-sum (DAS) reconstruction with given sound speed.
@@ -55,6 +55,7 @@ def das(v_das:float, bps:dict, tps:dict) -> None:
 
     sinogram = torch.from_numpy(sinogram[:,tps['t0']:]).cuda()
     ring_error = torch.from_numpy(ring_error).cuda()
+    print(sinogram.shape, ring_error.shape)
     with torch.no_grad():
         t_start = time()
         ip_rec = das(sinogram=sinogram, v0=v_das, d_delay=0, ring_error=ring_error).detach().cpu().numpy()
@@ -457,8 +458,8 @@ def neural_field(n_delays:int, hidden_layers:int, hidden_features:int, pos_encod
     
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
-    make_video(results_dir, loss_list, tps)
-    make_video_icon(results_dir, tps)
+    # make_video(results_dir, loss_list, tps)
+    # make_video_icon(results_dir, tps)
 
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -591,8 +592,8 @@ def pixel_grid(n_delays:int, lam_tv:float,
 
     # Visualization
     visualize_nf_apact(results_dir, IP_list[-1], SOS_list[-1], loss_list, t_end-t_start, tps['IP_max'], tps['IP_min'], tps['SOS_max'], tps['SOS_min'], params)
-    make_video(results_dir, loss_list, tps)
-    make_video_icon(results_dir, tps)
+    # make_video(results_dir, loss_list, tps)
+    # make_video_icon(results_dir, tps)
     
     logger.info(' Results saved to "%s".', results_dir)
 
@@ -616,7 +617,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_thetas', type=int, default=256, help='Number of angles used in wavefront calculation.')
     parser.add_argument('--lam_tv', type=float, default=0.0)
     parser.add_argument('--reg', type=str, default='None', choices=['None', 'Brenner', 'Tenenbaum', 'Variance'])
-    parser.add_argument('--lam', type=float, default=0.0)
+    # parser.add_argument('--lam', type=float, default=0.0)
     parser.add_argument('--n_epochs', type=int, default=10, help='Number of training epochs.')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for NF-APACT.')
     parser.add_argument('--lr', type=float, default=5e-3, help='Learning rate.')
