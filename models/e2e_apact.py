@@ -55,7 +55,6 @@ class DataFittingLoss(nn.Module):
 
 
 class NFAPACT(nn.Module):
-    """Neural Fields for Adaptive Photoacoustic Computed Tomography."""
     def __init__(self, rep:str, n_delays:int, lam_tv:float, x_vec:ndarray, y_vec:ndarray, R_body:float, v0:float, mean:float, std:float, 
                  hidden_layers:int=None, hidden_features:int=None, pos_encoding:bool=False, N_freq:int=None,
                  N_patch=80, l_patch=3.2e-3, fwhm=1.5e-3, angle_range=(0, 2*torch.pi)):
@@ -105,7 +104,7 @@ class NFAPACT(nn.Module):
         x, X, Y = self.deconv(patch_stack, H)
 
         # Compute loss.
-        data_fitting = self.data_fitting(Y.abs(), (H * X).abs(), self.k) + self.tv_regularizer(SOS, self.sos_mask)
+        data_fitting = self.data_fitting(Y.abs(), (H * X).abs(), self.k.mean()) + self.tv_regularizer(SOS, self.sos_mask)
         regularization = self.tv_regularizer(SOS, self.sos_mask) # torch.zeros(1).cuda() #- self.sharpness_regularizer(x)
 
         return x, SOS, data_fitting.mean(), regularization.mean()
