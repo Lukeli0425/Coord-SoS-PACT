@@ -33,6 +33,7 @@ results_old/
 results_CVPR/
 results_new/
 results_rebuttals/
+results_rebuttals1/
 
 # nohup files
 *.out
