@@ -26,7 +26,7 @@ plt.set_loglevel("warning")
 
 DATA_PATH = 'data/'
 # RESULTS_PATH = 'results_new/'
-RESULTS_PATH = 'results_rebuttals/'
+RESULTS_PATH = 'results_rebuttals1/'
 
 def das(v_das:float, bps:dict, tps:dict) -> None:
     """Run delay-and-sum (DAS) reconstruction with given sound speed.

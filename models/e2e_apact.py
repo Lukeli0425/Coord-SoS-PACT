@@ -104,7 +104,8 @@ class NFAPACT(nn.Module):
         x, X, Y = self.deconv(patch_stack, H)
 
         # Compute loss.
-        data_fitting = self.data_fitting(Y.abs(), (H * X).abs(), self.k.mean()) + self.tv_regularizer(SOS, self.sos_mask)
+        weight = self.k # ** 2 /self.k.mean()
+        data_fitting = self.data_fitting(Y.abs(), (H * X).abs(), weight) + self.tv_regularizer(SOS, self.sos_mask)
         regularization = self.tv_regularizer(SOS, self.sos_mask) # torch.zeros(1).cuda() #- self.sharpness_regularizer(x)
 
         return x, SOS, data_fitting.mean(), regularization.mean()
