@@ -2,7 +2,7 @@
 
 <b>[Tianao Li](https://lukeli0425.github.io)</b><sup>1</sup>, <b>Manxiu Cui</b><sup>2</sup>, <b>[Cheng Ma](https://rachmaninov-ma.wixsite.com/mysite)</b><sup>3</sup>, <b>[Emma Alexander](https://www.alexander.vision/emma)</b><sup>1</sup><br>
 <sup>1</sup>Northwestern University, <sup>2</sup>Caltech, <sup>3</sup>Tsinghua University<br>
-__In Submission__
+_International Conference on Computer Vision (ICCV), 2025_
 
 [![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/SS-APACT)&nbsp;
 [![arXiv](https://img.shields.io/badge/arXiv-2409.10876-b31b1b.svg)](https://arxiv.org/abs/2409.10876)&nbsp;
