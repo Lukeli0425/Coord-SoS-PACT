@@ -67,7 +67,7 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 ### Citation
 
 ```bibtex
-@article{li2025self,
+@article{li2025coordinate,
   title={Coordinate-based Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography},
   author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
   journal={arXiv preprint arXiv:2409.10876},
