@@ -77,4 +77,4 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 
 ### Acknowledgment
 
-We would like to thank Liujie Gu and Yan Luo for helping us with the numerical simulations.
+We gratefully acknowledge the support of the [NSF-Simons AI-Institute for the Sky (SkAI)](https://skai-institute.org/) via grants NSF AST-2421845 and Simons Foundation MPS-AI-00010513. We would also like to thank Liujie Gu and Yan Luo for helping us with the numerical simulations and [Yi-Chun Hung](https://yichunhung.github.io/) and [Marcos Ferreira](https://marc103.github.io/) for suggestions on the manuscript.
