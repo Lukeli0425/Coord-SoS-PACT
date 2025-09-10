@@ -4,17 +4,14 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
-from tqdm import tqdm
+from torch.fft import fft2, fftshift, ifft2, ifftshift
 
-from models.e2e_apact import SOSRep
-from models.pact import Fourier2Wavefront, SOS2Wavefront, Wavefront2Fourier
-from models.regularizer import (MaskedTotalSquaredVariation,
-                                MaskedTotalVariation)
+from models.coord_sos_pact import SOSRep
+from models.pact import SOS2Wavefront, Wavefront2Fourier
+from models.regularizers import (MaskedTotalSquaredVariation,
+                                 MaskedTotalVariation)
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
-
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 
 class MSELoss(nn.Module):
@@ -47,8 +44,8 @@ class APACT(nn.Module):
         self.logger = logging.getLogger('APACT')
         
         self.data_path = data_path
-        self.fourier2tf_dir = os.path.join(data_path, 'TFs')
-        os.makedirs(self.fourier2tf_dir, exist_ok=True)
+        self.tf_path = os.path.join(data_path, 'TFs')
+        os.makedirs(self.tf_path, exist_ok=True)
         
         # Wavefront sampling parameters
         self.N = None
@@ -103,7 +100,7 @@ class APACT(nn.Module):
             for x in xs:
                 for y in ys:
                     params.append((dc, x, y))
-                    torch.save(self.fourier2tf(dc, x, y), os.path.join(self.fourier2tf_dir, f'TF_{idx}.pth'))
+                    torch.save(self.fourier2tf(dc, x, y), os.path.join(self.tf_path, f'TF_{idx}.pth'))
                     idx += 1
         torch.save(torch.tensor(params), os.path.join(self.data_path, 'params.pth'))
         self.load_params()
@@ -117,7 +114,7 @@ class APACT(nn.Module):
         Y = fft2(ifftshift(pad_double(patch_stack), dim=(-2,-1)))
         
         for idx in range(self.N):
-            H = torch.load(os.path.join(self.fourier2tf_dir, f'TF_{idx}.pth')).cuda()
+            H = torch.load(os.path.join(self.tf_path, f'TF_{idx}.pth')).cuda()
             Ht, HtH = H.conj(), H.abs() ** 2
             rhs = (Y * Ht).sum(axis=-3).unsqueeze(-3)
             lhs = HtH.sum(axis=-3).unsqueeze(-3)

@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 from kwave.ktransducer import kWaveGrid
 from models.apact import APACT
+from models.coord_sos_pact import CoordSOSPACT
 from models.das import DelayAndSum, DualSOSDelayAndSum
 from models.deconv import MultiChannelDeconv
-from models.e2e_apact import NFAPACT
 from models.pact import SOS2Wavefront, Wavefront2TF
 from utils.dataio import *
 from utils.dataset import get_data_loader
@@ -362,7 +362,7 @@ def neural_field(n_delays:int, hidden_layers:int, hidden_features:int, pos_encod
     # #######
     # kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
     # ########
-    nf_apact = NFAPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, 
+    nf_apact = CoordSOSPACT(rep='SIREN', n_delays=n_delays, hidden_layers=hidden_layers, hidden_features=hidden_features, pos_encoding=pos_encoding, N_freq=N_freq, lam_tv=lam_tv, 
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()
@@ -499,7 +499,7 @@ def pixel_grid(n_delays:int, lam_tv:float,
     # #######
     # kgrid = kWaveGrid([tps['Nx']*scale_factor, tps['Ny']*scale_factor], [bps['dx']/scale_factor, bps['dy']/scale_factor])
     # ########
-    nf_apact = NFAPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, 
+    nf_apact = CoordSOSPACT(rep='Grid', n_delays=n_delays, hidden_layers=0, hidden_features=0, pos_encoding=False, N_freq=0, lam_tv=lam_tv, 
                         x_vec=kgrid.x_vec, y_vec=kgrid.y_vec, R_body=tps['R_body'], v0=v0, mean=tps['mean'], std=tps['std'], N_patch=N_patch, l_patch=l_patch, angle_range=(0, 2*torch.pi))
     nf_apact.cuda()
     nf_apact.train()

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm, Normalize
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FormatStrFormatter
-from torch.fft import fft2, fftshift, ifft2, ifftn, ifftshift
+from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from utils.dataio import *
 

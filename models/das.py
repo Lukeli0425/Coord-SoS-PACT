@@ -46,7 +46,6 @@ class DelayAndSum(nn.Module):
        
         return sinogram[self.id_transducer, id_time].mean(0)
     
-    
 
 class DualSOSDelayAndSum(nn.Module):
     """Delay-And-Sum image reconstruction module using a dual SoS distribution for Photoacoustic Computed Tomography with ring array ."""

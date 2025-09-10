@@ -3,10 +3,8 @@ from tempfile import gettempdir
 
 import numba
 import numpy as np
-import torch
 from numpy.fft import fft, ifft
 from numpy.random import choice
-from torch.fft import fftshift, ifftn
 
 from kwave.kmedium import kWaveMedium
 from kwave.ksource import kSource
@@ -14,7 +12,7 @@ from kwave.kspaceFirstOrder2D import kspaceFirstOrder2DC
 from kwave.ktransducer import *
 from kwave.utils import *
 
-    
+
 def center(img):
     """Calculate the center of an image.
 

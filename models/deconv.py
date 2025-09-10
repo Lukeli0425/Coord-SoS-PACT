@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.fft import fft2, fftn, fftshift, ifft2, ifftn, ifftshift
+from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from utils.utils_torch import crop_half, get_fourier_coord, pad_double
 

@@ -8,12 +8,11 @@ from torch.fft import fft2, fftshift, ifft2, ifftshift
 
 from models.deconv import MultiChannelDeconv
 from models.pact import SOS2Wavefront, Wavefront2TF
-from models.regularizer import (MaskedTotalSquaredVariation,
-                                MaskedTotalVariation, Sharpness)
+from models.regularizers import (MaskedTotalSquaredVariation,
+                                 MaskedTotalVariation, Sharpness)
 from models.siren import SIREN
 from utils.reconstruction import get_gaussian_window
 from utils.utils_torch import *
-from utils.utils_torch import get_mgrid
 
 
 class SOSRep(nn.Module):
@@ -54,7 +53,7 @@ class DataFittingLoss(nn.Module):
         return torch.mean(k * (Y-X) ** 2, axis=(-3,-2,-1))
 
 
-class NFAPACT(nn.Module):
+class CoordSOSPACT(nn.Module):
     def __init__(self, rep:str, n_delays:int, lam_tv:float, x_vec:ndarray, y_vec:ndarray, R_body:float, v0:float, mean:float, std:float, 
                  hidden_layers:int=None, hidden_features:int=None, pos_encoding:bool=False, N_freq:int=None,
                  N_patch=80, l_patch=3.2e-3, fwhm=1.5e-3, angle_range=(0, 2*torch.pi)):

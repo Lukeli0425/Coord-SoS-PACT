@@ -42,6 +42,7 @@ class Wavefront2Fourier(nn.Module):
         y2 = 2 * (wf * torch.sin(2*thetas)).mean().view(1)
         return torch.cat([dc, x2, y2], dim=0)
 
+
 # class SOS2Wavefront(nn.Module):
 #     def __init__(self, R_body, v0, x_vec, y_vec, n_thetas=180, N_int=500):
 #         super().__init__()
@@ -71,6 +72,7 @@ class Wavefront2Fourier(nn.Module):
 #         print(wf.shape)
 #         return self.thetas.view(-1), wf
 
+
 class SOS2Wavefront(nn.Module):
     def __init__(self, R_body, v0, x_vec, y_vec, n_thetas=180, N_int=500):
         super().__init__()
@@ -99,6 +101,7 @@ class SOS2Wavefront(nn.Module):
         i_index = -((y.view(-1,1,1) - l*steps*torch.cos(self.thetas) - self.y_vec[-1]) / self.dy).round().int()
         wf = torch.trapezoid(1-self.v0/SOS[i_index, j_index], l*steps, dim=-1)
         return self.thetas.view(1,-1), wf
+
 
 class Interp1D(nn.Module):
     """1D Wavefront Interpolation Module for TF calculation."""

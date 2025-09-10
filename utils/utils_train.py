@@ -1,10 +1,8 @@
 from math import exp
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pyexpat import model
 from torch.autograd import Variable
 from torch.nn.modules.loss import _Loss
 
