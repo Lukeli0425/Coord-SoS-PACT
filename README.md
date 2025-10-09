@@ -4,8 +4,9 @@
 <sup>1</sup>Northwestern University, <sup>2</sup>California Institute of Technology, <sup>3</sup>Tsinghua University, <sup>4</sup>NSF-Simons AI Institute for the Sky (SkAI)<br>
 _IEEE/CVF International Conference on Computer Vision (ICCV), 2025_
 
-[![project page](https://img.shields.io/badge/project-page-purple)](https://lukeli0425.github.io/Coord-SoS-PACT)&nbsp;
+[![Project Page](https://img.shields.io/badge/Project-Page-purple)](https://lukeli0425.github.io/Coord-SoS-PACT)&nbsp;
 [![arXiv](https://img.shields.io/badge/arXiv-2409.10876-b31b1b.svg)](https://arxiv.org/abs/2409.10876)&nbsp;
+[![Youtube Video](https://img.shields.io/badge/Youtube-Video-red)](https://www.youtube.com/watch?v=EAz7eFGXzzQ)&nbsp;
 [![LICENSE](https://img.shields.io/badge/MIT-Lisence-blue)](./LICENSE)&nbsp;
 
 Official code for [_Coordinate-based Speed of Sound Recovery for Aberration-Corrected
