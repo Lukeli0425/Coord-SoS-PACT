@@ -1,6 +1,6 @@
 # [ICCV 2025] Coordinate-based Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography
 
-<b>[Tianao Li](https://lukeli0425.github.io)</b><sup>1,4</sup>, <b>Manxiu Cui</b><sup>2</sup>, <b>[Cheng Ma](https://rachmaninov-ma.wixsite.com/mysite)</b><sup>3</sup>, <b>[Emma Alexander](https://www.alexander.vision/emma)</b><sup>1,4</sup><br>
+<b>[Tianao Li](https://lukeli0425.github.io)</b><sup>1,4</sup>, <b>[Manxiu Cui](https://scholar.google.com/citations?user=B16EZbsAAAAJ&hl=en)</b><sup>2</sup>, <b>[Cheng Ma](https://scholar.google.com/citations?user=kj6PwUIAAAAJ&hl=en)</b><sup>3</sup>, <b>[Emma Alexander](https://www.alexander.vision/emma)</b><sup>1,4</sup><br>
 <sup>1</sup>Northwestern University, <sup>2</sup>California Institute of Technology, <sup>3</sup>Tsinghua University, <sup>4</sup>NSF-Simons AI Institute for the Sky (SkAI)<br>
 _IEEE/CVF International Conference on Computer Vision (ICCV), 2025_
 
@@ -68,13 +68,12 @@ We created a numerical phantom to test our method in [`notebooks/create_phantom.
 ### Citation
 
 ```bibtex
-@InProceedings{Li_2025_ICCV,
-    author    = {Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
-    title     = {Coordinate-based Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography},
-    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-    month     = {October},
-    year      = {2025},
-    pages     = {27466-27475}
+@inproceedings{li2025coordinate,
+  title={Coordinate-based Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography},
+  author={Li, Tianao and Cui, Manxiu and Ma, Cheng and Alexander, Emma},
+  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  pages={27466--27475},
+  year={2025}
 }
 ```
 
