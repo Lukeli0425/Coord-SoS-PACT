@@ -6,6 +6,7 @@ from utils.utils_torch import crop_half, get_fourier_coord, pad_double
 
 
 class WienerBatched(nn.Module):
+    """Batched Wiener deconvolution module."""
     def __init__(self, lam, order=1, device='cuda:0'):
         super().__init__()
         self.device = device

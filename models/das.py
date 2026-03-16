@@ -13,7 +13,8 @@ class DelayAndSum(nn.Module):
             T_sample (`float`): Sample time interval [s].
             x_vec (`numpy.ndarray`): X coordinates of the image grid.
             y_vec (`numpy.ndarray`): Y coordinates of the image grid.
-            mode (str, optional): _description_. Defaults to `zero`.
+            angle_range (`tuple`, optional): Range of the angles [rad] of the transducers. Defaults to `(0, 2*torch.pi)`.
+            mode (str, optional): Padding mode for the sinogram. Defaults to `zero`.
             clip (bool, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
         """
         super().__init__()
@@ -59,9 +60,10 @@ class DualSOSDelayAndSum(nn.Module):
             x_vec (`numpy.ndarray`): X coordinates of the image grid.
             y_vec (`numpy.ndarray`): Y coordinates of the image grid.
             R_body (`float`): Radius of the circular body.
-            mode (`str`, optional): _description_. Defaults to `zero`.
-            clip (`bool`, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
+            angle_range (`tuple`, optional): Range of the angles [rad] of the transducers. Defaults to `(0, 2*torch.pi)`.
             center (`tuple`, optional): Center coordinates [m] of the circular body. Defaults to `(0.0, 0.0)`.
+            mode (`str`, optional): Padding mode for the sinogram. Defaults to `zero`.
+            clip (`bool`, optional): Whether to clip the time index into the time range of the sinogram. Defaults to `False` to accelerate the reconstruction.
         """
         super().__init__()
         self.R_ring = torch.tensor(R_ring).cuda()

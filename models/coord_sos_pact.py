@@ -16,7 +16,7 @@ from utils.utils_torch import *
 
 
 class SOSRep(nn.Module):
-    """SOS parameterization module."""
+    """SOS representation module."""
     def __init__(self, rep, mask, v0, mean, std, shape=None, hidden_layers=None, hidden_features=None, pos_encoding=None, N_freq=None):
         super().__init__()
         self.rep = rep
@@ -54,6 +54,7 @@ class DataFittingLoss(nn.Module):
 
 
 class CoordSOSPACT(nn.Module):
+    """Coordinate-based Speed of Sound Recovery for Aberration-Corrected Photoacoustic Computed Tomography."""
     def __init__(self, rep:str, n_delays:int, lam_tv:float, x_vec:ndarray, y_vec:ndarray, R_body:float, v0:float, mean:float, std:float, 
                  hidden_layers:int=None, hidden_features:int=None, pos_encoding:bool=False, N_freq:int=None,
                  N_patch=80, l_patch=3.2e-3, fwhm=1.5e-3, angle_range=(0, 2*torch.pi)):

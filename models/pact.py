@@ -74,6 +74,7 @@ class Wavefront2Fourier(nn.Module):
 
 
 class SOS2Wavefront(nn.Module):
+    """Differentiable SoS to Wavefront Module."""
     def __init__(self, R_body, v0, x_vec, y_vec, n_thetas=180, N_int=500):
         super().__init__()
         # self.R_body = torch.tensor(R_body, dtype=torch.float64).cuda()
@@ -104,7 +105,7 @@ class SOS2Wavefront(nn.Module):
 
 
 class Interp1D(nn.Module):
-    """1D Wavefront Interpolation Module for TF calculation."""
+    """Differentiable 1D Wavefront Interpolation Module for Transfer Function calculation."""
     def __init__(self, mode='linear'):
         super().__init__()
         self.mode = mode
@@ -133,7 +134,7 @@ class Interp1D(nn.Module):
             
 
 class Wavefront2TF(nn.Module):
-    """Wavefront to Transfer Function Module."""
+    """Differentiable Wavefront to Transfer Function Module."""
     def __init__(self, N, l, n_delays, angle_range=(0, 2*torch.pi)):
         super().__init__() 
         self.n_delays = n_delays

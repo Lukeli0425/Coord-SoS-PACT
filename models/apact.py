@@ -38,6 +38,7 @@ class Fourier2TF(nn.Module):
  
     
 class APACT(nn.Module):
+    """Adaptive Photoacoustic Computed Tomography (APACT)."""
     def __init__(self, delays, R_body, v0, Nx, Ny, dx, dy, x_vec, y_vec, lam_tsv, mean, std, dc_range, amp, step, n_thetas,
                  N_patch=80, fwhm=1.5e-3, generate_TF=True, data_path='./TFs'):
         super(APACT, self).__init__() 
