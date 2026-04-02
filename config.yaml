@@ -316,25 +316,25 @@ in_vivo:
   IP_max: 8
 
 
-kidney:
-  task: "kidney"
-  description: "in vivo mouse kidney"
-  sinogram: "mouse_wholebody_sample_liver_RF.mat"
-  EIR: null
-  ring_error: null # "RING_ERROR_NEW.mat"
-  SOS: null
+# kidney:
+#   task: "kidney"
+#   description: "in vivo mouse kidney"
+#   sinogram: "mouse_wholebody_sample_liver_RF.mat"
+#   EIR: null
+#   ring_error: null # "RING_ERROR_NEW.mat"
+#   SOS: null
 
-  t0: 200
-  Nx: 520                 # Image size in X direction.
-  Ny: 520                 # Image size in Y direction.
-  x_c: -12
-  y_c: 10
-  T: 29.0                 # Water temperature [C].
-  R_body: 9.4e-3               # Radius of body [m].
+#   t0: 200
+#   Nx: 520                 # Image size in X direction.
+#   Ny: 520                 # Image size in Y direction.
+#   x_c: -12
+#   y_c: 10
+#   T: 29.0                 # Water temperature [C].
+#   R_body: 9.4e-3               # Radius of body [m].
 
-  mean: 1560.0           # Mean of SOS in tissue [m/s].
-  std: 70.0              # Standard deviation of SOS in tissue [m/s].  
-  SOS_min: 1500
-  SOS_max: 1610
-  IP_min: -3
-  IP_max: 8
+#   mean: 1560.0           # Mean of SOS in tissue [m/s].
+#   std: 70.0              # Standard deviation of SOS in tissue [m/s].  
+#   SOS_min: 1500
+#   SOS_max: 1610
+#   IP_min: -3
+#   IP_max: 8
